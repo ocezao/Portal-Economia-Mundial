@@ -5,7 +5,14 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, User, ChevronDown, Home } from 'lucide-react';
+import { Menu, X, Search, User, ChevronDown, Home, LayoutDashboard, FileText, Users, PlusCircle, Calendar } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { APP_CONFIG } from '@/config/app';
 import { ROUTES, CATEGORIES, SUBCATEGORIES } from '@/config/routes';
 import { useAuth } from '@/hooks/useAuth';
@@ -134,19 +141,60 @@ export function Header() {
 
           {/* Usuário */}
           {isAuthenticated ? (
-            <Link
-              to={user?.role === 'admin' ? '/admin' : ROUTES.app.root}
-              className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-md hover:bg-[#f5f5f5] transition-colors tap-feedback"
-              aria-label={user?.role === 'admin' ? 'Painel administrativo' : 'Área do usuário'}
-            >
-              <span className="hidden md:block text-sm font-medium text-[#111111] max-w-[80px] truncate">
-                {user?.name.split(' ')[0]}
-              </span>
-              <User className={`w-5 h-5 ${user?.role === 'admin' ? 'text-[#c40000]' : 'text-[#111111]'}`} />
-              {user?.role === 'admin' && (
-                <span className="hidden lg:block text-xs bg-[#c40000] text-white px-1.5 py-0.5 rounded">Admin</span>
-              )}
-            </Link>
+            user?.role === 'admin' ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-md hover:bg-[#f5f5f5] transition-colors tap-feedback">
+                    <span className="hidden md:block text-sm font-medium text-[#111111] max-w-[80px] truncate">
+                      {user?.name.split(' ')[0]}
+                    </span>
+                    <User className="w-5 h-5 text-[#c40000]" />
+                    <span className="hidden lg:block text-xs bg-[#c40000] text-white px-1.5 py-0.5 rounded">Admin</span>
+                    <ChevronDown className="w-4 h-4 text-[#6b6b6b]" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="cursor-pointer">
+                      <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin#noticias" className="cursor-pointer">
+                      <FileText className="w-4 h-4 mr-2" /> Todas Notícias
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/noticias/novo" className="cursor-pointer">
+                      <PlusCircle className="w-4 h-4 mr-2" /> Nova Notícia
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin#agendamentos" className="cursor-pointer">
+                      <Calendar className="w-4 h-4 mr-2" /> Agendamentos
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin#usuarios" className="cursor-pointer">
+                      <Users className="w-4 h-4 mr-2" /> Usuários
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link
+                to={ROUTES.app.root}
+                className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-md hover:bg-[#f5f5f5] transition-colors tap-feedback"
+                aria-label="Área do usuário"
+              >
+                <span className="hidden md:block text-sm font-medium text-[#111111] max-w-[80px] truncate">
+                  {user?.name.split(' ')[0]}
+                  </span>
+                <User className="w-5 h-5 text-[#111111]" />
+              </Link>
+            )
           ) : (
             <>
               <Link to={ROUTES.login} className="hidden sm:block">

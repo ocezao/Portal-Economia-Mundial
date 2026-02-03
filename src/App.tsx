@@ -19,7 +19,6 @@ import { UserProfile } from '@/pages/UserProfile';
 import { UserPreferences } from '@/pages/UserPreferences';
 import { UserSettings } from '@/pages/UserSettings';
 import { AdminDashboard } from '@/pages/AdminDashboard';
-import { AdminNews } from '@/pages/AdminNews';
 import { AdminNewsEdit } from '@/pages/AdminNewsEdit';
 import { AdminUsers } from '@/pages/AdminUsers';
 import { AdminDiagnostico } from '@/pages/AdminDiagnostico';
@@ -65,7 +64,6 @@ function App() {
             </ProtectedRoute>
           }>
             <Route path={ROUTES.admin.root} element={<AdminDashboard />} />
-            <Route path={ROUTES.admin.noticias} element={<AdminNews />} />
             <Route path={ROUTES.admin.novaNoticia} element={<AdminNewsEdit />} />
             <Route path="/admin/noticias/editar/:slug" element={<AdminNewsEdit />} />
             <Route path={ROUTES.admin.usuarios} element={<AdminUsers />} />

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FileText, 
   Users, 
@@ -106,7 +106,16 @@ interface SystemUser {
 export function AdminDashboard() {
   const { user: currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Ler hash da URL para definir aba ativa
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (hash && ['dashboard', 'noticias', 'scheduled', 'usuarios', 'settings'].includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, [location.hash]);
   
   // Estados para gerenciamento de artigos
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -624,17 +633,17 @@ export function AdminDashboard() {
               <PieChart className="w-4 h-4" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="articles" className="gap-2">
+            <TabsTrigger value="noticias" className="gap-2">
               <Newspaper className="w-4 h-4" />
-              Artigos
+              Notícias
               <Badge variant="secondary" className="ml-1">{stats.total}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="scheduled" className="gap-2">
+            <TabsTrigger value="agendamentos" className="gap-2">
               <Calendar className="w-4 h-4" />
               Calendário
               <Badge variant="secondary" className="ml-1">{stats.scheduled}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
+            <TabsTrigger value="usuarios" className="gap-2">
               <UserCog className="w-4 h-4" />
               Usuários
               <Badge variant="secondary" className="ml-1">{users.length}</Badge>
@@ -677,19 +686,19 @@ export function AdminDashboard() {
                     </Link>
                   </li>
                   <li>
-                    <Button variant="outline" className="w-full gap-2" onClick={() => setActiveTab('articles')}>
+                    <Button variant="outline" className="w-full gap-2" onClick={() => setActiveTab('noticias')}>
                       <FileText className="w-4 h-4" />
-                      Gerenciar Artigos
+                      Lista de Notícias
                     </Button>
                   </li>
                   <li>
-                    <Button variant="outline" className="w-full gap-2" onClick={() => setActiveTab('scheduled')}>
+                    <Button variant="outline" className="w-full gap-2" onClick={() => setActiveTab('agendamentos')}>
                       <Calendar className="w-4 h-4" />
                       Ver Calendário
                     </Button>
                   </li>
                   <li>
-                    <Button variant="outline" className="w-full gap-2" onClick={() => setActiveTab('users')}>
+                    <Button variant="outline" className="w-full gap-2" onClick={() => setActiveTab('usuarios')}>
                       <Users className="w-4 h-4" />
                       Gerenciar Usuários
                     </Button>
@@ -700,7 +709,7 @@ export function AdminDashboard() {
               <article className="lg:col-span-2 bg-white border border-[#e5e5e5] rounded-xl p-6">
                 <header className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[#111111]">Artigos Mais Lidos</h2>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('articles')}>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('noticias')}>
                     Ver todos <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </header>
@@ -740,8 +749,8 @@ export function AdminDashboard() {
             </section>
           </TabsContent>
 
-          {/* TAB ARTIGOS */}
-          <TabsContent value="articles" className="space-y-6">
+          {/* TAB NOTICIAS */}
+          <TabsContent value="noticias" className="space-y-6">
             <section className="flex flex-col sm:flex-row gap-3">
               <section className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
@@ -866,7 +875,7 @@ export function AdminDashboard() {
           </TabsContent>
 
           {/* TAB CALENDÁRIO (Agendamentos) */}
-          <TabsContent value="scheduled" className="space-y-6">
+          <TabsContent value="agendamentos" className="space-y-6">
             <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Calendário */}
               <article className="lg:col-span-2 bg-white border rounded-xl p-6">
@@ -973,7 +982,7 @@ export function AdminDashboard() {
           </TabsContent>
 
           {/* TAB USUÁRIOS */}
-          <TabsContent value="users" className="space-y-6">
+          <TabsContent value="usuarios" className="space-y-6">
             <section className="flex items-center justify-between">
               <section>
                 <h2 className="text-lg font-bold text-[#111111]">Gerenciamento de Usuários</h2>
