@@ -43,9 +43,11 @@ function useScrollProgress() {
   useEffect(() => {
     const handleScroll = () => {
       const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight - windowHeight;
-      const scrolled = window.scrollY;
-      setProgress(Math.min((scrolled / documentHeight) * 100, 100));
+      const docHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const trackLength = docHeight - windowHeight;
+      const pct = Math.min((scrollTop / trackLength) * 100, 100);
+      setProgress(pct);
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -65,12 +67,12 @@ export function Home() {
   
   const heroRef = useRef<HTMLDivElement>(null);
   
-  // Dados
-  const featured = getFeaturedArticles(3);
-  const latest = getLatestArticles(12);
-  const trending = getTrendingArticles(5);
-  const breaking = getBreakingNews();
-  const allArticles = getAllArticles();
+  // Dados com fallback seguro
+  const featured = getFeaturedArticles(3) || [];
+  const latest = getLatestArticles(12) || [];
+  const trending = getTrendingArticles(5) || [];
+  const breaking = getBreakingNews() || [];
+  const allArticles = getAllArticles() || [];
   
   // Artigos filtrados por categoria
   const filteredArticles = activeCategory === 'all' 
@@ -79,7 +81,7 @@ export function Home() {
   
   // Quick reads (artigos curtos - leitura < 3 min)
   const quickReads = allArticles
-    .filter(a => a.readingTime <= 3)
+    .filter(a => a.readingTime && a.readingTime <= 3)
     .slice(0, 4);
   
   // Mostrar sticky CTA após scroll
@@ -92,13 +94,20 @@ export function Home() {
   }, []);
   
   // Verificar se usuário já leu algo (para personalização)
-  const readingHistory = storage.get<Array<{slug: string; category: string}>>('pem_reading_history') || [];
-  const recommendedCategory = readingHistory.length > 0 
-    ? readingHistory[readingHistory.length - 1].category 
-    : null;
-  const personalizedArticles = recommendedCategory 
-    ? allArticles.filter(a => a.category === recommendedCategory).slice(0, 3)
-    : [];
+  let personalizedArticles: typeof allArticles = [];
+  let recommendedCategory: string | null = null;
+  
+  try {
+    const readingHistory = storage.get<Array<{slug: string; category: string}>>('pem_reading_history') || [];
+    recommendedCategory = readingHistory.length > 0 
+      ? readingHistory[readingHistory.length - 1].category 
+      : null;
+    personalizedArticles = recommendedCategory 
+      ? allArticles.filter(a => a.category === recommendedCategory).slice(0, 3)
+      : [];
+  } catch {
+    // Ignora erro de storage
+  }
   
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,21 +116,34 @@ export function Home() {
       return;
     }
     
-    // Salvar inscrição
-    const subscribers = storage.get<string[]>('pem_newsletter_subscribers') || [];
-    if (!subscribers.includes(email)) {
-      subscribers.push(email);
-      storage.set('pem_newsletter_subscribers', subscribers);
-      toast.success('Inscrição realizada! Confira seu e-mail.');
-      setEmail('');
-    } else {
-      toast.info('Este e-mail já está inscrito.');
+    try {
+      const subscribers = storage.get<string[]>('pem_newsletter_subscribers') || [];
+      if (!subscribers.includes(email)) {
+        subscribers.push(email);
+        storage.set('pem_newsletter_subscribers', subscribers);
+        toast.success('Inscrição realizada! Confira seu e-mail.');
+        setEmail('');
+      } else {
+        toast.info('Este e-mail já está inscrito.');
+      }
+    } catch {
+      toast.error('Erro ao salvar inscrição');
     }
   };
   
   const loadMore = () => {
     setVisibleCount(prev => Math.min(prev + 3, filteredArticles.length));
   };
+
+  // Verificação de segurança
+  if (!latest || latest.length === 0) {
+    return (
+      <section className="max-w-[1280px] mx-auto px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Carregando...</h1>
+        <p className="text-gray-600">Aguarde enquanto carregamos as notícias.</p>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -160,8 +182,8 @@ export function Home() {
       )}
       
       <section className="max-w-[1280px] mx-auto px-4 py-6">
-        {/* Breaking News Banner - Mais Chamativo */}
-        {breaking.length > 0 && (
+        {/* Breaking News Banner */}
+        {breaking && breaking.length > 0 && (
           <aside className="mb-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-[#c40000] animate-pulse" />
             <div className="relative p-4 bg-[#c40000] text-white rounded-lg border-2 border-[#c40000]">
@@ -188,13 +210,12 @@ export function Home() {
           </aside>
         )}
 
-        {/* Hero Section com CTA */}
+        {/* Hero Section */}
         <section ref={heroRef} className="mb-10">
-          {featured[0] && (
+          {featured && featured[0] && (
             <div className="relative">
               <NewsCard article={featured[0]} variant="featured" />
               
-              {/* Badge de destaque */}
               <div className="absolute top-4 left-4 flex gap-2">
                 {featured[0].breaking && (
                   <span className="px-2 py-1 bg-[#c40000] text-white text-xs font-bold rounded">
@@ -213,7 +234,7 @@ export function Home() {
         </section>
 
         {/* Secondary Featured */}
-        {featured.length > 1 && (
+        {featured && featured.length > 1 && (
           <section className="mb-12">
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {featured.slice(1).map(article => (
@@ -225,40 +246,41 @@ export function Home() {
           </section>
         )}
 
-        {/* Quick Reads - Para engajamento rápido */}
+        {/* Quick Reads */}
         {quickReads.length > 0 && (
           <section className="mb-10 p-6 bg-gradient-to-r from-[#fef2f2] to-white rounded-xl border border-[#fecaca]">
-            <header className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[#c40000]" />
-                <h2 className="text-lg font-bold text-[#111111]">Leitura Rápida</h2>
-                <span className="text-xs text-[#6b6b6b]">Artigos de até 3 minutos</span>
-              </div>
+            <header className="flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-[#c40000]" />
+              <h2 className="text-lg font-bold text-[#111111]">Leitura Rápida</h2>
+              <span className="text-xs text-[#6b6b6b]">Artigos de até 3 minutos</span>
             </header>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {quickReads.map(article => (
-                <Link 
-                  key={article.slug}
-                  to={ROUTES.noticia(article.slug)}
-                  className="group p-4 bg-white rounded-lg border border-[#e5e5e5] hover:border-[#c40000] transition-all hover:shadow-md"
-                >
-                  <span className="text-xs text-[#c40000] font-medium">
-                    {CONTENT_CONFIG.categories[article.category].name}
-                  </span>
-                  <h3 className="text-sm font-bold text-[#111111] line-clamp-2 group-hover:text-[#c40000] mt-1">
-                    {article.title}
-                  </h3>
-                  <span className="text-xs text-[#6b6b6b] flex items-center gap-1 mt-2">
-                    <Clock className="w-3 h-3" />
-                    {article.readingTime} min
-                  </span>
-                </Link>
-              ))}
+              {quickReads.map(article => {
+                const quickCat = CONTENT_CONFIG.categories[article.category as keyof typeof CONTENT_CONFIG.categories];
+                return (
+                  <Link 
+                    key={article.slug}
+                    to={ROUTES.noticia(article.slug)}
+                    className="group p-4 bg-white rounded-lg border border-[#e5e5e5] hover:border-[#c40000] transition-all hover:shadow-md"
+                  >
+                    <span className="text-xs text-[#c40000] font-medium">
+                      {quickCat?.name || article.category}
+                    </span>
+                    <h3 className="text-sm font-bold text-[#111111] line-clamp-2 group-hover:text-[#c40000] mt-1">
+                      {article.title}
+                    </h3>
+                    <span className="text-xs text-[#6b6b6b] flex items-center gap-1 mt-2">
+                      <Clock className="w-3 h-3" />
+                      {article.readingTime} min
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
 
-        {/* Seção "Para Você" - Personalização */}
+        {/* Seção "Para Você" */}
         {personalizedArticles.length > 0 && (
           <section className="mb-10">
             <header className="flex items-center gap-2 mb-4">
@@ -338,7 +360,7 @@ export function Home() {
 
         {/* Main Content Grid */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Latest News - 2/3 */}
+          {/* Latest News */}
           <section className="lg:col-span-2">
             <header className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-[#111111]">
@@ -351,7 +373,7 @@ export function Home() {
             
             <ul className="space-y-6">
               {filteredArticles.slice(0, visibleCount).map((article, index) => {
-                const category = CONTENT_CONFIG.categories[article.category];
+                const category = CONTENT_CONFIG.categories[article.category as keyof typeof CONTENT_CONFIG.categories];
                 const publishedDate = new Date(article.publishedAt).toLocaleDateString('pt-BR', {
                   day: '2-digit',
                   month: 'short',
@@ -359,12 +381,12 @@ export function Home() {
                 
                 return (
                   <li key={article.slug}>
-                    {/* Ad - A cada 3 artigos */}
+                    {/* Ad a cada 3 artigos */}
                     {index === 3 && (
                       <div className="mb-6 p-4 bg-gradient-to-r from-[#fef2f2] to-[#fff5f5] rounded-lg border border-[#fecaca]">
                         <p className="text-xs text-[#c40000] font-medium mb-1">RECOMENDADO</p>
                         <p className="text-sm text-[#111111] font-medium">
-                          📊 Acompanhe os indicadores econômicos em tempo real no nosso dashboard
+                          Acompanhe os indicadores econômicos em tempo real no nosso dashboard
                         </p>
                         <Button 
                           variant="link" 
@@ -389,9 +411,9 @@ export function Home() {
                         <div className="flex items-center gap-2 mb-1">
                           <span 
                             className="text-xs font-semibold uppercase tracking-wider"
-                            style={{ color: category.color }}
+                            style={{ color: category?.color || '#6b6b6b' }}
                           >
-                            {category.name}
+                            {category?.name || article.category}
                           </span>
                           {article.views > 1000 && (
                             <span className="text-xs text-[#6b6b6b] flex items-center gap-0.5">
@@ -441,7 +463,7 @@ export function Home() {
             )}
           </section>
 
-          {/* Sidebar - 1/3 */}
+          {/* Sidebar */}
           <aside className="space-y-8">
             {/* Trending */}
             <section className="p-6 bg-[#f5f5f5] rounded-lg">
@@ -474,7 +496,7 @@ export function Home() {
               </ol>
             </section>
 
-            {/* Video Content Teaser */}
+            {/* Video Teaser */}
             <section className="p-6 bg-[#111111] text-white rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <Play className="w-5 h-5 text-[#c40000]" />
