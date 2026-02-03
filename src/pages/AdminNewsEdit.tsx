@@ -458,7 +458,7 @@ export function AdminNewsEdit() {
       
       localStorage.removeItem('pem_draft_article');
       setHasChanges(false);
-      navigate('/admin/noticias');
+      navigate('/admin#noticias');
     } catch (error) {
       toast.error('Erro ao salvar artigo');
     } finally {
@@ -470,7 +470,7 @@ export function AdminNewsEdit() {
     if (hasChanges) {
       setShowExitDialog(true);
     } else {
-      navigate('/admin/noticias');
+      navigate('/admin#noticias');
     }
   };
 
@@ -1228,7 +1228,7 @@ export function AdminNewsEdit() {
                 Continuar editando
               </Button>
               <Button 
-                onClick={() => navigate('/admin/noticias')}
+                onClick={() => navigate('/admin#noticias')}
                 variant="destructive"
               >
                 Sair sem salvar

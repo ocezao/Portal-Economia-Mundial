@@ -26,7 +26,7 @@ export const ROUTES = {
   // Admin
   admin: {
     root: '/admin',
-    noticias: '/admin/noticias',
+    noticias: '/admin#noticias',
     novaNoticia: '/admin/noticias/novo',
     editarNoticia: (slug: string) => `/admin/noticias/editar/${slug}`,
     usuarios: '/admin/usuarios',
