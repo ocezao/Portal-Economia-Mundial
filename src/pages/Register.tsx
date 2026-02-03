@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { storage } from '@/config/storage';
+import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/config/routes';
 import { toast } from 'sonner';
 
@@ -32,6 +32,7 @@ interface FormErrors {
 
 export function Register() {
   const navigate = useNavigate();
+  const { register, error } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -92,49 +93,24 @@ export function Register() {
 
     setIsLoading(true);
 
-    // Simular delay de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Verificar se email já existe
-    const existingUsers = storage.get<Array<{ email: string }>>('pem_registered_users') || [];
-    if (existingUsers.some(u => u.email === formData.email)) {
-      setErrors({ email: 'Este e-mail já está cadastrado' });
-      setIsLoading(false);
-      return;
-    }
-
-    // Criar novo usuário
-    const newUser = {
-      id: `user_${Date.now()}`,
+    const success = await register({
       name: formData.name.trim(),
       email: formData.email.trim().toLowerCase(),
-      password: formData.password, // Em produção: hash!
-      createdAt: new Date().toISOString(),
-      isLoggedIn: true,
-      isAdmin: false,
-      preferences: {
-        categories: [],
-        notifications: true,
-        darkMode: false,
-        fontSize: 'medium',
-        language: 'pt-BR',
-        emailDigest: true,
-        pushNotifications: false,
-      },
-    };
+      password: formData.password,
+    });
 
-    // Salvar na lista de usuários
-    existingUsers.push({ email: newUser.email });
-    storage.set('pem_registered_users', existingUsers);
+    if (success) {
+      toast.success('Cadastro realizado com sucesso!');
+      navigate(ROUTES.app.root);
+    } else {
+      if (error?.field) {
+        setErrors({ [error.field]: error.message } as FormErrors);
+      } else {
+        toast.error(error?.message || 'Erro ao criar conta. Tente novamente.');
+      }
+    }
 
-    // Logar usuário automaticamente
-    storage.set('pem_user', newUser);
-
-    toast.success('Cadastro realizado com sucesso!');
     setIsLoading(false);
-
-    // Redirecionar para área do usuário
-    navigate(ROUTES.app.root);
   };
 
   const handleChange = (field: keyof FormData, value: string | boolean) => {

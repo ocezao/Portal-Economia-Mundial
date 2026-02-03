@@ -13,6 +13,7 @@ export const ROUTES = {
   termos: '/termos',
   cookies: '/cookies',
   login: '/login',
+  register: '/cadastro',
   
   // Área do usuário
   app: {

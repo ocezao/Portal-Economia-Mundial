@@ -15,7 +15,7 @@ import {
   Settings
 } from 'lucide-react';
 import { storage, STORAGE_KEYS } from '@/config/storage';
-import { mockArticles } from '@/services/newsService';
+import { getAllArticles } from '@/services/newsManager';
 import { Button } from '@/components/ui/button';
 
 interface CheckResult {
@@ -65,7 +65,8 @@ export function AdminDiagnostico() {
     }
 
     // 2. Verificar slugs duplicados
-    const slugs = mockArticles.map(a => a.slug);
+    const articles = getAllArticles();
+    const slugs = articles.map(a => a.slug);
     const duplicates = slugs.filter((item, index) => slugs.indexOf(item) !== index);
     
     checks.push({
@@ -78,7 +79,7 @@ export function AdminDiagnostico() {
     });
 
     // 3. Verificar artigos sem capa
-    const withoutCover = mockArticles.filter(a => !a.coverImage || a.coverImage.includes('placeholder'));
+    const withoutCover = articles.filter(a => !a.coverImage || a.coverImage.includes('placeholder'));
     
     checks.push({
       id: 'covers',
@@ -91,7 +92,7 @@ export function AdminDiagnostico() {
     });
 
     // 4. Verificar artigos sem excerpt
-    const withoutExcerpt = mockArticles.filter(a => !a.excerpt || a.excerpt.length < 50);
+    const withoutExcerpt = articles.filter(a => !a.excerpt || a.excerpt.length < 50);
     
     checks.push({
       id: 'excerpts',
@@ -103,7 +104,7 @@ export function AdminDiagnostico() {
     });
 
     // 5. Verificar SEO
-    const withoutSEO = mockArticles.filter(a => !a.title || !a.excerpt || a.tags.length === 0);
+    const withoutSEO = articles.filter(a => !a.title || !a.excerpt || a.tags.length === 0);
     
     checks.push({
       id: 'seo',

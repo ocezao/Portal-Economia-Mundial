@@ -13,7 +13,7 @@ import { EconomicComparator } from '@/components/geoEcon/EconomicComparator';
 import { ROUTES, CATEGORIES } from '@/config/routes';
 import { APP_CONFIG } from '@/config/app';
 import { CONTENT_CONFIG } from '@/config/content';
-import { getFeaturedArticles, getLatestArticles, getTrendingArticles, getBreakingNews } from '@/services/newsService';
+import { getFeaturedArticles, getLatestArticles, getTrendingArticles, getBreakingNews } from '@/services/newsManager';
 
 export function Home() {
   const featured = getFeaturedArticles(3);

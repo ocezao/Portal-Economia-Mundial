@@ -533,7 +533,7 @@ export const mockArticles: NewsArticle[] = [
 // ==================== SERVICE FUNCTIONS ====================
 
 export function getAllArticles(): NewsArticle[] {
-  return mockArticles.sort((a, b) => 
+  return [...mockArticles].sort((a, b) => 
     new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 }

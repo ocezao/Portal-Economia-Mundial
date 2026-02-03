@@ -3,7 +3,7 @@
  * Simula atualizações de preços
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { MarketData } from '@/config/market';
 import { initialMarketData, simulateMarketUpdate } from '@/config/market';
 import { APP_CONFIG } from '@/config/app';
@@ -16,20 +16,57 @@ interface UseMarketReturn {
   refresh: () => void;
 }
 
+interface MarketSnapshot {
+  data: MarketData[];
+  lastUpdate: Date | null;
+}
+
+let snapshot: MarketSnapshot = {
+  data: initialMarketData,
+  lastUpdate: null,
+};
+
+let intervalId: ReturnType<typeof setInterval> | null = null;
+const subscribers = new Set<(state: MarketSnapshot) => void>();
+
+const emit = () => {
+  subscribers.forEach((listener) => listener(snapshot));
+};
+
+const startInterval = () => {
+  if (intervalId) return;
+  intervalId = setInterval(() => {
+    snapshot = {
+      data: simulateMarketUpdate(snapshot.data),
+      lastUpdate: new Date(),
+    };
+    emit();
+  }, APP_CONFIG.timing.marketUpdateInterval);
+};
+
+const stopInterval = () => {
+  if (intervalId && subscribers.size === 0) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+};
+
 export function useMarket(): UseMarketReturn {
-  const [data, setData] = useState<MarketData[]>(initialMarketData);
+  const [data, setData] = useState<MarketData[]>(snapshot.data);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(snapshot.lastUpdate);
 
   const refresh = useCallback(() => {
     setIsLoading(true);
     try {
       // Simula delay de API
       setTimeout(() => {
-        setData(prev => simulateMarketUpdate(prev));
-        setLastUpdate(new Date());
+        snapshot = {
+          data: simulateMarketUpdate(snapshot.data),
+          lastUpdate: new Date(),
+        };
+        emit();
         setIsLoading(false);
       }, 300);
     } catch (err) {
@@ -39,16 +76,18 @@ export function useMarket(): UseMarketReturn {
   }, []);
 
   useEffect(() => {
-    // Atualização automática
-    intervalRef.current = setInterval(() => {
-      setData(prev => simulateMarketUpdate(prev));
-      setLastUpdate(new Date());
-    }, APP_CONFIG.timing.marketUpdateInterval);
+    const listener = (state: MarketSnapshot) => {
+      setData(state.data);
+      setLastUpdate(state.lastUpdate);
+    };
+
+    subscribers.add(listener);
+    startInterval();
+    listener(snapshot);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      subscribers.delete(listener);
+      stopInterval();
     };
   }, []);
 

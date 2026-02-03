@@ -10,7 +10,7 @@ import { ReadingProgress } from '@/components/news/ReadingProgress';
 import { ArticleContent } from '@/components/news/ArticleContent';
 import { RelatedArticles } from '@/components/news/RelatedArticles';
 import { CommentSection } from '@/components/interactive/CommentSection';
-import { getArticleBySlug } from '@/services/newsService';
+import { getArticleBySlug } from '@/services/newsManager';
 import { CONTENT_CONFIG } from '@/config/content';
 import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/hooks/useAuth';

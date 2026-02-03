@@ -6,7 +6,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
-import { getRelatedArticles } from '@/services/newsService';
+import { getRelatedArticles } from '@/services/newsManager';
 import type { NewsArticle } from '@/types';
 
 interface RelatedArticlesProps {

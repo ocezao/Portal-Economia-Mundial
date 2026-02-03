@@ -4,12 +4,13 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { ROUTES } from '@/config/routes';
 import { toast } from 'sonner';
 
 export function Login() {
@@ -19,6 +20,10 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  
+  const handleForgotPassword = () => {
+    toast.info('Recuperação de senha em breve.');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +33,18 @@ export function Login() {
     
     if (success) {
       toast.success('Login realizado com sucesso!');
-      navigate('/app');
+      // Verificar o role do usuário recém-logado
+      const storedSession = localStorage.getItem('pem_session');
+      if (storedSession) {
+        const session = JSON.parse(storedSession);
+        if (session.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/app');
+        }
+      } else {
+        navigate('/app');
+      }
     } else {
       toast.error('E-mail ou senha incorretos');
     }
@@ -110,11 +126,19 @@ export function Login() {
           {/* Links */}
           <footer className="mt-6 text-center text-sm text-[#6b6b6b]">
             <p>
-              <a href="#" className="text-[#c40000] hover:underline">Esqueceu a senha?</a>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-[#c40000] hover:underline"
+              >
+                Esqueceu a senha?
+              </button>
             </p>
             <p className="mt-2">
               Não tem conta?{' '}
-              <a href="#" className="text-[#c40000] hover:underline">Cadastre-se</a>
+              <Link to={ROUTES.register} className="text-[#c40000] hover:underline">
+                Cadastre-se
+              </Link>
             </p>
           </footer>
         </article>

@@ -86,12 +86,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <a
+                  href={`mailto:${APP_CONFIG.contact.email}?subject=Fale%20Conosco`}
+                  className="text-sm text-[#9ca3af] hover:text-white transition-colors"
+                >
                   Fale Conosco
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <a
+                  href={`mailto:${APP_CONFIG.contact.email}?subject=Trabalhe%20Conosco`}
+                  className="text-sm text-[#9ca3af] hover:text-white transition-colors"
+                >
                   Trabalhe Conosco
                 </a>
               </li>

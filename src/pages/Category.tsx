@@ -5,7 +5,7 @@
 
 import { useParams } from 'react-router-dom';
 import { NewsCard } from '@/components/news/NewsCard';
-import { getArticlesByCategory } from '@/services/newsService';
+import { getArticlesByCategory } from '@/services/newsManager';
 import { CONTENT_CONFIG } from '@/config/content';
 import { APP_CONFIG } from '@/config/app';
 

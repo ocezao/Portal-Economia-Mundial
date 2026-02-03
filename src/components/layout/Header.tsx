@@ -135,14 +135,17 @@ export function Header() {
           {/* Usuário */}
           {isAuthenticated ? (
             <Link
-              to={ROUTES.app.root}
+              to={user?.role === 'admin' ? '/admin' : ROUTES.app.root}
               className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-md hover:bg-[#f5f5f5] transition-colors tap-feedback"
-              aria-label="Área do usuário"
+              aria-label={user?.role === 'admin' ? 'Painel administrativo' : 'Área do usuário'}
             >
               <span className="hidden md:block text-sm font-medium text-[#111111] max-w-[80px] truncate">
                 {user?.name.split(' ')[0]}
               </span>
-              <User className="w-5 h-5 text-[#111111]" />
+              <User className={`w-5 h-5 ${user?.role === 'admin' ? 'text-[#c40000]' : 'text-[#111111]'}`} />
+              {user?.role === 'admin' && (
+                <span className="hidden lg:block text-xs bg-[#c40000] text-white px-1.5 py-0.5 rounded">Admin</span>
+              )}
             </Link>
           ) : (
             <>

@@ -17,6 +17,16 @@ export interface User {
   role: UserRole;
   region?: string;
   avatar?: string;
+  bio?: string;
+  profession?: string;
+  company?: string;
+  socialLinks?: {
+    website?: string;
+    twitter?: string;
+    linkedin?: string;
+    github?: string;
+  };
+  twoFactorEnabled?: boolean;
   createdAt: string;
   lastLogin: string;
   isActive: boolean;
@@ -24,12 +34,70 @@ export interface User {
 }
 
 export interface UserPreferences {
+  // Categorias e tags
   categories: string[];
   tags: string[];
+  customTags?: string[];
+  
+  // Idioma e acessibilidade
   language: 'pt-BR' | 'en';
+  theme?: 'light' | 'dark' | 'system';
+  fontSize?: 'small' | 'medium' | 'large';
+  layoutDensity?: 'compact' | 'comfortable' | 'spacious';
   reducedMotion: boolean;
+  
+  // Notificações
   emailNotifications: boolean;
   pushNotifications: boolean;
+  newsletterWeekly?: boolean;
+  newsletterDaily?: boolean;
+  breakingNewsAlerts?: boolean;
+  marketAlerts?: boolean;
+  notificationSchedule?: {
+    morning: boolean;
+    afternoon: boolean;
+    evening: boolean;
+  };
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  
+  // Privacidade
+  shareReadingHistory?: boolean;
+  allowPersonalization?: boolean;
+  analyticsConsent?: boolean;
+  marketingConsent?: boolean;
+  cookieConsent?: boolean;
+  
+  // Feed
+  feedLayout?: 'grid' | 'list' | 'compact';
+  feedSort?: 'relevance' | 'date' | 'popular';
+  contentDensity?: 'minimal' | 'balanced' | 'detailed';
+  articlesPerPage?: number;
+  hideReadArticles?: boolean;
+  showOnlyPreferred?: boolean;
+  highlightBreaking?: boolean;
+  
+  // Conteúdo
+  autoPlayVideos?: boolean;
+  loadImages?: boolean;
+  infiniteScroll?: boolean;
+  showReadingTime?: boolean;
+  showRelatedArticles?: boolean;
+  contentLanguages?: string[];
+  
+  // Interações
+  autoBookmarkOnLike?: boolean;
+  shareToSocial?: boolean;
+  commentNotifications?: boolean;
+  
+  // Modo Foco
+  focusMode?: boolean;
+  focusModeSettings?: {
+    hideSidebar: boolean;
+    hideComments: boolean;
+    hideRelated: boolean;
+    readerView: boolean;
+  };
 }
 
 export interface AuthSession {
@@ -446,8 +514,14 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
+  // Se requer admin e usuário não é admin, redireciona para área do usuário
   if (requiredRole === 'admin' && !isAdmin) {
     return <Navigate to="/app" replace />;
+  }
+
+  // Se o usuário é admin e está tentando acessar área de usuário comum, redireciona para admin
+  if (isAdmin && location.pathname.startsWith('/app')) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;
