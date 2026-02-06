@@ -44,11 +44,11 @@ import {
   Menu
 } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
-import { storage } from '@/config/storage';
 import { CONTENT_CONFIG } from '@/config/content';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -82,26 +82,26 @@ import {
 
   updateScheduledArticle,
   checkAndPublishScheduled,
+  assignAllArticlesToAuthor,
   type ArticleFilters,
   type ScheduledArticle,
   resetToDefault
 } from '@/services/newsManager';
+import { getAppSettings, updateAppSettings } from '@/services/appSettings';
+import type { AppSettings } from '@/hooks/useAppSettings';
 import type { NewsArticle } from '@/types';
+import {
+  listAdminUsers,
+  createAdminUser,
+  updateAdminUser,
+  updateAdminUserPassword,
+  deleteAdminUser,
+  type AdminUser,
+} from '@/services/adminUsers';
+import { SUPABASE_FREE_LIMITS } from '@/config/supabaseLimits';
 
 // Interface para usuários do sistema
-interface SystemUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  createdAt: string;
-  lastLogin: string;
-  isActive: boolean;
-  region?: string;
-  bio?: string;
-  profession?: string;
-  company?: string;
-}
+type SystemUser = AdminUser;
 
 export function AdminDashboard() {
   const { user: currentUser, logout } = useAuth();
@@ -124,6 +124,16 @@ export function AdminDashboard() {
     byCategory: { economia: 0, geopolitica: 0, tecnologia: 0 },
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Configurações globais
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+    readingLimitEnabled: true,
+    readingLimitPercentage: 0.2,
+    maxFreeArticles: 3,
+    readingLimitScope: 'anon',
+  });
+  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+  const [isSettingsSaving, setIsSettingsSaving] = useState(false);
   
   // Estados para usuários
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -134,7 +144,9 @@ export function AdminDashboard() {
   const [isEditingUser, setIsEditingUser] = useState(false);
   
   // Form de usuário
-  const [userFormData, setUserFormData] = useState<Partial<SystemUser>>({
+  const [userFormData, setUserFormData] = useState<
+    Partial<SystemUser> & { password?: string; confirmPassword?: string }
+  >({
     name: '',
     email: '',
     role: 'user',
@@ -143,6 +155,8 @@ export function AdminDashboard() {
     profession: '',
     company: '',
     isActive: true,
+    password: '',
+    confirmPassword: '',
   });
   
   // Filtros de artigos
@@ -179,17 +193,19 @@ export function AdminDashboard() {
   // Verificar publicações agendadas periodicamente
   useEffect(() => {
     const interval = setInterval(() => {
-      const published = checkAndPublishScheduled();
+    void (async () => {
+      const published = await checkAndPublishScheduled();
       if (published > 0) {
         toast.success(`${published} artigo(s) agendado(s) publicado(s)!`);
-        loadData();
+        await loadData();
       }
-    }, 60000);
+    })();
+  }, 60000);
     
     return () => clearInterval(interval);
   }, []);
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     
     const filters: ArticleFilters = {
@@ -198,67 +214,59 @@ export function AdminDashboard() {
       status: statusFilter,
     };
     
-    const result = getArticlesPaginated(filters, currentPage, perPage);
+    const result = await getArticlesPaginated(filters, currentPage, perPage);
     setArticles(result.items);
     setTotalPages(result.totalPages);
     
-    setStats(getArticleStats());
-    setScheduledArticles(getScheduledArticles().filter(s => s.status === 'pending'));
+    setStats(await getArticleStats());
+    setScheduledArticles((await getScheduledArticles()).filter(s => s.status === 'pending'));
     
     loadUsers();
     
     setIsLoading(false);
   }, [searchTerm, categoryFilter, statusFilter, currentPage, perPage]);
 
-  const loadUsers = () => {
-    const registeredUsers = storage.get<Array<{id: string; email: string; name?: string; createdAt?: string}>>('pem_registered_users') || [];
-    const allUsers: SystemUser[] = [
-      {
-        id: 'admin-001',
-        name: 'Administrador PEM',
-        email: 'admin@pem.com',
-        role: 'admin',
-        createdAt: '2024-01-01T00:00:00Z',
-        lastLogin: new Date().toISOString(),
-        isActive: true,
-        region: 'BR',
-        bio: 'Administrador do sistema',
-        profession: 'Administrador',
-        company: 'Portal Econômico Mundial',
-      },
-      {
-        id: 'user-001',
-        name: 'Usuário Demo',
-        email: 'usuario@exemplo.com',
-        role: 'user',
-        createdAt: '2024-01-15T00:00:00Z',
-        lastLogin: new Date().toISOString(),
-        isActive: true,
-        region: 'BR',
-        bio: '',
-        profession: 'Estudante',
-        company: '',
-      },
-      ...registeredUsers.map((u, index) => ({
-        id: u.id,
-        name: u.name || `Usuário ${index + 1}`,
-        email: u.email,
-        role: 'user' as UserRole,
-        createdAt: u.createdAt || new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        isActive: true,
-        region: '',
-        bio: '',
-        profession: '',
-        company: '',
-      })),
-    ];
-    setUsers(allUsers);
+  const loadUsers = async () => {
+    try {
+      const data = await listAdminUsers();
+      setUsers(data);
+    } catch (error) {
+      // Erro silenciado em produção
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error('Erro ao carregar usuários:', error);
+      }
+      toast.error('Erro ao carregar usuários');
+    }
   };
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSettings = async () => {
+      try {
+        const data = await getAppSettings();
+        if (isMounted) setAppSettings(data);
+      } catch (error) {
+        // Erro silenciado em produção
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Erro ao carregar configurações:', error);
+        }
+      } finally {
+        if (isMounted) setIsSettingsLoading(false);
+      }
+    };
+
+    void loadSettings();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -315,10 +323,10 @@ export function AdminDashboard() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!articleToDelete) return;
     
-    const success = deleteArticle(articleToDelete.slug);
+    const success = await deleteArticle(articleToDelete.slug);
     if (success) {
       toast.success(`Artigo "${articleToDelete.title}" excluído!`);
       loadData();
@@ -326,16 +334,16 @@ export function AdminDashboard() {
     setDeleteDialogOpen(false);
   };
 
-  const handleDuplicate = (article: NewsArticle) => {
-    const newArticle = duplicateArticle(article.slug);
+  const handleDuplicate = async (article: NewsArticle) => {
+    const newArticle = await duplicateArticle(article.slug);
     if (newArticle) {
       toast.success(`Artigo "${article.title}" duplicado!`);
       loadData();
     }
   };
 
-  const handleCancelScheduled = (id: string) => {
-    cancelScheduledArticle(id);
+  const handleCancelScheduled = async (id: string) => {
+    await cancelScheduledArticle(id);
     toast.success('Agendamento cancelado!');
     loadData();
   };
@@ -347,10 +355,10 @@ export function AdminDashboard() {
     setEditScheduledOpen(true);
   };
 
-  const saveScheduledChanges = () => {
+  const saveScheduledChanges = async () => {
     if (!scheduledToEdit) return;
     
-    updateScheduledArticle(scheduledToEdit.id, {
+    await updateScheduledArticle(scheduledToEdit.id, {
       scheduledDate: scheduledToEdit.scheduledDate,
       scheduledTime: scheduledToEdit.scheduledTime,
     });
@@ -372,6 +380,8 @@ export function AdminDashboard() {
       profession: '',
       company: '',
       isActive: true,
+      password: '',
+      confirmPassword: '',
     });
     setShowUserForm(true);
   };
@@ -388,54 +398,79 @@ export function AdminDashboard() {
       profession: user.profession,
       company: user.company,
       isActive: user.isActive,
+      password: '',
+      confirmPassword: '',
     });
     setShowUserForm(true);
   };
 
-  const saveUser = () => {
+  const saveUser = async () => {
     if (!userFormData.name || !userFormData.email) {
       toast.error('Nome e email são obrigatórios!');
       return;
     }
 
-    if (isEditingUser && userToEdit) {
-      if (userToEdit.id === 'admin-001' || userToEdit.id === 'user-001') {
-        const updatedUsers = users.map(u => 
-          u.id === userToEdit.id ? { ...u, ...userFormData } as SystemUser : u
-        );
-        setUsers(updatedUsers);
-      } else {
-        const registeredUsers = storage.get<Array<any>>('pem_registered_users') || [];
-        const updated = registeredUsers.map(u => 
-          u.id === userToEdit.id ? { ...u, ...userFormData } : u
-        );
-        storage.set('pem_registered_users', updated);
+    if (!isEditingUser) {
+      if (!userFormData.password || !userFormData.confirmPassword) {
+        toast.error('Senha é obrigatória para novo usuário');
+        return;
       }
-      toast.success('Usuário atualizado com sucesso!');
-    } else {
-      const newUser = {
-        id: `user_${Date.now()}`,
-        ...userFormData,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      };
-      
-      const registeredUsers = storage.get<Array<any>>('pem_registered_users') || [];
-      registeredUsers.push(newUser);
-      storage.set('pem_registered_users', registeredUsers);
-      
-      toast.success('Usuário criado com sucesso!');
+      if (userFormData.password !== userFormData.confirmPassword) {
+        toast.error('As senhas não conferem');
+        return;
+      }
     }
-    
-    setShowUserForm(false);
-    loadUsers();
+
+    if (userFormData.password && userFormData.confirmPassword) {
+      if (userFormData.password !== userFormData.confirmPassword) {
+        toast.error('As senhas não conferem');
+        return;
+      }
+      if (userFormData.password.length < 6) {
+        toast.error('Senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+    }
+
+    try {
+      if (isEditingUser && userToEdit) {
+        await updateAdminUser({
+          userId: userToEdit.id,
+          name: userFormData.name,
+          email: userFormData.email,
+          role: (userFormData.role as UserRole) ?? 'user',
+        });
+
+        if (userFormData.password) {
+          await updateAdminUserPassword({
+            userId: userToEdit.id,
+            password: userFormData.password,
+          });
+        }
+
+        toast.success('Usuário atualizado com sucesso!');
+      } else {
+        await createAdminUser({
+          name: userFormData.name,
+          email: userFormData.email,
+          password: userFormData.password ?? '',
+          role: (userFormData.role as UserRole) ?? 'user',
+        });
+        toast.success('Usuário criado com sucesso!');
+      }
+
+      setShowUserForm(false);
+      loadUsers();
+    } catch (error) {
+      toast.error('Erro ao salvar usuário');
+    }
   };
 
   const handleDeleteUser = (user: SystemUser) => {
     setUserToDelete(user);
   };
 
-  const confirmDeleteUser = () => {
+  const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     
     if (userToDelete.id === currentUser?.id) {
@@ -444,19 +479,26 @@ export function AdminDashboard() {
       return;
     }
     
-    if (userToDelete.id === 'admin-001' || userToDelete.id === 'user-001') {
-      toast.error('Não é possível excluir usuários de demonstração!');
+    try {
+      await deleteAdminUser({ userId: userToDelete.id });
+      toast.success(`Usuário "${userToDelete.name}" excluído!`);
       setUserToDelete(null);
-      return;
+      loadUsers();
+    } catch (error) {
+      toast.error('Erro ao excluir usuário');
     }
-    
-    const registeredUsers = storage.get<Array<{id: string}>>('pem_registered_users') || [];
-    const updated = registeredUsers.filter(u => u.id !== userToDelete.id);
-    storage.set('pem_registered_users', updated);
-    
-    toast.success(`Usuário "${userToDelete.name}" excluído!`);
-    setUserToDelete(null);
-    loadUsers();
+  };
+
+  const saveAppSettings = async () => {
+    setIsSettingsSaving(true);
+    try {
+      await updateAppSettings(appSettings);
+      toast.success('Configurações salvas!');
+    } catch (error) {
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setIsSettingsSaving(false);
+    }
   };
 
   const toggleArticleSelection = (slug: string) => {
@@ -475,13 +517,13 @@ export function AdminDashboard() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedArticles.length === 0) return;
     
     let deleted = 0;
-    selectedArticles.forEach(slug => {
-      if (deleteArticle(slug)) deleted++;
-    });
+    for (const slug of selectedArticles) {
+      if (await deleteArticle(slug)) deleted++;
+    }
     
     toast.success(`${deleted} artigo(s) excluído(s)!`);
     setSelectedArticles([]);
@@ -489,10 +531,10 @@ export function AdminDashboard() {
     loadData();
   };
 
-  const exportData = () => {
+  const exportData = async () => {
     const data = {
-      articles: getAllArticles(),
-      scheduled: getScheduledArticles(),
+      articles: await getAllArticles({ includeDrafts: true }),
+      scheduled: await getScheduledArticles(),
       exportedAt: new Date().toISOString(),
     };
     
@@ -531,6 +573,26 @@ export function AdminDashboard() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Usuários exportados!');
+  };
+
+  const handleAssignPostsToAdmin = async () => {
+    if (!currentUser?.id) {
+      toast.error('Admin não identificado');
+      return;
+    }
+
+    if (!confirm('Atribuir todos os posts ao admin atual?')) return;
+
+    try {
+      const count = await assignAllArticlesToAuthor(
+        currentUser.id,
+        currentUser.name || 'Admin PEM'
+      );
+      toast.success(`${count} post(s) atribuídos ao admin atual`);
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao atribuir posts ao admin');
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -1078,7 +1140,7 @@ export function AdminDashboard() {
                           <span className="text-xs sm:text-sm font-medium">{day}</span>
                           {hasScheduled && (
                             <section className="absolute bottom-0.5 right-0.5 left-0.5">
-                              <Badge className="w-full justify-center text-[10px] sm:text-xs bg-blue-600 text-white px-0.5">
+                              <Badge className="w-full justify-center text-xs sm:text-xs bg-blue-600 text-white px-0.5">
                                 {scheduledForDay.length}
                               </Badge>
                             </section>
@@ -1284,6 +1346,145 @@ export function AdminDashboard() {
               <section className="bg-white border rounded-xl p-4 sm:p-6">
                 <h2 className="text-lg font-bold text-[#111111] mb-4">Configurações do Sistema</h2>
                 <section className="space-y-3">
+                  <section className="p-4 bg-[#f8fafc] rounded-lg">
+                    <h3 className="font-medium text-sm mb-3">Limite de Leitura</h3>
+                    {isSettingsLoading ? (
+                      <p className="text-xs text-[#6b6b6b]">Carregando configurações...</p>
+                    ) : (
+                      <section className="space-y-4">
+                        <section className="flex items-center justify-between">
+                          <section>
+                            <p className="text-sm font-medium text-[#111111]">Ativar limite</p>
+                            <p className="text-xs text-[#6b6b6b]">Exibe apenas parte do artigo</p>
+                          </section>
+                          <Switch
+                            checked={appSettings.readingLimitEnabled}
+                            onCheckedChange={(checked) =>
+                              setAppSettings(prev => ({ ...prev, readingLimitEnabled: checked }))
+                            }
+                          />
+                        </section>
+
+                        <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <fieldset>
+                            <Label>Percentual visível (0–1)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={appSettings.readingLimitPercentage}
+                              onChange={(e) =>
+                                setAppSettings(prev => ({
+                                  ...prev,
+                                  readingLimitPercentage: Number(e.target.value),
+                                }))
+                              }
+                            />
+                          </fieldset>
+                          <fieldset>
+                            <Label>Artigos grátis</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={appSettings.maxFreeArticles}
+                              onChange={(e) =>
+                                setAppSettings(prev => ({
+                                  ...prev,
+                                  maxFreeArticles: Number(e.target.value),
+                                }))
+                              }
+                            />
+                          </fieldset>
+                          <fieldset>
+                            <Label>Aplica para</Label>
+                            <select
+                              value={appSettings.readingLimitScope}
+                              onChange={(e) =>
+                                setAppSettings(prev => ({
+                                  ...prev,
+                                  readingLimitScope: e.target.value as AppSettings['readingLimitScope'],
+                                }))
+                              }
+                              className="w-full px-3 py-2 border rounded-md"
+                            >
+                              <option value="anon">Apenas não logados</option>
+                              <option value="all">Todos</option>
+                            </select>
+                          </fieldset>
+                        </section>
+
+                        <Button
+                          variant="outline"
+                          onClick={saveAppSettings}
+                          disabled={isSettingsSaving}
+                          className="w-full sm:w-auto"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSettingsSaving ? 'Salvando...' : 'Salvar limite'}
+                        </Button>
+                      </section>
+                    )}
+                  </section>
+
+                  <section className="p-4 bg-[#f8fafc] rounded-lg">
+                    <h3 className="font-medium text-sm mb-3">Limites do Plano Free (Supabase)</h3>
+                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Banco de dados</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.databaseSizeMb} MB</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Storage</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.fileStorageGb} GB</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Egress</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.egressGb} GB</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Egress cache</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.cachedEgressGb} GB</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Funções (mês)</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionInvocations.toLocaleString('pt-BR')}</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Tempo máx. função</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMaxDurationSeconds}s</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">CPU máx. função</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMaxCpuSeconds}s</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Memória função</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMemoryMb} MB</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Arquivo máx.</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.maxFileSizeMb} MB</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Funções/projeto</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.maxFunctionsPerProject}</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Projetos ativos</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.maxActiveProjects}</p>
+                      </section>
+                      <section className="p-3 bg-white border rounded-md">
+                        <p className="text-[#6b6b6b]">Auto-pause</p>
+                        <p className="font-medium">{SUPABASE_FREE_LIMITS.freeProjectAutoPauseDays} dias</p>
+                      </section>
+                    </section>
+                    <p className="text-xs text-[#6b6b6b] mt-3">
+                      Valores de referência do plano Free. Verifique no painel do Supabase, pois podem mudar.
+                    </p>
+                  </section>
+
                   <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
                     <section>
                       <p className="font-medium text-sm">Resetar Dados</p>
@@ -1291,9 +1492,9 @@ export function AdminDashboard() {
                     </section>
                     <Button 
                       variant="outline" 
-                      onClick={() => { 
+                      onClick={async () => { 
                         if (confirm('ATENÇÃO: Isso apagará todas as alterações. Continuar?')) { 
-                          resetToDefault(); 
+                          await resetToDefault(); 
                           toast.success('Dados resetados!'); 
                           loadData(); 
                         }
@@ -1301,6 +1502,20 @@ export function AdminDashboard() {
                       className="text-[#ef4444] w-full sm:w-auto"
                     >
                       <RefreshCw className="w-4 h-4 mr-2" /> Resetar
+                    </Button>
+                  </section>
+
+                  <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
+                    <section>
+                      <p className="font-medium text-sm">Atribuir posts ao admin</p>
+                      <p className="text-xs text-[#6b6b6b]">Define o admin atual como autor de todos os posts</p>
+                    </section>
+                    <Button
+                      variant="outline"
+                      onClick={handleAssignPostsToAdmin}
+                      className="w-full sm:w-auto"
+                    >
+                      <User className="w-4 h-4 mr-2" /> Atribuir
                     </Button>
                   </section>
                   
@@ -1321,8 +1536,8 @@ export function AdminDashboard() {
                     </section>
                     <Button 
                       variant="outline" 
-                      onClick={() => { 
-                        const published = checkAndPublishScheduled(); 
+                      onClick={async () => { 
+                        const published = await checkAndPublishScheduled(); 
                         if (published > 0) { 
                           toast.success(`${published} artigo(s) publicado(s)!`); 
                           loadData(); 
@@ -1432,6 +1647,26 @@ export function AdminDashboard() {
               </section>
               <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <fieldset>
+                  <Label>{isEditingUser ? 'Nova senha' : 'Senha *'}</Label>
+                  <Input
+                    type="password"
+                    value={userFormData.password || ''}
+                    onChange={(e) => setUserFormData({...userFormData, password: e.target.value})}
+                    placeholder={isEditingUser ? 'Deixe em branco para manter' : 'Digite a senha'}
+                  />
+                </fieldset>
+                <fieldset>
+                  <Label>{isEditingUser ? 'Confirmar nova senha' : 'Confirmar senha *'}</Label>
+                  <Input
+                    type="password"
+                    value={userFormData.confirmPassword || ''}
+                    onChange={(e) => setUserFormData({...userFormData, confirmPassword: e.target.value})}
+                    placeholder={isEditingUser ? 'Confirme a nova senha' : 'Repita a senha'}
+                  />
+                </fieldset>
+              </section>
+              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <fieldset>
                   <Label>Tipo de Usuário</Label>
                   <select 
                     value={userFormData.role} 
@@ -1458,7 +1693,7 @@ export function AdminDashboard() {
                 <fieldset>
                   <Label>Profissão</Label>
                   <Input 
-                    value={userFormData.profession} 
+                    value={userFormData.profession ?? ''} 
                     onChange={(e) => setUserFormData({...userFormData, profession: e.target.value})} 
                     placeholder="Ex: Jornalista" 
                   />
@@ -1466,7 +1701,7 @@ export function AdminDashboard() {
                 <fieldset>
                   <Label>Empresa</Label>
                   <Input 
-                    value={userFormData.company} 
+                    value={userFormData.company ?? ''} 
                     onChange={(e) => setUserFormData({...userFormData, company: e.target.value})} 
                     placeholder="Ex: Empresa XYZ" 
                   />
@@ -1475,7 +1710,7 @@ export function AdminDashboard() {
               <fieldset>
                 <Label>Região</Label>
                 <select 
-                  value={userFormData.region} 
+                  value={userFormData.region ?? ''} 
                   onChange={(e) => setUserFormData({...userFormData, region: e.target.value})} 
                   className="w-full px-3 py-2 border rounded-md"
                 >
@@ -1493,7 +1728,7 @@ export function AdminDashboard() {
               <fieldset>
                 <Label>Biografia</Label>
                 <textarea 
-                  value={userFormData.bio} 
+                  value={userFormData.bio ?? ''} 
                   onChange={(e) => setUserFormData({...userFormData, bio: e.target.value})} 
                   placeholder="Breve descrição do usuário..." 
                   rows={3} 

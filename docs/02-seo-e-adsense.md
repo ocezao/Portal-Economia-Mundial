@@ -106,6 +106,9 @@ keywords: {article.tags.join(', ')}
 </aside>
 ```
 
+### Observação importante
+Os espaços de anúncio **não devem aparecer vazios**. Inserimos blocos de atenção (briefing, newsletter e enquete) na Home para manter o usuário engajado. Os anúncios devem ser renderizados apenas quando o AdSense estiver ativo.
+
 ### Implementação
 
 1. **Criar conta AdSense**

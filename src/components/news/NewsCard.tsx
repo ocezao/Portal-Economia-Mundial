@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Clock, Bookmark } from 'lucide-react';
+import { Clock, Bookmark, Gem } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { NewsArticle } from '@/types';
@@ -31,6 +31,17 @@ export function NewsCard({
     year: 'numeric',
   });
 
+  // Verifica se é publicação patrocinada
+  const isSponsored = article.tags?.includes('Publicação Patrocinada');
+
+  // Badge de Publicação Patrocinada
+  const SponsoredBadge = () => isSponsored ? (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
+      <Gem className="w-3 h-3" />
+      Patrocinado
+    </span>
+  ) : null;
+
   if (variant === 'featured') {
     return (
       <article className="group relative">
@@ -47,14 +58,22 @@ export function NewsCard({
                 Urgente
               </span>
             )}
+            {isSponsored && (
+              <span className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-900 text-xs font-bold uppercase tracking-wider rounded-full shadow-md">
+                💎 Patrocinado
+              </span>
+            )}
           </figure>
           <header>
-            <span 
-              className="inline-block text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: category.color }}
-            >
-              {category.name}
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span 
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: category.color }}
+              >
+                {category.name}
+              </span>
+              <SponsoredBadge />
+            </div>
             <h2 className="text-2xl md:text-3xl font-bold text-[#111111] leading-tight mb-3 group-hover:text-[#c40000] transition-colors">
               {article.title}
             </h2>
@@ -79,21 +98,29 @@ export function NewsCard({
     return (
       <article className="group">
         <Link to={ROUTES.noticia(article.slug)} className="flex gap-4">
-          <figure className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md">
+          <figure className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md relative">
             <img
               src={article.coverImage}
               alt={article.title}
               loading="lazy"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
+            {isSponsored && (
+              <span className="absolute top-1 right-1 w-5 h-5 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full flex items-center justify-center shadow-sm" title="Publicação Patrocinada">
+                <Gem className="w-3 h-3 text-amber-900" />
+              </span>
+            )}
           </figure>
           <section className="flex-1 min-w-0">
-            <span 
-              className="text-xs font-semibold uppercase tracking-wider"
-              style={{ color: category.color }}
-            >
-              {category.name}
-            </span>
+            <div className="flex items-center gap-2 mb-1">
+              <span 
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: category.color }}
+              >
+                {category.name}
+              </span>
+              {isSponsored && <SponsoredBadge />}
+            </div>
             <h3 className="text-sm font-semibold text-[#111111] line-clamp-2 group-hover:text-[#c40000] transition-colors">
               {article.title}
             </h3>
@@ -108,7 +135,7 @@ export function NewsCard({
 
   // Default
   return (
-    <article className="group bg-white border border-[#e5e5e5] rounded-lg overflow-hidden card-hover">
+    <article className={`group bg-white border rounded-lg overflow-hidden card-hover ${isSponsored ? 'border-amber-200 shadow-md' : 'border-[#e5e5e5]'}`}>
       <Link to={ROUTES.noticia(article.slug)} className="block">
         <figure className="relative aspect-[16/9] overflow-hidden">
           <img
@@ -122,15 +149,23 @@ export function NewsCard({
               Urgente
             </span>
           )}
+          {isSponsored && (
+            <span className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase rounded-full shadow-md">
+              💎 Patrocinado
+            </span>
+          )}
         </figure>
         <section className="p-4">
           <header>
-            <span 
-              className="inline-block text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: category.color }}
-            >
-              {category.name}
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span 
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: category.color }}
+              >
+                {category.name}
+              </span>
+              {isSponsored && <SponsoredBadge />}
+            </div>
             <h3 className="text-lg font-bold text-[#111111] leading-snug mb-2 group-hover:text-[#c40000] transition-colors line-clamp-2">
               {article.title}
             </h3>

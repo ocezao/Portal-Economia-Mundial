@@ -66,14 +66,75 @@
 }
 
 @layer base {
+  :root {
+    /* Fontes de Portais de Notícias - Merriweather + Inter */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-headline: 'Merriweather', Georgia, 'Times New Roman', serif;
+    --font-mono: 'SF Mono', Monaco, monospace;
+  }
+
   * {
     @apply border-border;
   }
+  
   html {
     scroll-behavior: smooth;
   }
+  
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-primary);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Corpo de texto - Inter (sans-serif moderna) */
+  button,
+  input,
+  select,
+  textarea,
+  p,
+  span,
+  a,
+  li,
+  td,
+  th,
+  label {
+    font-family: var(--font-primary);
+  }
+  
+  /* Títulos - Merriweather (serif elegante) */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-headline);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  
+  /* Títulos de artigos - peso maior para impacto */
+  h1 {
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  
+  h2 {
+    font-weight: 700;
+  }
+  
+  /* Subtítulos */
+  h3, h4 {
+    font-weight: 700;
+  }
+  
+  /* Texto pequeno - Inter para legibilidade */
+  small, .text-sm, .text-xs {
     font-family: var(--font-primary);
   }
 }
@@ -91,4 +152,35 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ============================================
+   TICKER ANIMATION - Scroll infinito
+   Animação de marquee para o MarketTicker
+   ============================================ */
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-animation {
+  animation: ticker-scroll 40s linear infinite;
+  will-change: transform;
+}
+
+/* Pausar animação ao passar o mouse (opcional - acessibilidade) */
+.ticker-animation:hover {
+  animation-play-state: paused;
+}
+
+/* Animação mais rápida em mobile */
+@media (max-width: 768px) {
+  .ticker-animation {
+    animation-duration: 25s;
+  }
 }

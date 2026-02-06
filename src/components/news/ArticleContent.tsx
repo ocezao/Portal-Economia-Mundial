@@ -20,11 +20,11 @@ interface ArticleContentProps {
 export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
   const [showSurvey, setShowSurvey] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { canReadFull, isUnlocked, unlockArticle, hasReachedLimit } = useReadingLimit(isLoggedIn);
+  const { canReadFull, isUnlocked, unlockArticle, hasReachedLimit, readingLimitPercentage, limitActive } = useReadingLimit(isLoggedIn);
   const { isCompleted } = useSurvey();
 
-  const isFullyUnlocked = canReadFull || isUnlocked(article.slug) || isCompleted;
-  const limitIndex = Math.floor(article.content.length * APP_CONFIG.features.readingLimit);
+  const isFullyUnlocked = !limitActive || canReadFull || isUnlocked(article.slug) || isCompleted;
+  const limitIndex = Math.floor(article.content.length * readingLimitPercentage);
   const previewContent = article.content.slice(0, limitIndex);
   const fullContent = article.content;
 
@@ -50,8 +50,10 @@ export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
     <>
       <article className="prose prose-lg max-w-none">
         {/* Conteúdo Preview ou Completo */}
+        {/* SECURITY: Este conteúdo deve ser sanitizado no backend antes de salvar */}
+        {/* TODO: Considerar usar DOMPurify para sanitização adicional no frontend */}
         <section 
-          className="text-[#111111] leading-relaxed"
+          className="text-[#111111] leading-relaxed paywall-content"
           dangerouslySetInnerHTML={{ 
             __html: isFullyUnlocked ? fullContent : previewContent 
           }}

@@ -4,6 +4,22 @@ module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      screens: {
+        'xs': '480px',
+      },
+      fontFamily: {
+        'sans': ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        'serif': ['Merriweather', 'Georgia', 'Times New Roman', 'serif'],
+        'headline': ['Merriweather', 'Georgia', 'Times New Roman', 'serif'],
+        'body': ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        'mono': ['SF Mono', 'Monaco', 'monospace'],
+      },
+      fontSize: {
+        'xs': ['0.875rem', { lineHeight: '1.25rem' }],    // 14px - mínimo aceitável
+        'sm': ['0.9375rem', { lineHeight: '1.375rem' }],  // 15px
+        'base': ['1rem', { lineHeight: '1.5rem' }],       // 16px (padrão)
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }],    // 18px
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

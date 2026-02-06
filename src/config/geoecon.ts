@@ -14,6 +14,7 @@ export interface TensionPoint {
   level: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   description: string;
+  url?: string;
   lastUpdate: string;
 }
 

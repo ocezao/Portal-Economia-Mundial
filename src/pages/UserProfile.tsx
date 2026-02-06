@@ -40,7 +40,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { CONTENT_CONFIG } from '@/config/content';
-import { storage, STORAGE_KEYS } from '@/config/storage';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { useReadingHistory } from '@/hooks/useReadingHistory';
 import {
   Tabs,
   TabsContent,
@@ -115,6 +116,9 @@ export function UserProfile() {
   });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.twoFactorEnabled || false);
   
+  const { bookmarks } = useBookmarks();
+  const { history: readingHistory } = useReadingHistory();
+
   // Stats
   const [stats, setStats] = useState<UserStats>({
     articlesRead: 0,
@@ -125,21 +129,17 @@ export function UserProfile() {
     joinedDate: user?.createdAt || '',
   });
 
-  // Load stats from storage
+  // Load stats from Supabase data
   useEffect(() => {
-    const history = storage.get<Array<{ timeSpent: number }>>(STORAGE_KEYS.readingHistory) || [];
-    const bookmarks = storage.get<Array<unknown>>(STORAGE_KEYS.bookmarks) || [];
-    const comments = storage.get<Array<unknown>>('pem_comments') || [];
-    
     setStats({
-      articlesRead: history.length,
-      totalReadingTime: history.reduce((sum, h) => sum + (h.timeSpent || 0), 0),
+      articlesRead: readingHistory.length,
+      totalReadingTime: readingHistory.reduce((sum, h) => sum + (h.timeSpent || 0), 0),
       bookmarksCount: bookmarks.length,
-      commentsCount: comments.length,
-      streakDays: Math.min(history.length, 30), // Simplified streak calculation
+      commentsCount: 0,
+      streakDays: Math.min(readingHistory.length, 30),
       joinedDate: user?.createdAt || '',
     });
-  }, [user]);
+  }, [user, readingHistory, bookmarks]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

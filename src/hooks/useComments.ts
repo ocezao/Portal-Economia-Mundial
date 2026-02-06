@@ -24,8 +24,8 @@ export function useComments(articleSlug: string): UseCommentsReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [canSubmit, setCanSubmit] = useState(true);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [canSubmit] = useState(true);
+  const [cooldownSeconds] = useState(0);
 
   // Buscar comentários
   const fetchComments = useCallback(async () => {
@@ -41,18 +41,7 @@ export function useComments(articleSlug: string): UseCommentsReturn {
     }
   }, [articleSlug]);
 
-  // Verificar cooldown inicial
-  useEffect(() => {
-    const checkCooldown = () => {
-      const result = commentService.canSubmit();
-      setCanSubmit(result.allowed);
-      setCooldownSeconds(result.remainingSeconds);
-    };
-    checkCooldown();
-    
-    const interval = setInterval(checkCooldown, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Cooldown nÃ£o implementado no Supabase
 
   // Carregar comentários ao montar
   useEffect(() => {

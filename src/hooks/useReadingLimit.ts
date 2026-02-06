@@ -5,7 +5,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/config/storage';
-import { APP_CONFIG } from '@/config/app';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { supabase } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 
 interface UseReadingLimitReturn {
   canReadFull: boolean;
@@ -14,34 +16,119 @@ interface UseReadingLimitReturn {
   unlockArticle: (slug: string) => void;
   isUnlocked: (slug: string) => boolean;
   hasReachedLimit: boolean;
+  readingLimitPercentage: number;
+  limitActive: boolean;
 }
 
 export function useReadingLimit(isLoggedIn: boolean): UseReadingLimitReturn {
   const [unlockedArticles, setUnlockedArticles] = useState<string[]>([]);
+  const { settings } = useAppSettings();
+
+  const getAnonId = useCallback((): string => {
+    const storageKey = 'pem_anon_id';
+    const existing = localStorage.getItem(storageKey);
+    if (existing) return existing;
+
+    const generated =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    localStorage.setItem(storageKey, generated);
+    return generated;
+  }, []);
 
   // Carregar artigos desbloqueados
   useEffect(() => {
-    const saved = storage.getUnlockedArticles();
-    setUnlockedArticles(saved);
-  }, []);
+    let isMounted = true;
+
+    const load = async () => {
+      if (isLoggedIn) {
+        const saved = storage.getUnlockedArticles();
+        if (isMounted) setUnlockedArticles(saved);
+        return;
+      }
+
+      try {
+        const anonId = getAnonId();
+
+        await supabase
+          .from('anon_readers')
+          .upsert({ anon_id: anonId }, { onConflict: 'anon_id' });
+
+        const { data, error } = await supabase
+          .from('anon_article_unlocks')
+          .select('news_articles ( slug )')
+          .eq('anon_id', anonId);
+
+        if (error) {
+          logger.error('Erro ao carregar limite anon:', error);
+          return;
+        }
+
+        const slugs =
+          (data ?? [])
+            .map((row: any) => row?.news_articles?.slug)
+            .filter(Boolean) ?? [];
+
+        if (isMounted) setUnlockedArticles(slugs);
+      } catch (error) {
+        console.error('Erro ao carregar limite anon:', error);
+      }
+    };
+
+    void load();
+    return () => {
+      isMounted = false;
+    };
+  }, [getAnonId, isLoggedIn]);
 
   const unlockArticle = useCallback((slug: string) => {
-    storage.unlockArticle(slug);
-    setUnlockedArticles(prev => [...prev, slug]);
-  }, []);
+    if (isLoggedIn) {
+      storage.unlockArticle(slug);
+      setUnlockedArticles(prev => [...prev, slug]);
+      return;
+    }
+
+    void (async () => {
+      try {
+        const anonId = getAnonId();
+        const { data: article } = await supabase
+          .from('news_articles')
+          .select('id')
+          .eq('slug', slug)
+          .single();
+
+        if (!article?.id) return;
+
+        await supabase.from('anon_article_unlocks').upsert({
+          anon_id: anonId,
+          article_id: article.id,
+        });
+
+        setUnlockedArticles(prev => (prev.includes(slug) ? prev : [...prev, slug]));
+      } catch (error) {
+        logger.error('Erro ao desbloquear artigo:', error);
+      }
+    })();
+  }, [getAnonId, isLoggedIn]);
 
   const isUnlocked = useCallback((slug: string): boolean => {
     return unlockedArticles.includes(slug);
   }, [unlockedArticles]);
 
-  // Se logado, pode ler tudo
-  const canReadFull = isLoggedIn;
+  const limitActive =
+    settings.readingLimitEnabled &&
+    (settings.readingLimitScope === 'all' ? true : !isLoggedIn);
+
+  // Se logado (ou limite desligado), pode ler tudo
+  const canReadFull = isLoggedIn || !limitActive;
   
   // Artigos gratuitos restantes
-  const remainingReads = Math.max(0, APP_CONFIG.features.maxFreeArticles - unlockedArticles.length);
+  const remainingReads = Math.max(0, settings.maxFreeArticles - unlockedArticles.length);
   
   // Atingiu o limite?
-  const hasReachedLimit = !isLoggedIn && unlockedArticles.length >= APP_CONFIG.features.maxFreeArticles;
+  const hasReachedLimit = limitActive && unlockedArticles.length >= settings.maxFreeArticles;
 
   return {
     canReadFull,
@@ -50,5 +137,7 @@ export function useReadingLimit(isLoggedIn: boolean): UseReadingLimitReturn {
     unlockArticle,
     isUnlocked,
     hasReachedLimit,
+    readingLimitPercentage: settings.readingLimitPercentage,
+    limitActive,
   };
 }

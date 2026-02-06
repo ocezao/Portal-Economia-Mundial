@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Footer Principal
  * Semântico: footer, nav, address
  */
@@ -18,7 +18,7 @@ export function Footer() {
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <article>
-            <h2 className="text-2xl font-black tracking-tight mb-4">
+            <h2 className="text-2xl font-black tracking-tight mb-4 font-headline">
               {APP_CONFIG.brand.short}
             </h2>
             <p className="text-sm text-[#9ca3af] mb-4">
@@ -86,20 +86,24 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href={`mailto:${APP_CONFIG.contact.email}?subject=Fale%20Conosco`}
-                  className="text-sm text-[#9ca3af] hover:text-white transition-colors"
-                >
-                  Fale Conosco
-                </a>
+                <Link to={ROUTES.termometroRisco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                  Termômetro de Risco
+                </Link>
               </li>
               <li>
-                <a
-                  href={`mailto:${APP_CONFIG.contact.email}?subject=Trabalhe%20Conosco`}
-                  className="text-sm text-[#9ca3af] hover:text-white transition-colors"
-                >
+                <Link to={ROUTES.mapaTensoes} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                  Mapa de Tensões
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.faleConosco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                  Fale Conosco
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.trabalheConosco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Trabalhe Conosco
-                </a>
+                </Link>
               </li>
             </ul>
           </nav>
@@ -194,10 +198,10 @@ export function Footer() {
             </ul>
           </nav>
 
-          {/* Copyright */}
-          <p className="text-xs text-[#6b6b6b] text-center sm:text-right">
-            © {currentYear} {APP_CONFIG.brand.name}. Todos os direitos reservados.
-          </p>
+          {/* Copyright e Idioma */}
+          <section className="flex flex-col sm:flex-row items-center gap-4 text-xs text-[#6b6b6b]">
+            <span>© {currentYear} {APP_CONFIG.brand.name}. Todos os direitos reservados.</span>
+          </section>
         </section>
       </section>
     </footer>

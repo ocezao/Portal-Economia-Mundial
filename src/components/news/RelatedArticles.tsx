@@ -3,6 +3,7 @@
  * Recomendações baseadas na categoria atual
  */
 
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -15,7 +16,28 @@ interface RelatedArticlesProps {
 }
 
 export function RelatedArticles({ currentArticle, limit = 4 }: RelatedArticlesProps) {
-  const related = getRelatedArticles(currentArticle.slug, currentArticle.category, limit);
+  const [related, setRelated] = useState<NewsArticle[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const data = await getRelatedArticles(currentArticle.slug, currentArticle.category, limit);
+        if (isMounted) setRelated(data);
+      } catch (error) {
+        // Erro silenciado em produção
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Erro ao carregar artigos relacionados:', error);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentArticle.slug, currentArticle.category, limit]);
 
   if (related.length === 0) return null;
 

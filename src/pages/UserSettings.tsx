@@ -36,7 +36,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { storage, STORAGE_KEYS } from '@/config/storage';
+import { STORAGE_KEYS } from '@/config/storage';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { useReadingHistory } from '@/hooks/useReadingHistory';
+import { supabase } from '@/lib/supabaseClient';
 import {
   Dialog,
   DialogContent,
@@ -91,6 +94,8 @@ interface UserSettingsData {
 
 export function UserSettings() {
   const { user, updatePreferences, logout } = useAuth();
+  const { bookmarks, clearAll: clearAllBookmarks } = useBookmarks();
+  const { history: readingHistory, reload: reloadHistory } = useReadingHistory();
   const [activeTab, setActiveTab] = useState('geral');
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -148,9 +153,9 @@ export function UserSettings() {
   const exportData = (format: 'json' | 'csv') => {
     const data = {
       user: user,
-      bookmarks: storage.get<Array<{articleSlug: string; bookmarkedAt: string; title: string}>>(STORAGE_KEYS.bookmarks),
-      history: storage.get<Array<{articleSlug: string; readAt: string; title: string}>>(STORAGE_KEYS.readingHistory),
-      comments: storage.get('pem_comments'),
+      bookmarks,
+      history: readingHistory,
+      comments: [],
       preferences: settings,
       exportedAt: new Date().toISOString(),
     };
@@ -188,14 +193,22 @@ export function UserSettings() {
     toast.success(`Dados exportados em ${format.toUpperCase()}!`);
   };
 
-  const clearAllData = () => {
+  const clearAllData = async () => {
     // Limpar dados do usuário
     Object.values(STORAGE_KEYS).forEach(key => {
       if (key !== STORAGE_KEYS.authToken && key !== STORAGE_KEYS.authSession) {
-        storage.remove(key);
+        if (key !== STORAGE_KEYS.bookmarks && key !== STORAGE_KEYS.readingHistory) {
+          localStorage.removeItem(key);
+        }
       }
     });
     
+    if (user) {
+      await supabase.from('reading_history').delete().eq('user_id', user.id);
+      await supabase.from('reading_progress').delete().eq('user_id', user.id);
+      await clearAllBookmarks();
+      await reloadHistory();
+    }
     toast.success('Todos os dados foram apagados.');
     setShowDeleteDialog(false);
     logout();

@@ -1,5 +1,5 @@
 /**
- * Página Sobre
+ * Pagina Sobre
  * Informações sobre o portal
  */
 
@@ -10,7 +10,10 @@ export function About() {
   return (
     <>
       <title>Sobre - {APP_CONFIG.brand.name}</title>
-      <meta name="description" content={`Conheça o ${APP_CONFIG.brand.name}, portal de notícias especializado em geopolítica, economia e tecnologia.`} />
+      <meta
+        name="description"
+        content={`Conheça o ${APP_CONFIG.brand.name}, um projeto independente de noticias e análise.`}
+      />
 
       {/* Hero */}
       <header className="bg-[#111111] text-white py-20">
@@ -29,15 +32,25 @@ export function About() {
         <section className="max-w-[768px] mx-auto px-4">
           <h2 className="text-3xl font-bold text-[#111111] mb-6">Nossa Missão</h2>
           <p className="text-lg text-[#6b6b6b] leading-relaxed mb-6">
-            O {APP_CONFIG.brand.name} nasceu da necessidade de oferecer análises aprofundadas 
-            e contextualizadas sobre os eventos que moldam o mundo. Em um cenário de 
-            sobrecarga informacional, buscamos clareza, precisão e relevância.
+            O {APP_CONFIG.brand.name} e um projeto independente, feito por uma equipe pequena
+            que acredita em informação direta e útil. Nosso foco é explicar o que acontece e
+            por que isso importa, sem excesso de ruido e sem pressa para publicar qualquer
+            coisa que não esteja clara.
           </p>
           <p className="text-lg text-[#6b6b6b] leading-relaxed">
-            Nossa equipe de jornalistas e analistas trabalha para trazer não apenas 
-            os fatos, mas também as interpretações que ajudam nossos leitores a 
-            compreender as complexas interações entre geopolítica, economia global 
-            e tecnologia.
+            Não somos uma redacao gigante. Somos poucos, e isso nos obriga a escolher bem
+            as pautas e a dedicar tempo ao contexto. Preferimos explicar os impactos reais
+            de um evento do que apenas repetir manchetes.
+          </p>
+          <p className="text-lg text-[#6b6b6b] leading-relaxed mt-6">
+            O portal se sustenta com independência editorial. Não fazemos publieditorial
+            disfarcado e deixamos claro quando um conteudo tem parceria. A credibilidade
+            vem da transparência e do cuidado com o que publicamos.
+          </p>
+          <p className="text-lg text-[#6b6b6b] leading-relaxed mt-6">
+            Se você acompanha o portal, saiba que cada texto passa por leitura humana
+            e checagem básica de consistencia. Quando erramos, corrigimos e registramos
+            a atualização. A confiança do leitor e o nosso ativo principal.
           </p>
         </section>
       </section>
@@ -48,23 +61,23 @@ export function About() {
           <ul className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <li className="text-center">
               <Award className="w-10 h-10 mx-auto mb-4 text-[#c40000]" />
-              <p className="text-3xl font-black text-[#111111]">10+</p>
+              <p className="text-3xl font-black text-[#111111]">8+</p>
               <p className="text-sm text-[#6b6b6b]">Anos de experiência</p>
             </li>
             <li className="text-center">
               <Users className="w-10 h-10 mx-auto mb-4 text-[#c40000]" />
-              <p className="text-3xl font-black text-[#111111]">50+</p>
-              <p className="text-sm text-[#6b6b6b]">Jornalistas</p>
+              <p className="text-3xl font-black text-[#111111]">5</p>
+              <p className="text-sm text-[#6b6b6b]">Pessoas no time</p>
             </li>
             <li className="text-center">
               <Globe className="w-10 h-10 mx-auto mb-4 text-[#c40000]" />
               <p className="text-3xl font-black text-[#111111]">30+</p>
-              <p className="text-sm text-[#6b6b6b]">Países cobertos</p>
+              <p className="text-sm text-[#6b6b6b]">Paises acompanhados</p>
             </li>
             <li className="text-center">
               <TrendingUp className="w-10 h-10 mx-auto mb-4 text-[#c40000]" />
-              <p className="text-3xl font-black text-[#111111]">2M+</p>
-              <p className="text-sm text-[#6b6b6b]">Leitores mensais</p>
+              <p className="text-3xl font-black text-[#111111]">Diario</p>
+              <p className="text-sm text-[#6b6b6b]">Ritmo de atualização</p>
             </li>
           </ul>
         </section>
@@ -84,7 +97,7 @@ export function About() {
                   <h3 className="text-lg font-bold text-[#111111]">Ana Silva</h3>
                   <p className="text-sm text-[#c40000]">Editora Chefe</p>
                   <p className="text-sm text-[#6b6b6b] mt-2">
-                    Jornalista com 15 anos de experiência em cobertura econômica internacional.
+                    Jornalista com 15 anos de experiencia em cobertura econômica internacional.
                   </p>
                 </li>
                 <li className="text-center">
@@ -118,7 +131,7 @@ export function About() {
         <section className="max-w-[768px] mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-[#111111] mb-6">Entre em Contato</h2>
           <p className="text-lg text-[#6b6b6b] mb-8">
-            Tem uma sugestão, denúncia ou quer falar com nossa equipe? 
+            Tem uma sugestao, denuncia ou quer falar com nossa equipe?
             Estamos sempre abertos a ouvir nossos leitores.
           </p>
           <address className="not-italic space-y-2 text-[#111111]">

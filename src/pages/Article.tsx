@@ -3,8 +3,9 @@
  * Conteúdo completo com módulos contextuais e comentários
  */
 
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Clock, Calendar, User, Bookmark, Facebook, Twitter, Linkedin, Link as LinkIcon, AlertTriangle, TrendingUp, BookOpen, FileText } from 'lucide-react';
+import { Clock, Calendar, User, Bookmark, Facebook, Twitter, Linkedin, Link as LinkIcon, AlertTriangle, TrendingUp, BookOpen, FileText, Gem } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReadingProgress } from '@/components/news/ReadingProgress';
 import { ArticleContent } from '@/components/news/ArticleContent';
@@ -13,15 +14,58 @@ import { CommentSection } from '@/components/interactive/CommentSection';
 import { getArticleBySlug } from '@/services/newsManager';
 import { CONTENT_CONFIG } from '@/config/content';
 import { APP_CONFIG } from '@/config/app';
+import { generateArticleJsonLd } from '@/config/seo';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { toast } from 'sonner';
+import type { NewsArticle } from '@/types';
 
 export function Article() {
   const { slug } = useParams<{ slug: string }>();
-  const article = slug ? getArticleBySlug(slug) : null;
+  const [article, setArticle] = useState<NewsArticle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { isAuthenticated: isLoggedIn } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { settings } = useAppSettings();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      if (!slug) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getArticleBySlug(slug);
+        if (isMounted) setArticle(data);
+      } catch (error) {
+        // Erro silenciado em produção
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Erro ao carregar artigo:', error);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
+
+  if (isLoading) {
+    return (
+      <section className="max-w-[1280px] mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-[#111111] mb-4">Carregando...</h1>
+        <p className="text-[#6b6b6b]">Aguarde enquanto carregamos o artigo.</p>
+      </section>
+    );
+  }
 
   if (!article) {
     return (
@@ -43,6 +87,24 @@ export function Article() {
     month: 'long',
     year: 'numeric',
   });
+  const isPaywalled = settings.readingLimitEnabled && settings.readingLimitScope === 'anon';
+  const articleJsonLd = generateArticleJsonLd(
+    {
+      title: article.title,
+      slug: article.slug,
+      excerpt: article.excerpt,
+      coverImage: article.coverImage,
+      publishedAt: article.publishedAt,
+      updatedAt: article.updatedAt,
+      author: article.author,
+      category: article.category,
+      tags: article.tags,
+    },
+    {
+      isAccessibleForFree: !isPaywalled,
+      paywallSelector: '.paywall-content',
+    }
+  );
 
   // Mock data para módulos contextuais
   const contexto = article.excerpt;
@@ -126,6 +188,11 @@ export function Article() {
       {article.tags.map(tag => (
         <meta key={tag} property="article:tag" content={tag} />
       ))}
+      {/* SECURITY: JSON-LD estruturado - seguro pois usa JSON.stringify de objeto controlado */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
 
       {/* Progress Bar */}
       <ReadingProgress articleSlug={article.slug} />
@@ -147,12 +214,20 @@ export function Article() {
           <article className="lg:col-span-2">
             {/* Header */}
             <header className="mb-8">
-              <span 
-                className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider text-white rounded mb-4"
-                style={{ backgroundColor: category.color }}
-              >
-                {category.name}
-              </span>
+              <div className="flex items-center gap-2 mb-4">
+                <span 
+                  className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider text-white rounded"
+                  style={{ backgroundColor: category.color }}
+                >
+                  {category.name}
+                </span>
+                {article.tags?.includes('Publicação Patrocinada') && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-800 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-full border border-amber-200">
+                    <Gem className="w-3.5 h-3.5" />
+                    Publicação Patrocinada
+                  </span>
+                )}
+              </div>
 
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#111111] leading-tight mb-6">
                 {article.title}

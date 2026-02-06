@@ -33,12 +33,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { storage } from '@/config/storage';
 import { ROUTES } from '@/config/routes';
 import { getAllArticles } from '@/services/newsManager';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { useReadingHistory } from '@/hooks/useReadingHistory';
 import { CONTENT_CONFIG } from '@/config/content';
 import { NewsCard } from '@/components/news/NewsCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
+import type { NewsArticle } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -100,10 +103,29 @@ export function UserDashboard() {
   });
 
   // Dados do usuário
-  const bookmarks = useMemo(() => storage.getBookmarks(), []);
-  const readingHistory = useMemo(() => storage.getReadingHistory(), []);
+  const { bookmarks } = useBookmarks();
+  const { history: readingHistory } = useReadingHistory();
   const dailyStats = useMemo(() => storage.getDailyStats(), []);
-  const allArticles = useMemo(() => getAllArticles(), []);
+  const [allArticles, setAllArticles] = useState<NewsArticle[]>([]);
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const data = await getAllArticles();
+        if (isMounted) setAllArticles(data);
+      } catch (error) {
+        // Erro silenciado em produção
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Erro ao carregar artigos:', error);
+        }
+      }
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   
   // Sequência de leitura
   const [streak, setStreak] = useState<ReadingStreak>({

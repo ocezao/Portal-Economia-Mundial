@@ -45,7 +45,9 @@ import {
   getScheduledArticles,
   type ScheduledArticle
 } from '@/services/newsManager';
+import { generateAiNews } from '@/services/aiNews';
 import { CONTENT_CONFIG } from '@/config/content';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -73,6 +75,7 @@ export function AdminNewsEdit() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const isEditing = !!slug;
+  const { user: currentUser } = useAuth();
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,35 +113,44 @@ export function AdminNewsEdit() {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [showAiConfirm, setShowAiConfirm] = useState(false);
+  const [aiTopicCategory, setAiTopicCategory] = useState<'economia' | 'geopolitica' | 'tecnologia' | 'custom' | ''>('');
+  const [aiTopicText, setAiTopicText] = useState('');
+  const [aiQuestions, setAiQuestions] = useState('');
 
   // Carregar dados se estiver editando
   useEffect(() => {
-    if (isEditing && slug) {
-      const article = getArticleBySlug(slug);
-      if (article) {
-        setFormData({
-          title: article.title,
-          slug: article.slug,
-          excerpt: article.excerpt,
-          content: article.content.replace(/<[^>]*>/g, ''),
-          category: article.category,
-          author: article.author,
-          tags: article.tags,
-          tagInput: '',
-          coverImage: article.coverImage,
-          seoTitle: article.title,
-          seoDescription: article.excerpt.slice(0, 160),
-          breaking: article.breaking,
-          featured: article.featured,
-          scheduledDate: '',
-          scheduledTime: '',
-          timezone: 'America/Sao_Paulo',
-        });
-        setPublishMode('now');
-      } else {
-        // Verificar se é um artigo agendado sendo editado
-        const scheduled = getScheduledArticles().find(s => s.articleData.slug === slug);
-        if (scheduled) {
+    let isMounted = true;
+
+    const load = async () => {
+      if (isEditing && slug) {
+        const article = await getArticleBySlug(slug, { includeDrafts: true });
+        if (article && isMounted) {
+          setFormData({
+            title: article.title,
+            slug: article.slug,
+            excerpt: article.excerpt,
+            content: article.content.replace(/<[^>]*>/g, ''),
+            category: article.category,
+            author: article.author,
+            tags: article.tags,
+            tagInput: '',
+            coverImage: article.coverImage,
+            seoTitle: article.title,
+            seoDescription: article.excerpt.slice(0, 160),
+            breaking: article.breaking,
+            featured: article.featured,
+            scheduledDate: '',
+            scheduledTime: '',
+            timezone: 'America/Sao_Paulo',
+          });
+          setPublishMode('now');
+          return;
+        }
+
+        const scheduledList = await getScheduledArticles();
+        const scheduled = scheduledList.find(s => s.articleData.slug === slug);
+        if (scheduled && isMounted) {
           setScheduledInfo(scheduled);
           setFormData({
             title: scheduled.articleData.title,
@@ -160,20 +172,35 @@ export function AdminNewsEdit() {
           });
           setPublishMode('schedule');
         }
+
+        return;
       }
-    } else {
-      // Novo artigo - definir data mínima como amanhã para agendamento
+
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      setFormData(prev => ({
-        ...prev,
-        scheduledDate: tomorrow.toISOString().split('T')[0],
-        scheduledTime: '09:00',
-      }));
-    }
-  }, [isEditing, slug]);
+      if (isMounted) {
+        setFormData(prev => ({
+          ...prev,
+          author: prev.author || currentUser?.name || '',
+          scheduledDate: tomorrow.toISOString().split('T')[0],
+          scheduledTime: '09:00',
+        }));
+      }
+    };
 
-  // Auto-save
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditing, slug, currentUser?.name]);
+
+  useEffect(() => {
+    if (!isEditing && currentUser?.role === 'admin' && !formData.author) {
+      setFormData(prev => ({ ...prev, author: currentUser.name || 'Admin PEM' }));
+    }
+  }, [currentUser?.role, currentUser?.name, isEditing, formData.author]);
+
+// Auto-save
   useEffect(() => {
     if (hasChanges && formData.title) {
       autoSaveRef.current = setTimeout(() => {
@@ -359,7 +386,7 @@ export function AdminNewsEdit() {
     toast.success('Conteúdo gerado! Revise e ajuste conforme necessário.');
   };
 
-  const validate = (): boolean => {
+  const validate = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
     
     if (!formData.title.trim()) newErrors.title = 'Título é obrigatório';
@@ -401,7 +428,7 @@ export function AdminNewsEdit() {
   };
 
   const handleSave = async () => {
-    if (!validate()) {
+    if (!(await validate())) {
       toast.error('Por favor, corrija os erros antes de salvar');
       return;
     }
@@ -409,35 +436,47 @@ export function AdminNewsEdit() {
     setIsSaving(true);
     
     try {
+      const resolvedAuthor =
+        currentUser?.role === 'admin'
+          ? (currentUser.name || 'Admin PEM')
+          : formData.author;
+      const resolvedAuthorId =
+        currentUser?.role === 'admin'
+          ? currentUser.id
+          : formData.author.toLowerCase().replace(/\s+/g, '-');
+
       const articleData = {
         title: formData.title,
         slug: formData.slug,
         excerpt: formData.excerpt,
         content: formData.content,
         category: formData.category as 'economia' | 'geopolitica' | 'tecnologia',
-        author: formData.author,
-        authorId: formData.author.toLowerCase().replace(/\s+/g, '-'),
+        author: resolvedAuthor,
+        authorId: resolvedAuthorId,
         tags: formData.tags,
         coverImage: formData.coverImage,
         featured: formData.featured,
         breaking: formData.breaking,
         readingTime: Math.ceil(formData.content.split(/\s+/).length / 200),
+        views: 0,
+        likes: 0,
+        shares: 0,
+        comments: 0,
       };
       
       if (publishMode === 'schedule') {
         // Agendar publicação
         if (scheduledInfo) {
           // Atualizar agendamento existente
-          updateScheduledArticle(scheduledInfo.id, {
-            articleData,
+          await updateArticle(scheduledInfo.articleData.slug, articleData);
+          await updateScheduledArticle(scheduledInfo.id, {
             scheduledDate: formData.scheduledDate,
             scheduledTime: formData.scheduledTime,
-            timezone: formData.timezone,
           });
           toast.success('Agendamento atualizado com sucesso!');
         } else {
           // Criar novo agendamento
-          scheduleArticle(
+          await scheduleArticle(
             articleData,
             formData.scheduledDate,
             formData.scheduledTime,
@@ -448,10 +487,10 @@ export function AdminNewsEdit() {
       } else {
         // Publicar imediatamente
         if (isEditing && slug) {
-          updateArticle(slug, articleData);
+          await updateArticle(slug, articleData);
           toast.success('Artigo atualizado com sucesso!');
         } else {
-          createArticle(articleData);
+          await createArticle(articleData);
           toast.success('Artigo publicado com sucesso!');
         }
       }
@@ -471,6 +510,52 @@ export function AdminNewsEdit() {
       setShowExitDialog(true);
     } else {
       navigate('/admin#noticias');
+    }
+  };
+
+  const applyAiResult = (data: Awaited<ReturnType<typeof generateAiNews>>) => {
+    const subtitle = data.subtitle?.trim();
+    const subtitleBlock = subtitle ? `<p><strong>${subtitle}</strong></p>\n` : '';
+
+    setFormData(prev => ({
+      ...prev,
+      title: data.title,
+      slug: generateSlug(data.title),
+      excerpt: data.excerpt,
+      content: `${subtitleBlock}${data.contentHtml}`,
+      category: data.category,
+      author: data.author || 'Redação PEM',
+      tags: data.tags ?? [],
+      seoTitle: data.seoTitle || data.title,
+      seoDescription: data.seoDescription || data.excerpt.slice(0, 160),
+    }));
+
+    setHasChanges(true);
+    setActiveTab('content');
+  };
+
+  const handleGenerateAi = async () => {
+    setShowAiConfirm(false);
+    setIsGeneratingContent(true);
+    try {
+      const topic =
+        aiTopicCategory === 'custom'
+          ? aiTopicText.trim()
+          : aiTopicCategory
+            ? `categoria: ${aiTopicCategory}`
+            : aiTopicText.trim();
+
+      const result = await generateAiNews({
+        topic: topic || undefined,
+        category: aiTopicCategory === 'custom' || !aiTopicCategory ? undefined : aiTopicCategory,
+        questions: aiQuestions.trim() || undefined,
+      });
+      applyAiResult(result);
+      toast.success('Notícia gerada com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao gerar notícia');
+    } finally {
+      setIsGeneratingContent(false);
     }
   };
 
@@ -541,6 +626,24 @@ export function AdminNewsEdit() {
             >
               <Eye className="w-4 h-4" />
               {showPreview ? 'Editar' : 'Preview'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowAiConfirm(true)}
+              className="gap-2"
+              disabled={isGeneratingContent}
+            >
+              {isGeneratingContent ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-[#111111]/30 border-t-[#111111] rounded-full animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Gerar Notícia (IA)
+                </>
+              )}
             </Button>
             <Button 
               onClick={handleSave}
@@ -621,6 +724,7 @@ export function AdminNewsEdit() {
               />
             )}
             
+            {/* SECURITY: Preview do conteúdo - deve ser sanitizado no backend */}
             <section 
               className="prose max-w-none prose-headings:text-[#111111] prose-p:text-[#333]"
               dangerouslySetInnerHTML={{ 
@@ -1163,12 +1267,65 @@ export function AdminNewsEdit() {
                     <h2 className="text-lg font-semibold text-[#111111]">Tags</h2>
                   </header>
                   
+                  {/* Tags Rápidas / Sugeridas */}
+                  <section className="mb-4">
+                    <p className="text-xs text-[#6b6b6b] mb-2">Tags sugeridas:</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const specialTag = 'Publicação Patrocinada';
+                          if (!formData.tags.includes(specialTag)) {
+                            setFormData(prev => ({ ...prev, tags: [...prev.tags, specialTag] }));
+                            setHasChanges(true);
+                            toast.success('Tag "Publicação Patrocinada" adicionada');
+                          } else {
+                            toast.error('Esta tag já existe');
+                          }
+                        }}
+                        className={`text-xs rounded-full ${
+                          formData.tags.includes('Publicação Patrocinada')
+                            ? 'bg-[#fef2f2] border-[#c40000] text-[#c40000]'
+                            : 'border-[#e6e1d8] hover:border-[#c40000] hover:text-[#c40000]'
+                        }`}
+                      >
+                        💎 Publicação Patrocinada
+                      </Button>
+                      
+                      {['Destaque', 'Urgente', 'Análise', 'Opinião'].map((quickTag) => (
+                        <Button
+                          key={quickTag}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (!formData.tags.includes(quickTag)) {
+                              setFormData(prev => ({ ...prev, tags: [...prev.tags, quickTag] }));
+                              setHasChanges(true);
+                            } else {
+                              toast.error('Esta tag já existe');
+                            }
+                          }}
+                          className={`text-xs rounded-full ${
+                            formData.tags.includes(quickTag)
+                              ? 'bg-[#f6f3ef] border-[#111111]'
+                              : 'border-[#e6e1d8] hover:border-[#111111]'
+                          }`}
+                        >
+                          {quickTag}
+                        </Button>
+                      ))}
+                    </div>
+                  </section>
+                  
                   <section className="flex gap-2 mb-3">
                     <Input
                       value={formData.tagInput}
                       onChange={(e) => handleChange('tagInput', e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                      placeholder="Adicionar tag..."
+                      placeholder="Adicionar tag personalizada..."
                       className="flex-1"
                     />
                     <Button type="button" onClick={addTag} variant="outline">
@@ -1182,7 +1339,11 @@ export function AdminNewsEdit() {
                         <Badge 
                           key={tag} 
                           variant="secondary"
-                          className="gap-1 cursor-pointer hover:bg-[#fef2f2]"
+                          className={`gap-1 cursor-pointer hover:bg-[#fef2f2] ${
+                            tag === 'Publicação Patrocinada' 
+                              ? 'bg-[#fef2f2] text-[#c40000] border border-[#c40000]' 
+                              : ''
+                          }`}
                           onClick={() => removeTag(tag)}
                         >
                           {tag}
@@ -1200,11 +1361,17 @@ export function AdminNewsEdit() {
                 <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                   <h2 className="text-lg font-semibold text-[#111111] mb-4">Autor *</h2>
                   <Input
-                    value={formData.author}
+                    value={currentUser?.role === 'admin' ? (currentUser.name || formData.author) : formData.author}
                     onChange={(e) => handleChange('author', e.target.value)}
                     placeholder="Nome do autor"
+                    disabled={currentUser?.role === 'admin'}
                     className={errors.author ? 'border-[#ef4444]' : ''}
                   />
+                  {currentUser?.role === 'admin' && (
+                    <p className="mt-1 text-xs text-[#6b6b6b]">
+                      O autor será preenchido automaticamente com o admin logado.
+                    </p>
+                  )}
                   {errors.author && (
                     <p className="mt-1 text-xs text-[#ef4444]">{errors.author}</p>
                   )}
@@ -1215,6 +1382,62 @@ export function AdminNewsEdit() {
         )}
 
         {/* Dialog de Confirmação de Saída */}
+        {/* Dialog IA */}
+        <Dialog open={showAiConfirm} onOpenChange={setShowAiConfirm}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Gerar notícia com IA</DialogTitle>
+              <DialogDescription>
+                A IA vai pesquisar as notícias mais relevantes das últimas 48h e gerar todo o texto.
+                Isso substituirá o conteúdo atual do formulário. Continuar?
+              </DialogDescription>
+            </DialogHeader>
+            <section className="space-y-4 py-2">
+              <fieldset>
+                <Label>Tema principal</Label>
+                <select
+                  value={aiTopicCategory}
+                  onChange={(e) => setAiTopicCategory(e.target.value as any)}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">Sem preferência</option>
+                  <option value="economia">Economia</option>
+                  <option value="geopolitica">Geopolítica</option>
+                  <option value="tecnologia">Tecnologia</option>
+                  <option value="custom">Outro (escrever abaixo)</option>
+                </select>
+              </fieldset>
+              {(aiTopicCategory === 'custom' || aiTopicCategory === '') && (
+                <fieldset>
+                  <Label>O que pesquisar</Label>
+                  <Input
+                    value={aiTopicText}
+                    onChange={(e) => setAiTopicText(e.target.value)}
+                    placeholder="Ex: juros nos EUA, petróleo, China x Taiwan..."
+                  />
+                </fieldset>
+              )}
+              <fieldset>
+                <Label>Perguntas para a IA</Label>
+                <Textarea
+                  value={aiQuestions}
+                  onChange={(e) => setAiQuestions(e.target.value)}
+                  placeholder="Ex: qual impacto no Brasil? quem ganhou/perdeu?"
+                  rows={4}
+                />
+              </fieldset>
+            </section>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setShowAiConfirm(false)} className="w-full sm:w-auto">
+                Cancelar
+              </Button>
+              <Button onClick={handleGenerateAi} className="bg-[#c40000] hover:bg-[#a00000] w-full sm:w-auto">
+                Gerar agora
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
           <DialogContent>
             <DialogHeader>

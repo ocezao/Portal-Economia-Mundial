@@ -9,7 +9,7 @@ export const APP_CONFIG = {
     short: 'PEM',
     tagline: 'Notícias que movem o mundo',
     founded: 2024,
-    logo: '/logo.svg',
+    logo: '/logo.webp',
     favicon: '/favicon.ico',
   },
   

@@ -1,10 +1,14 @@
 /**
- * Auth Context - Sistema de Autenticação Robusto
+ * Auth Context - Sistema de Autenticação com Supabase
  * Provider + Hook para gerenciamento global de autenticação
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { storage, STORAGE_KEYS } from '@/config/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { Navigate, useLocation } from 'react-router-dom';
 
 // ==================== TIPOS ====================
 
@@ -38,14 +42,14 @@ export interface UserPreferences {
   categories: string[];
   tags: string[];
   customTags?: string[];
-  
+
   // Idioma e acessibilidade
   language: 'pt-BR' | 'en';
   theme?: 'light' | 'dark' | 'system';
   fontSize?: 'small' | 'medium' | 'large';
   layoutDensity?: 'compact' | 'comfortable' | 'spacious';
   reducedMotion: boolean;
-  
+
   // Notificações
   emailNotifications: boolean;
   pushNotifications: boolean;
@@ -60,14 +64,14 @@ export interface UserPreferences {
   };
   quietHoursStart?: string;
   quietHoursEnd?: string;
-  
+
   // Privacidade
   shareReadingHistory?: boolean;
   allowPersonalization?: boolean;
   analyticsConsent?: boolean;
   marketingConsent?: boolean;
   cookieConsent?: boolean;
-  
+
   // Feed
   feedLayout?: 'grid' | 'list' | 'compact';
   feedSort?: 'relevance' | 'date' | 'popular';
@@ -76,7 +80,7 @@ export interface UserPreferences {
   hideReadArticles?: boolean;
   showOnlyPreferred?: boolean;
   highlightBreaking?: boolean;
-  
+
   // Conteúdo
   autoPlayVideos?: boolean;
   loadImages?: boolean;
@@ -84,12 +88,12 @@ export interface UserPreferences {
   showReadingTime?: boolean;
   showRelatedArticles?: boolean;
   contentLanguages?: string[];
-  
+
   // Interações
   autoBookmarkOnLike?: boolean;
   shareToSocial?: boolean;
   commentNotifications?: boolean;
-  
+
   // Modo Foco
   focusMode?: boolean;
   focusModeSettings?: {
@@ -98,12 +102,6 @@ export interface UserPreferences {
     hideRelated: boolean;
     readerView: boolean;
   };
-}
-
-export interface AuthSession {
-  user: User;
-  token: string;
-  expiresAt: number;
 }
 
 export interface LoginCredentials {
@@ -131,7 +129,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   error: AuthError | null;
-  
+
   // Ações
   login: (credentials: LoginCredentials) => Promise<boolean>;
   register: (data: RegisterData) => Promise<boolean>;
@@ -139,7 +137,7 @@ interface AuthContextType {
   clearError: () => void;
   updateUser: (updates: Partial<User>) => void;
   updatePreferences: (prefs: Partial<UserPreferences>) => void;
-  
+
   // Helpers
   checkPermission: (requiredRole: UserRole) => boolean;
   getSessionTimeRemaining: () => number;
@@ -147,65 +145,70 @@ interface AuthContextType {
 
 // ==================== CONFIGURAÇÃO ====================
 
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 horas
-const TOKEN_KEY = STORAGE_KEYS.authToken;
-const SESSION_KEY = STORAGE_KEYS.authSession;
-
-// Hash simples para simulação (NÃO usar em produção)
-const simpleHash = (str: string): string => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(36);
+const DEFAULT_PREFERENCES: UserPreferences = {
+  categories: [],
+  tags: [],
+  language: 'pt-BR',
+  reducedMotion: false,
+  emailNotifications: true,
+  pushNotifications: false,
 };
 
-// ==================== MOCK USERS ====================
+const getPreferencesKey = (userId: string) => `${STORAGE_KEYS.userPreferences}_${userId}`;
 
-const MOCK_USERS: Array<User & { passwordHash: string }> = [
-  {
-    id: 'admin-001',
-    name: 'Administrador PEM',
-    email: 'admin@pem.com',
-    passwordHash: simpleHash('admin123'),
-    role: 'admin',
-    region: 'BR',
-    avatar: '/images/avatars/admin.webp',
-    createdAt: '2024-01-01T00:00:00Z',
-    lastLogin: new Date().toISOString(),
+const loadUserPreferences = (userId: string): UserPreferences => {
+  return storage.get<UserPreferences>(getPreferencesKey(userId)) ?? DEFAULT_PREFERENCES;
+};
+
+const saveUserPreferences = (userId: string, preferences: UserPreferences) => {
+  storage.set(getPreferencesKey(userId), preferences);
+};
+
+const mapSupabaseUser = (supabaseUser: SupabaseUser): User => {
+  const metadata = supabaseUser.user_metadata ?? {};
+  const preferences = loadUserPreferences(supabaseUser.id);
+
+  return {
+    id: supabaseUser.id,
+    name: metadata.name ?? supabaseUser.email ?? 'Usuário',
+    email: supabaseUser.email ?? '',
+    role: (metadata.role as UserRole) ?? 'user',
+    region: metadata.region ?? 'BR',
+    avatar: metadata.avatar ?? metadata.avatar_url,
+    bio: metadata.bio,
+    profession: metadata.profession,
+    company: metadata.company,
+    socialLinks: metadata.socialLinks,
+    twoFactorEnabled: metadata.twoFactorEnabled,
+    createdAt: supabaseUser.created_at ?? new Date().toISOString(),
+    lastLogin: metadata.lastLogin ?? new Date().toISOString(),
     isActive: true,
-    preferences: {
-      categories: ['economia', 'geopolitica', 'tecnologia'],
-      tags: ['Fed', 'BCB', 'Inflação'],
-      language: 'pt-BR',
-      reducedMotion: false,
-      emailNotifications: true,
-      pushNotifications: false,
-    },
-  },
-  {
-    id: 'user-001',
-    name: 'Usuário Demo',
-    email: 'usuario@exemplo.com',
-    passwordHash: simpleHash('senha123'),
-    role: 'user',
-    region: 'BR',
-    avatar: '/images/avatars/user.webp',
-    createdAt: '2024-01-15T00:00:00Z',
-    lastLogin: new Date().toISOString(),
-    isActive: true,
-    preferences: {
-      categories: ['economia', 'mercados'],
-      tags: ['Bitcoin', 'Dólar'],
-      language: 'pt-BR',
-      reducedMotion: false,
-      emailNotifications: true,
-      pushNotifications: false,
-    },
-  },
-];
+    preferences,
+  };
+};
+
+const updateSupabaseMetadata = async (updates: Partial<User>) => {
+  if (!isSupabaseConfigured) return;
+  const metadataUpdates: Record<string, unknown> = {};
+
+  if (updates.name !== undefined) metadataUpdates.name = updates.name;
+  if (updates.region !== undefined) metadataUpdates.region = updates.region;
+  if (updates.avatar !== undefined) metadataUpdates.avatar = updates.avatar;
+  if (updates.bio !== undefined) metadataUpdates.bio = updates.bio;
+  if (updates.profession !== undefined) metadataUpdates.profession = updates.profession;
+  if (updates.company !== undefined) metadataUpdates.company = updates.company;
+  if (updates.socialLinks !== undefined) metadataUpdates.socialLinks = updates.socialLinks;
+  if (updates.twoFactorEnabled !== undefined) metadataUpdates.twoFactorEnabled = updates.twoFactorEnabled;
+  if (updates.role !== undefined) metadataUpdates.role = updates.role;
+  if (updates.lastLogin !== undefined) metadataUpdates.lastLogin = updates.lastLogin;
+
+  if (Object.keys(metadataUpdates).length === 0) return;
+
+  const { error } = await supabase.auth.updateUser({ data: metadataUpdates });
+  if (error) {
+    logger.error('Erro ao atualizar metadata do usuário:', error.message);
+  }
+};
 
 // ==================== CONTEXT ====================
 
@@ -217,115 +220,117 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
 
-  // Inicializar - verificar sessão existente
   useEffect(() => {
-    const initAuth = () => {
-      try {
-        const session = storage.get<AuthSession>(SESSION_KEY);
-        
-        if (session && session.expiresAt > Date.now()) {
-          setUser(session.user);
-        } else {
-          // Sessão expirada, limpar
-          storage.remove(SESSION_KEY);
-          storage.remove(TOKEN_KEY);
-        }
-      } catch (err) {
-        console.error('Erro ao inicializar auth:', err);
-      } finally {
-        setIsLoading(false);
+    let isMounted = true;
+
+    if (!isSupabaseConfigured || !supabase) {
+      setUser(null);
+      setSessionExpiresAt(null);
+      setIsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const initAuth = async () => {
+      setIsLoading(true);
+      const { data, error: sessionError } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      if (sessionError) {
+        setError({
+          code: 'AUTH_SESSION_ERROR',
+          message: 'Erro ao carregar sessão. Tente novamente.',
+        });
       }
+
+      if (data.session?.user) {
+        const mappedUser = mapSupabaseUser(data.session.user);
+        setUser(mappedUser);
+        setSessionExpiresAt(data.session.expires_at ? data.session.expires_at * 1000 : null);
+      } else {
+        setUser(null);
+        setSessionExpiresAt(null);
+      }
+
+      setIsLoading(false);
     };
 
     initAuth();
-  }, []);
 
-  // Gerar token de sessão
-  const generateToken = (userId: string): string => {
-    return `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
 
-  // Criar sessão
-  const createSession = (userData: User): AuthSession => {
-    const session: AuthSession = {
-      user: userData,
-      token: generateToken(userData.id),
-      expiresAt: Date.now() + SESSION_DURATION,
+      if (session?.user) {
+        const mappedUser = mapSupabaseUser(session.user);
+        setUser(mappedUser);
+        setSessionExpiresAt(session.expires_at ? session.expires_at * 1000 : null);
+
+        if (event === 'SIGNED_IN') {
+          const lastLogin = new Date().toISOString();
+          updateSupabaseMetadata({ lastLogin });
+          setUser({ ...mappedUser, lastLogin });
+        }
+      } else {
+        setUser(null);
+        setSessionExpiresAt(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
     };
-    
-    storage.set(SESSION_KEY, session);
-    storage.set(TOKEN_KEY, session.token);
-    
-    return session;
-  };
+  }, []);
 
   // Login
   const login = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
-    try {
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Buscar usuário
-      const foundUser = MOCK_USERS.find(u => u.email === credentials.email.toLowerCase().trim());
-
-      if (!foundUser) {
-        setError({
-          code: 'AUTH_INVALID_CREDENTIALS',
-          message: 'E-mail ou senha incorretos',
-        });
-        return false;
-      }
-
-      if (!foundUser.isActive) {
-        setError({
-          code: 'AUTH_ACCOUNT_DISABLED',
-          message: 'Conta desativada. Entre em contato com o suporte.',
-        });
-        return false;
-      }
-
-      // Verificar senha
-      const passwordHash = simpleHash(credentials.password);
-      if (passwordHash !== foundUser.passwordHash) {
-        setError({
-          code: 'AUTH_INVALID_CREDENTIALS',
-          message: 'E-mail ou senha incorretos',
-        });
-        return false;
-      }
-
-      // Criar sessão
-      const { passwordHash: _, ...userWithoutPassword } = foundUser;
-      const updatedUser = {
-        ...userWithoutPassword,
-        lastLogin: new Date().toISOString(),
-      };
-
-      createSession(updatedUser);
-      setUser(updatedUser);
-
-      // Salvar usuário atualizado
-      const registeredUsers = storage.get<Array<{ id: string; email: string }>>(STORAGE_KEYS.registeredUsers) || [];
-      const userIndex = registeredUsers.findIndex(u => u.id === updatedUser.id);
-      if (userIndex >= 0) {
-        registeredUsers[userIndex] = { id: updatedUser.id, email: updatedUser.email };
-        storage.set(STORAGE_KEYS.registeredUsers, registeredUsers);
-      }
-
-      return true;
-    } catch (err) {
+    if (!isSupabaseConfigured) {
       setError({
-        code: 'AUTH_UNKNOWN_ERROR',
-        message: 'Erro inesperado. Tente novamente.',
+        code: 'AUTH_SUPABASE_NOT_CONFIGURED',
+        message: 'Supabase nÃ£o configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.',
       });
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: credentials.email.toLowerCase().trim(),
+      password: credentials.password,
+    });
+
+    if (signInError) {
+      setError({
+        code: signInError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
+        message: signInError.message || 'E-mail ou senha incorretos',
+      });
+      setIsLoading(false);
+      return false;
+    }
+
+    if (!data.session?.user) {
+      setError({
+        code: 'AUTH_NO_SESSION',
+        message: 'Sessão não encontrada. Tente novamente.',
+      });
+      setIsLoading(false);
+      return false;
+    }
+
+    const mappedUser = mapSupabaseUser(data.session.user);
+    const lastLogin = new Date().toISOString();
+    setUser({ ...mappedUser, lastLogin });
+    setSessionExpiresAt(data.session.expires_at ? data.session.expires_at * 1000 : null);
+    updateSupabaseMetadata({ lastLogin });
+
+    setIsLoading(false);
+    return true;
   }, []);
 
   // Registro
@@ -333,82 +338,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
 
-    try {
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Verificar email existente
-      const registeredUsers = storage.get<Array<{ id: string; email: string }>>(STORAGE_KEYS.registeredUsers) || [];
-      const existingUser = [...MOCK_USERS, ...registeredUsers].find(
-        u => u.email === data.email.toLowerCase().trim()
-      );
-
-      if (existingUser) {
-        setError({
-          code: 'AUTH_EMAIL_EXISTS',
-          message: 'Este e-mail já está cadastrado',
-          field: 'email',
-        });
-        return false;
-      }
-
-      // Criar novo usuário
-      const newUser: User = {
-        id: `user_${Date.now()}`,
-        name: data.name.trim(),
-        email: data.email.toLowerCase().trim(),
-        role: 'user',
-        region: data.region || 'BR',
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        isActive: true,
-        preferences: {
-          categories: [],
-          tags: [],
-          language: 'pt-BR',
-          reducedMotion: false,
-          emailNotifications: true,
-          pushNotifications: false,
-        },
-      };
-
-      // Salvar hash da senha (em produção: hash real + salt)
-      const userWithPassword = {
-        ...newUser,
-        passwordHash: simpleHash(data.password),
-      };
-
-      // Adicionar à lista de usuários registrados
-      registeredUsers.push({ id: newUser.id, email: newUser.email });
-      storage.set(STORAGE_KEYS.registeredUsers, registeredUsers);
-      
-      // Salvar dados do usuário
-      const allUsers = storage.get<Array<typeof userWithPassword>>(STORAGE_KEYS.allUsers) || [];
-      allUsers.push(userWithPassword);
-      storage.set(STORAGE_KEYS.allUsers, allUsers);
-
-      // Criar sessão
-      createSession(newUser);
-      setUser(newUser);
-
-      return true;
-    } catch (err) {
+    if (!isSupabaseConfigured) {
       setError({
-        code: 'AUTH_UNKNOWN_ERROR',
-        message: 'Erro ao criar conta. Tente novamente.',
+        code: 'AUTH_SUPABASE_NOT_CONFIGURED',
+        message: 'Supabase nÃ£o configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.',
       });
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: data.email.toLowerCase().trim(),
+      password: data.password,
+      options: {
+        data: {
+          name: data.name.trim(),
+          region: data.region || 'BR',
+          role: 'user',
+        },
+      },
+    });
+
+    if (signUpError) {
+      setError({
+        code: signUpError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
+        message: signUpError.message || 'Erro ao criar conta. Tente novamente.',
+      });
+      setIsLoading(false);
+      return false;
+    }
+
+    if (signUpData.session?.user) {
+      const mappedUser = mapSupabaseUser(signUpData.session.user);
+      setUser(mappedUser);
+      setSessionExpiresAt(signUpData.session.expires_at ? signUpData.session.expires_at * 1000 : null);
+    }
+
+    setIsLoading(false);
+    return true;
   }, []);
 
   // Logout
   const logout = useCallback(() => {
-    storage.remove(SESSION_KEY);
-    storage.remove(TOKEN_KEY);
-    setUser(null);
-    setError(null);
+    setIsLoading(true);
+    if (!isSupabaseConfigured) {
+      setUser(null);
+      setSessionExpiresAt(null);
+      setIsLoading(false);
+      return;
+    }
+    supabase.auth.signOut().finally(() => {
+      setUser(null);
+      setSessionExpiresAt(null);
+      setIsLoading(false);
+    });
   }, []);
 
   // Limpar erro
@@ -422,13 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-
-    // Atualizar sessão
-    const session = storage.get<AuthSession>(SESSION_KEY);
-    if (session) {
-      session.user = updatedUser;
-      storage.set(SESSION_KEY, session);
-    }
+    updateSupabaseMetadata(updates);
   }, [user]);
 
   // Atualizar preferências
@@ -436,6 +413,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     const updatedPreferences = { ...user.preferences, ...prefs };
+    saveUserPreferences(user.id, updatedPreferences);
     updateUser({ preferences: updatedPreferences });
   }, [user, updateUser]);
 
@@ -443,15 +421,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkPermission = useCallback((requiredRole: UserRole): boolean => {
     if (!user) return false;
     if (requiredRole === 'admin') return user.role === 'admin';
-    return true; // 'user' role permite acesso
+    return true;
   }, [user]);
 
   // Tempo restante da sessão
   const getSessionTimeRemaining = useCallback((): number => {
-    const session = storage.get<AuthSession>(SESSION_KEY);
-    if (!session) return 0;
-    return Math.max(0, session.expiresAt - Date.now());
-  }, []);
+    if (!sessionExpiresAt) return 0;
+    return Math.max(0, sessionExpiresAt - Date.now());
+  }, [sessionExpiresAt]);
 
   const value: AuthContextType = {
     user,
@@ -488,8 +465,6 @@ export function useAuth(): AuthContextType {
 
 // ==================== HOC PARA PROTEÇÃO DE ROTAS ====================
 
-import { Navigate, useLocation } from 'react-router-dom';
-
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRole?: UserRole;
@@ -514,12 +489,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  // Se requer admin e usuário não é admin, redireciona para área do usuário
   if (requiredRole === 'admin' && !isAdmin) {
     return <Navigate to="/app" replace />;
   }
 
-  // Se o usuário é admin e está tentando acessar área de usuário comum, redireciona para admin
   if (isAdmin && location.pathname.startsWith('/app')) {
     return <Navigate to="/admin" replace />;
   }

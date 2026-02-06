@@ -7,11 +7,15 @@ import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { MarketTicker } from './MarketTicker';
 import { Footer } from './Footer';
+import { ScrollProgress } from './ScrollProgress';
 import { APP_CONFIG } from '@/config/app';
 
 export function Layout() {
   return (
     <>
+      {/* Barra de Progresso de Rolagem */}
+      <ScrollProgress />
+
       {/* Skip Link para acessibilidade */}
       <a 
         href="#main-content"

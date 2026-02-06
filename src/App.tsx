@@ -7,13 +7,19 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider, ProtectedRoute } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
 import { Home } from '@/pages/Home';
 import { Category } from '@/pages/Category';
 import { Article } from '@/pages/Article';
 import { About } from '@/pages/About';
+import { EmAlta } from '@/pages/EmAlta';
+import { Destaque } from '@/pages/Destaque';
+import { TodasCategorias } from '@/pages/TodasCategorias';
 import { Privacy, Terms, Cookies } from '@/pages/Legal';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
+import { FaleConosco } from '@/pages/FaleConosco';
+import { TrabalheConosco } from '@/pages/TrabalheConosco';
 import { UserDashboard } from '@/pages/UserDashboard';
 import { UserProfile } from '@/pages/UserProfile';
 import { UserPreferences } from '@/pages/UserPreferences';
@@ -22,13 +28,17 @@ import { AdminDashboard } from '@/pages/AdminDashboard';
 import { AdminNewsEdit } from '@/pages/AdminNewsEdit';
 import { AdminUsers } from '@/pages/AdminUsers';
 import { AdminDiagnostico } from '@/pages/AdminDiagnostico';
+import { FinnhubTest } from '@/components/diagnostics/FinnhubTest';
+import { DadosEconomicos, Mercados, CalendarioEconomico } from '@/pages/economics';
+import { MapaTensoesInfo } from '@/pages/MapaTensoesInfo';
+import { TermometroRiscoInfo } from '@/pages/TermometroRiscoInfo';
 import { ROUTES } from '@/config/routes';
-import './config/theme.css';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Rotas Públicas com Layout */}
           <Route element={<Layout />}>
@@ -39,6 +49,21 @@ function App() {
             <Route path={ROUTES.privacidade} element={<Privacy />} />
             <Route path={ROUTES.termos} element={<Terms />} />
             <Route path={ROUTES.cookies} element={<Cookies />} />
+            <Route path={ROUTES.faleConosco} element={<FaleConosco />} />
+            <Route path={ROUTES.trabalheConosco} element={<TrabalheConosco />} />
+            
+            {/* Novas páginas do menu */}
+            <Route path="/em-alta" element={<EmAlta />} />
+            <Route path="/destaque" element={<Destaque />} />
+            <Route path="/categorias" element={<TodasCategorias />} />
+            
+            <Route path={ROUTES.termometroRisco} element={<TermometroRiscoInfo />} />
+            <Route path={ROUTES.mapaTensoes} element={<MapaTensoesInfo />} />
+            
+            {/* Dados Econômicos - Trading Economics */}
+            <Route path={ROUTES.economia.dados} element={<DadosEconomicos />} />
+            <Route path={ROUTES.economia.mercados} element={<Mercados />} />
+            <Route path={ROUTES.economia.calendario} element={<CalendarioEconomico />} />
           </Route>
 
           {/* Login e Cadastro (sem Layout) */}
@@ -68,6 +93,7 @@ function App() {
             <Route path="/admin/noticias/editar/:slug" element={<AdminNewsEdit />} />
             <Route path={ROUTES.admin.usuarios} element={<AdminUsers />} />
             <Route path="/admin/diagnostico" element={<AdminDiagnostico />} />
+            <Route path="/admin/teste-finnhub" element={<FinnhubTest />} />
           </Route>
 
           {/* 404 */}

@@ -2,62 +2,153 @@
 
 ## Visão Geral da Arquitetura
 
-O PEM foi projetado com uma arquitetura modular e escalável, preparada para futura integração com backend.
+O PEM possui arquitetura modular dividida em três grandes camadas:
+
+1. **Frontend** - React SPA com dados do Supabase
+2. **Backend** - Supabase (Auth + Postgres + Edge Functions)
+3. **Analytics** - Stack independente (PostgreSQL + Fastify + Metabase)
+
+---
 
 ## Camadas da Aplicação
 
-### 1. Presentation Layer
+### 1. Presentation Layer (Frontend)
 
-**Componentes de UI** (`/components`)
+**Componentes de UI** (`/src/components`)
 - `layout/`: Estrutura visual (Header, Footer, Ticker)
 - `news/`: Componentes de notícias (Cards, ArticleContent)
 - `interactive/`: Elementos interativos (SurveyForm)
 - `ui/`: Componentes base shadcn/ui
 
-**Páginas** (`/pages`)
+**Páginas** (`/src/pages`)
 - Cada página é um componente React independente
 - Roteamento via React Router DOM
 - SEO dinâmico por página
 
 ### 2. Business Logic Layer
 
-**Hooks Customizados** (`/hooks`)
+**Hooks Customizados** (`/src/hooks`)
 - `useAuth`: Gerenciamento de autenticação
 - `useBookmarks`: Favoritos do usuário
 - `useMarket`: Dados de mercado em tempo real
 - `useReadingProgress`: Tracking de leitura
 - `useSurvey`: Questionário de desbloqueio
 - `useReadingLimit`: Controle de limite de leitura
+- `useAppSettings`: Configurações globais do app
 
-**Serviços** (`/services`)
-- `newsService.ts`: Mock de artigos (substituível por API)
-- Interface clara para futura integração
+**Serviços** (`/src/services`)
+- `newsManager.ts`: CRUD de artigos no Supabase
+- `comments/supabaseService.ts`: Comentários no Supabase
+- `adminUsers.ts`: Administração de usuários via Edge Function
+- `aiNews.ts`: Geração de notícias via Edge Function
+- `appSettings.ts`: Configurações globais no banco
 
 ### 3. Data Layer
 
-**Configurações** (`/config`)
+**Configurações** (`/src/config`)
 - Centralização de todas as configurações
 - Fácil manutenção e modificação
 - Preparado para múltiplos ambientes
 
-**Storage** (`/config/storage.ts`)
+**Storage** (`/src/config/storage.ts`)
 - Abstração do LocalStorage
 - Tipagem forte
 - Métodos específicos por entidade
 
-## Fluxo de Dados
+---
+
+## Analytics Layer (Independente)
+
+A camada de Analytics opera separadamente do sistema principal, garantindo:
+- **Isolamento**: Falhas no analytics não afetam o portal
+- **Escalabilidade**: Pode ser movida para infraestrutura separada
+- **Privacidade**: Dados pseudonimizados desde a coleta
+
+### Componentes do Analytics
 
 ```
-Usuário → Componente → Hook → Service → Storage/API
-                ↓
-            Config
+┌─────────────────────────────────────────────────────────────────┐
+│                         CLIENTE (Browser)                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │   Website    │  │  SDK Analytics│  │   localStorage      │  │
+│  │  (React)     │◄─┤  (vanilla JS)│◄─┤   (offline queue)   │  │
+│  └──────────────┘  └──────┬───────┘  └──────────────────────┘  │
+└───────────────────────────┼────────────────────────────────────┘
+                            │ HTTPS
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    COLLECTOR API (Node.js)                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │   Fastify    │  │   Validate   │  │   Deduplication      │  │
+│  │   Server     │──┤    Schema    │──┤   (LRU + DB)         │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                            │ Batch INSERT
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    STORAGE (PostgreSQL)                          │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  Tabela: events_raw (particionada por mês)                  ││
+│  │  • UNIQUE INDEX(event_id) por partição                      ││
+│  │  • Índices GIN para JSONB                                   ││
+│  │  • Deduplicação via ON CONFLICT                             ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      DASHBOARD (Metabase)                        │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  • Dashboard Real-time                                      ││
+│  │  • Dashboard Editorial                                      ││
+│  │  • Dashboard Técnico                                        ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+### Endpoints do Collector
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/health` | GET | Health check do sistema |
+| `/collect` | POST | Recebe eventos do cliente |
+
+### Stack Tecnológico do Analytics
+
+| Componente | Tecnologia | Justificativa |
+|------------|------------|---------------|
+| API | Fastify (Node.js) | Performance, baixo overhead |
+| Database | PostgreSQL 15 | Particionamento nativo, familiaridade |
+| Dashboard | Metabase | Open source, fácil configuração |
+| Deploy | Docker Compose | Simplicidade, portabilidade |
+
+---
+
+## Edge Functions
+
+### 1) admin-users
+Responsável por:
+- Criar usuário com senha
+- Atualizar dados
+- Redefinir senha
+- Excluir usuário
+
+Arquivo: `supabase/functions/admin-users/index.ts`
+
+### 2) ai-news
+Responsável por:
+- Buscar notícias das últimas 48h (GNews)
+- Gerar conteúdo via OpenRouter
+
+Arquivo: `supabase/functions/ai-news/index.ts`
+
+---
 
 ## Padrões de Design
 
 ### Componentes Semânticos
 - Uso estrito de tags HTML semânticas
-- Proibido uso de `<div>`
+- Proibido uso de `<div>` para layout
 - Acessibilidade (ARIA labels, skip links)
 
 ### Config-Driven Development
@@ -67,8 +158,28 @@ Usuário → Componente → Hook → Service → Storage/API
 
 ### Future-Proof Services
 - Interfaces bem definidas
-- Mock data facilmente substituível
+- Serviços com backend real no Supabase
 - DTOs preparados para API real
+
+---
+
+## Fluxo de Dados
+
+### Portal (Frontend)
+```
+Usuário → Componente → Hook → Service → Storage/API
+                ↓
+            Config
+```
+
+### Analytics
+```
+Browser → SDK → Collector → PostgreSQL → Metabase
+              ↓
+         verify.sh (validação)
+```
+
+---
 
 ## Preparação para Backend
 
@@ -95,9 +206,10 @@ export async function getArticleBySlug(slug: string): Promise<NewsArticle | null
 
 ### Auth Evolution
 
-1. **Fase 1**: Mock auth (atual)
-2. **Fase 2**: JWT com refresh tokens
-3. **Fase 3**: OAuth (Google, Apple, etc.)
+1. **Fase 1**: Supabase Auth (atual)
+2. **Fase 2**: OAuth (Google, Apple, etc.)
+
+---
 
 ## Performance
 
@@ -112,14 +224,41 @@ export async function getArticleBySlug(slug: string): Promise<NewsArticle | null
 - Time to Interactive < 3s
 - Lighthouse Score > 90
 
+---
+
 ## Segurança
 
 ### Medidas Atuais
 - Sanitização de HTML (conteúdo de artigos)
 - XSS protection via React
 - CSRF tokens prontos para implementação
+- Hash de IPs no analytics (LGPD)
 
 ### Futuras Implementações
 - Content Security Policy
-- Rate limiting
+- Rate limiting no collector
 - Input validation no backend
+
+---
+
+## Validação do Sistema
+
+Para garantir que todo o sistema está funcionando:
+
+```bash
+# Validar analytics
+./scripts/verify.sh
+```
+
+Este script verifica:
+1. PostgreSQL healthy
+2. Partições criadas automaticamente
+3. UNIQUE INDEX(event_id) nas partições
+4. Collector /health respondendo
+5. POST /collect funcionando
+6. Deduplicação funcionando
+
+---
+
+**Data de criação:** 2024-01-10  
+**Última atualização:** 2024-02-03 (adicionado Analytics Layer)

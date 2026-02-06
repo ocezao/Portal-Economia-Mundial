@@ -65,7 +65,7 @@ export function AdminDiagnostico() {
     }
 
     // 2. Verificar slugs duplicados
-    const articles = getAllArticles();
+    const articles = await getAllArticles({ includeDrafts: true });
     const slugs = articles.map(a => a.slug);
     const duplicates = slugs.filter((item, index) => slugs.indexOf(item) !== index);
     

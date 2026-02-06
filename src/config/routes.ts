@@ -12,8 +12,12 @@ export const ROUTES = {
   privacidade: '/privacidade',
   termos: '/termos',
   cookies: '/cookies',
+  faleConosco: '/fale-conosco',
+  trabalheConosco: '/trabalhe-conosco',
   login: '/login',
   register: '/cadastro',
+  termometroRisco: '/termometro-de-risco',
+  mapaTensoes: '/mapa-de-tensoes',
   
   // Área do usuário
   app: {
@@ -30,6 +34,13 @@ export const ROUTES = {
     novaNoticia: '/admin/noticias/novo',
     editarNoticia: (slug: string) => `/admin/noticias/editar/${slug}`,
     usuarios: '/admin/usuarios',
+  },
+  
+  // Dados Econômicos (Trading Economics)
+  economia: {
+    dados: '/dados-economicos',
+    mercados: '/mercados',
+    calendario: '/calendario-economico',
   },
 } as const;
 

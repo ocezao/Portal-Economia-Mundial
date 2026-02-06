@@ -1,51 +1,47 @@
 /**
- * Tipos do Sistema de Comentários
- * Interface para futura integração com backend
+ * Tipos para o sistema de comentários
  */
 
 export interface Comment {
   id: string;
   articleSlug: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
   content: string;
+  author: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  authorId?: string;
+  authorName?: string;
+  authorAvatar?: string;
   createdAt: string;
   updatedAt?: string;
-  likes: number;
-  isDeleted: boolean;
+  likes?: number;
+  parentId?: string | null;
+  isDeleted?: boolean;
 }
 
-export interface CreateCommentDTO {
+export interface GetCommentsParams {
+  articleSlug: string;
+  sortBy?: 'newest' | 'oldest' | 'popular';
+  limit?: number;
+  offset?: number;
+}
+
+export interface CreateCommentParams {
   articleSlug: string;
   content: string;
+  parentId?: string | null;
 }
 
-export interface UpdateCommentDTO {
-  commentId: string;
-  content: string;
-}
-
-export interface DeleteCommentDTO {
+export interface DeleteCommentParams {
   commentId: string;
   authorId: string;
 }
 
-export interface CommentFilter {
-  articleSlug: string;
-  sortBy?: 'newest' | 'oldest';
-}
-
-export interface CommentValidationResult {
-  valid: boolean;
-  errors: string[];
-}
-
-// Interface para implementação do serviço (mock ou API real)
-export interface ICommentService {
-  getComments(filter: CommentFilter): Promise<Comment[]>;
-  createComment(dto: CreateCommentDTO, author: { id: string; name: string }): Promise<Comment>;
-  updateComment(dto: UpdateCommentDTO): Promise<Comment | null>;
-  deleteComment(dto: DeleteCommentDTO): Promise<boolean>;
-  canDeleteComment(comment: Comment, userId: string): boolean;
+export interface CommentService {
+  getComments(params: GetCommentsParams): Promise<Comment[]>;
+  createComment(params: CreateCommentParams, author: Comment['author']): Promise<Comment>;
+  deleteComment(params: DeleteCommentParams): Promise<void>;
+  likeComment(commentId: string, userId: string): Promise<void>;
 }

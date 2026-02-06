@@ -1,0 +1,49 @@
+/**
+ * Fastify server - Analytics Collector
+ */
+
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { healthRoutes } from './routes/health';
+import { collectRoutes } from './routes/collect';
+import { rateLimitPlugin } from './plugins/rate-limit';
+import { dedupePlugin } from './plugins/dedupe';
+import { checkCurrentPartition } from './db/partition-check';
+
+const server = Fastify({
+  logger: {
+    level: process.env.LOG_LEVEL || 'info'
+  }
+});
+
+async function start() {
+  try {
+    // Plugins
+    await server.register(cors, {
+      origin: true,
+      credentials: true
+    });
+
+    await server.register(rateLimitPlugin);
+    await server.register(dedupePlugin);
+
+    // Routes
+    await server.register(healthRoutes);
+    await server.register(collectRoutes);
+
+    // Verificação crítica: partição deve existir
+    // Se não existir, processo encerra com exit(1)
+    await checkCurrentPartition();
+
+    const port = parseInt(process.env.PORT || '3000');
+    
+    await server.listen({ port, host: '0.0.0.0' });
+    server.log.info(`Collector rodando na porta ${port}`);
+    
+  } catch (err) {
+    console.error('Falha ao iniciar collector:', err);
+    process.exit(1);
+  }
+}
+
+start();

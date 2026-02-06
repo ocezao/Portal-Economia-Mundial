@@ -1,9 +1,9 @@
-/**
- * Página de Login
- * Autenticação mock para demonstração
+﻿/**
+ * PÃ¡gina de Login
+ * AutenticaÃ§Ã£o mock para demonstraÃ§Ã£o
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,14 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!isAuthenticated) return;
+    navigate(isAdmin ? '/admin' : '/app', { replace: true });
+  }, [isAuthenticated, isAdmin, isAuthLoading, navigate]);
   
   const handleForgotPassword = () => {
     toast.info('Recuperação de senha em breve.');
@@ -33,7 +39,7 @@ export function Login() {
     
     if (success) {
       toast.success('Login realizado com sucesso!');
-      // Verificar o role do usuário recém-logado
+      // Verificar o role do usuÃ¡rio recÃ©m-logado
       const storedSession = localStorage.getItem('pem_session');
       if (storedSession) {
         const session = JSON.parse(storedSession);
@@ -91,7 +97,7 @@ export function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="pl-10 pr-10"
                   required
                 />

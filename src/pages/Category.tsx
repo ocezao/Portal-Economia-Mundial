@@ -3,16 +3,41 @@
  * Lista notícias filtradas por categoria
  */
 
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { NewsCard } from '@/components/news/NewsCard';
 import { getArticlesByCategory } from '@/services/newsManager';
 import { CONTENT_CONFIG } from '@/config/content';
 import { APP_CONFIG } from '@/config/app';
+import type { NewsArticle } from '@/types';
 
 export function Category() {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? CONTENT_CONFIG.categories[slug as keyof typeof CONTENT_CONFIG.categories] : null;
-  const articles = slug ? getArticlesByCategory(slug) : [];
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!slug) return;
+
+    const load = async () => {
+      try {
+        const data = await getArticlesByCategory(slug);
+        if (isMounted) setArticles(data);
+      } catch (error) {
+        // Erro silenciado em produção
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Erro ao carregar categoria:', error);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
 
   if (!category) {
     return (

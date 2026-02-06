@@ -20,7 +20,7 @@ export const SEO_CONFIG = {
     type: 'website',
     siteName: APP_CONFIG.brand.name,
     locale: 'pt_BR',
-    image: '/og-image.jpg',
+    image: '/og-image.webp',
     imageWidth: 1200,
     imageHeight: 630,
     twitterCard: 'summary_large_image',
@@ -64,7 +64,8 @@ export const SEO_CONFIG = {
   },
 } as const;
 
-export const generateArticleJsonLd = (article: {
+export const generateArticleJsonLd = (
+  article: {
   title: string;
   slug: string;
   excerpt: string;
@@ -74,34 +75,55 @@ export const generateArticleJsonLd = (article: {
   author: string;
   category: string;
   tags: string[];
-}) => ({
-  '@context': 'https://schema.org',
-  '@type': 'NewsArticle',
-  headline: article.title,
-  description: article.excerpt,
-  image: `${APP_CONFIG.urls.base}${article.coverImage}`,
-  datePublished: article.publishedAt,
-  dateModified: article.updatedAt,
-  author: {
-    '@type': 'Person',
-    name: article.author,
   },
-  publisher: {
-    '@type': 'Organization',
-    name: APP_CONFIG.brand.name,
-    logo: {
-      '@type': 'ImageObject',
-      url: `${APP_CONFIG.urls.base}${APP_CONFIG.brand.logo}`,
+  options?: {
+    isAccessibleForFree?: boolean;
+    paywallSelector?: string;
+  }
+) => {
+  const jsonLd: Record<string, any> = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    description: article.excerpt,
+    image: `${APP_CONFIG.urls.base}${article.coverImage}`,
+    datePublished: article.publishedAt,
+    dateModified: article.updatedAt,
+    author: {
+      '@type': 'Person',
+      name: article.author,
     },
-  },
-  articleSection: article.category,
-  keywords: article.tags.join(', '),
-  url: `${APP_CONFIG.urls.base}/noticias/${article.slug}`,
-  mainEntityOfPage: {
-    '@type': 'WebPage',
-    '@id': `${APP_CONFIG.urls.base}/noticias/${article.slug}`,
-  },
-});
+    publisher: {
+      '@type': 'Organization',
+      name: APP_CONFIG.brand.name,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${APP_CONFIG.urls.base}${APP_CONFIG.brand.logo}`,
+      },
+    },
+    articleSection: article.category,
+    keywords: article.tags.join(', '),
+    url: `${APP_CONFIG.urls.base}/noticias/${article.slug}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${APP_CONFIG.urls.base}/noticias/${article.slug}`,
+    },
+  };
+
+  if (typeof options?.isAccessibleForFree === 'boolean') {
+    jsonLd.isAccessibleForFree = options.isAccessibleForFree;
+
+    if (options.isAccessibleForFree === false) {
+      jsonLd.hasPart = {
+        '@type': 'WebPageElement',
+        isAccessibleForFree: false,
+        cssSelector: options.paywallSelector ?? '.paywall-content',
+      };
+    }
+  }
+
+  return jsonLd;
+};
 
 export const generateBreadcrumbJsonLd = (items: { name: string; url: string }[]) => ({
   '@context': 'https://schema.org',
