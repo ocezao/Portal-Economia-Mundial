@@ -182,8 +182,8 @@ export const getCachedArticles = unstable_cache(
 - [x] Sitemap de noticias paginado com imagens (`src/app/sitemaps/news/[page]/route.ts`)
 - [ ] Validar em Search Console apos ter dominio
 
-**Arquivo a criar:**
-- `src/app/sitemap.ts`
+Notas:
+- A implementacao usa rotas XML (`src/app/sitemap.xml/route.ts` + `src/app/sitemaps/*`) em vez de `src/app/sitemap.ts`.
 
 ---
 

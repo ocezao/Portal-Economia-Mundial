@@ -100,7 +100,6 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 
 **🔴 CRÍTICO (6 itens):**
 - Sistema de Imagens (Base64 → CDN)
-- Home SSR (remover 'use client')
 - Cache de Dados
 - PM2 + Nginx
 - Health Check API
