@@ -6,6 +6,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -26,12 +27,8 @@ export function RelatedArticles({ currentArticle, limit = 4 }: RelatedArticlesPr
       try {
         const data = await getRelatedArticles(currentArticle.slug, currentArticle.category, limit);
         if (isMounted) setRelated(data);
-      } catch (error) {
-        // Erro silenciado em produção
-        if (process.env.NODE_ENV !== 'production') {
-          // eslint-disable-next-line no-console
-          console.error('Erro ao carregar artigos relacionados:', error);
-        }
+      } catch {
+        // Erro silenciado em produção - não logamos em dev intencionalmente
       }
     };
 
@@ -61,12 +58,13 @@ export function RelatedArticles({ currentArticle, limit = 4 }: RelatedArticlesPr
           <li key={article.slug}>
             <article className="group">
               <Link href={ROUTES.noticia(article.slug)} className="flex gap-4">
-                <figure className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-md">
-                  <img
+                <figure className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-md relative">
+                  <Image
                     src={article.coverImage}
                     alt={article.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    fill
+                    sizes="80px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </figure>
                 <section className="flex-1 min-w-0">

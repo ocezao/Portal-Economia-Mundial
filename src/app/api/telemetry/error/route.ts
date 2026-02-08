@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 
 // Best-effort in-memory rate limiter.
+// TODO: Em produção com múltiplas instâncias, usar Redis para rate limiting centralizado
+// Exemplo: Redis com ioredis ou @upstash/redis para persistência entre nodes
 const rl = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000;
 const MAX = 60; // events/min per IP

@@ -5,12 +5,35 @@
 
 import type { AnalyticsSDK } from '../core/analytics';
 
+// Tipos para entradas de performance
+interface LayoutShiftEntry extends PerformanceEntry {
+  hadRecentInput: boolean;
+  value: number;
+}
+
+interface EventEntry extends PerformanceEntry {
+  interactionId: number;
+  duration: number;
+  startTime: number;
+  entryType: string;
+  name: string;
+}
+
+interface FirstInputEntry extends PerformanceEntry {
+  processingStart: number;
+  startTime: number;
+}
+
+interface LargestContentfulPaintEntry extends PerformanceEntry {
+  startTime: number;
+}
+
 interface WebVitalMetric {
   name: 'LCP' | 'CLS' | 'INP' | 'TTFB' | 'FCP' | 'FID';
   value: number;
   rating: 'good' | 'needs-improvement' | 'poor';
   delta?: number;
-  entries?: any[];
+  entries?: PerformanceEntry[];
 }
 
 // Thresholds conforme Google Web Vitals
@@ -23,13 +46,38 @@ const THRESHOLDS: Record<string, { good: number; poor: number }> = {
   'FCP': { good: 1800, poor: 3000 }
 };
 
+// Type guards
+function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShiftEntry {
+  return entry.entryType === 'layout-shift' && 'hadRecentInput' in entry && 'value' in entry;
+}
+
+function isEventEntry(entry: PerformanceEntry): entry is EventEntry {
+  return 'interactionId' in entry && 'duration' in entry;
+}
+
+function isFirstInputEntry(entry: PerformanceEntry): entry is FirstInputEntry {
+  return entry.entryType === 'first-input' && 'processingStart' in entry;
+}
+
+function isLargestContentfulPaintEntry(entry: PerformanceEntry): entry is LargestContentfulPaintEntry {
+  return entry.entryType === 'largest-contentful-paint' && 'startTime' in entry;
+}
+
+function isPerformanceNavigationTiming(entry: PerformanceEntry): entry is PerformanceNavigationTiming {
+  return entry.entryType === 'navigation';
+}
+
+function isPerformancePaintTiming(entry: PerformanceEntry): entry is PerformancePaintTiming {
+  return entry.entryType === 'paint';
+}
+
 export class WebVitalsTracker {
   private sdk: AnalyticsSDK;
   private reportedMetrics: Set<string> = new Set();
-  private clsValue: number = 0;
-  private inpValue: number = 0;
-  private inpEntries: any[] = [];
-  private isActive: boolean = false;
+  private clsValue = 0;
+  private inpValue = 0;
+  private inpEntries: Array<{ duration: number; startTime: number; name: string }> = [];
+  private isActive = false;
 
   constructor(sdk: AnalyticsSDK) {
     this.sdk = sdk;
@@ -86,14 +134,15 @@ export class WebVitalsTracker {
     try {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as PerformanceEntry & { startTime: number };
+        const lastEntry = entries[entries.length - 1];
         
-        if (lastEntry) {
+        if (lastEntry && isLargestContentfulPaintEntry(lastEntry)) {
           const value = Math.round(lastEntry.startTime);
           this.reportMetric('LCP', value);
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       observer.observe({ entryTypes: ['largest-contentful-paint'] as any });
 
       // Capturar valor final quando a página esconder
@@ -102,7 +151,7 @@ export class WebVitalsTracker {
           observer.disconnect();
         }
       });
-    } catch (e) {
+    } catch {
       // LCP não suportado
     }
   }
@@ -113,13 +162,13 @@ export class WebVitalsTracker {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const layoutShift = entry as any;
-          if (!layoutShift.hadRecentInput) {
-            this.clsValue += layoutShift.value;
+          if (isLayoutShiftEntry(entry) && !entry.hadRecentInput) {
+            this.clsValue += entry.value;
           }
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       observer.observe({ entryTypes: ['layout-shift'] as any });
 
       // Report CLS quando a página esconder
@@ -135,7 +184,7 @@ export class WebVitalsTracker {
           this.reportMetric('CLS', Math.round(this.clsValue * 1000) / 1000, true);
         }
       }, 10000);
-    } catch (e) {
+    } catch {
       // CLS não suportado
     }
   }
@@ -146,20 +195,20 @@ export class WebVitalsTracker {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const eventEntry = entry as any;
           // INP é baseado em eventos de interação
-          if (eventEntry.interactionId > 0 || 
-              eventEntry.entryType === 'first-input' ||
-              eventEntry.entryType === 'event') {
+          if (isEventEntry(entry) && 
+              (entry.interactionId > 0 || 
+               entry.entryType === 'first-input' ||
+               entry.entryType === 'event')) {
             this.inpEntries.push({
-              duration: eventEntry.duration,
-              startTime: eventEntry.startTime,
-              name: eventEntry.name
+              duration: entry.duration,
+              startTime: entry.startTime,
+              name: entry.name
             });
             
             // Atualizar INP (maior duração de interação)
-            if (eventEntry.duration > this.inpValue) {
-              this.inpValue = eventEntry.duration;
+            if (entry.duration > this.inpValue) {
+              this.inpValue = entry.duration;
             }
           }
         }
@@ -167,10 +216,12 @@ export class WebVitalsTracker {
 
       // Tentar observer diferentes tipos de eventos
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         observer.observe({ entryTypes: ['event'] as any, buffered: true });
       } catch {
         // Fallback para first-input
         try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           observer.observe({ entryTypes: ['first-input'] as any, buffered: true });
         } catch {
           // Não suportado
@@ -183,7 +234,7 @@ export class WebVitalsTracker {
           this.reportMetric('INP', Math.round(this.inpValue));
         }
       });
-    } catch (e) {
+    } catch {
       // INP não suportado
     }
   }
@@ -194,14 +245,16 @@ export class WebVitalsTracker {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const fidEntry = entry as any;
-          const value = fidEntry.processingStart - fidEntry.startTime;
-          this.reportMetric('FID', Math.round(value));
+          if (isFirstInputEntry(entry)) {
+            const value = entry.processingStart - entry.startTime;
+            this.reportMetric('FID', Math.round(value));
+          }
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       observer.observe({ entryTypes: ['first-input'] as any });
-    } catch (e) {
+    } catch {
       // FID não suportado
     }
   }
@@ -209,9 +262,9 @@ export class WebVitalsTracker {
   private measureTTFB(): void {
     if (!('performance' in window)) return;
 
-    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const navEntry = performance.getEntriesByType('navigation')[0];
     
-    if (navEntry) {
+    if (navEntry && isPerformanceNavigationTiming(navEntry)) {
       const value = Math.round(navEntry.responseStart);
       this.reportMetric('TTFB', value);
     }
@@ -223,16 +276,16 @@ export class WebVitalsTracker {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const paintEntry = entry as PerformancePaintTiming;
-          if (paintEntry.name === 'first-contentful-paint') {
-            this.reportMetric('FCP', Math.round(paintEntry.startTime));
+          if (isPerformancePaintTiming(entry) && entry.name === 'first-contentful-paint') {
+            this.reportMetric('FCP', Math.round(entry.startTime));
             observer.disconnect();
           }
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       observer.observe({ entryTypes: ['paint'] as any });
-    } catch (e) {
+    } catch {
       // FCP não suportado
     }
   }
@@ -240,9 +293,9 @@ export class WebVitalsTracker {
   private measureNavigationTiming(): void {
     if (!('performance' in window)) return;
 
-    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const navEntry = performance.getEntriesByType('navigation')[0];
     
-    if (navEntry) {
+    if (navEntry && isPerformanceNavigationTiming(navEntry)) {
       // Métricas adicionais de navegação
       const dnsTime = navEntry.domainLookupEnd - navEntry.domainLookupStart;
       const tcpTime = navEntry.connectEnd - navEntry.connectStart;
@@ -262,7 +315,7 @@ export class WebVitalsTracker {
     }
   }
 
-  private reportMetric(name: WebVitalMetric['name'], value: number, isPartial: boolean = false): void {
+  private reportMetric(name: WebVitalMetric['name'], value: number, isPartial = false): void {
     const metricKey = isPartial ? `${name}_partial` : name;
     
     // Evitar duplicados (exceto CLS que é cumulativo)

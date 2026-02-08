@@ -123,15 +123,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {/* Demo Credentials */}
-        <aside className="mt-8 p-4 bg-[#f5f5f5] rounded-lg text-sm">
-          <p className="font-medium text-[#111111] mb-2">Credenciais de demonstração:</p>
-          <ul className="space-y-1 text-[#6b6b6b]">
-            <li><strong>Usuário:</strong> usuario@exemplo.com / senha123</li>
-            <li><strong>Admin:</strong> admin@pem.com / admin123</li>
-          </ul>
-        </aside>
-
         {/* Links */}
         <footer className="mt-6 text-center text-sm text-[#6b6b6b]">
           <p>

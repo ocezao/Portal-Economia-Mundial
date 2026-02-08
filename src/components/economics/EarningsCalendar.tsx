@@ -130,7 +130,7 @@ function formatCurrency(value: number | null | undefined): string {
   return `$${value.toFixed(1)}M`;
 }
 
-interface EarningsCalendarProps {
+export interface EarningsCalendarProps {
   earnings: EarningsEvent[];
   title?: string;
   showViewAll?: boolean;

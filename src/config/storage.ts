@@ -128,12 +128,8 @@ export const storage = {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
+    } catch {
       // Silently fail in production
-      if (process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
-        console.error('Error saving to localStorage:', error);
-      }
     }
   },
   

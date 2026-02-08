@@ -5,6 +5,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, Bookmark, Gem } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -56,11 +57,13 @@ export function NewsCard({
       <article className="group relative">
         <Link href={ROUTES.noticia(article.slug)} className="block">
           <figure className="relative aspect-[16/9] overflow-hidden rounded-lg mb-4">
-            <img
+            <Image
               src={article.coverImage}
               alt={article.title}
-              loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 800px"
+              priority
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             {article.breaking && (
               <span className="absolute top-4 left-4 px-3 py-1 bg-[#c40000] text-white text-xs font-bold uppercase tracking-wider">
@@ -108,11 +111,12 @@ export function NewsCard({
       <article className="group">
         <Link href={ROUTES.noticia(article.slug)} className="flex gap-4">
           <figure className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md relative">
-            <img
+            <Image
               src={article.coverImage}
               alt={article.title}
-              loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              fill
+              sizes="96px"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
             {isSponsored && (
               <span className="absolute top-1 right-1 w-5 h-5 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full flex items-center justify-center shadow-sm" title="Publicação Patrocinada">
@@ -130,7 +134,7 @@ export function NewsCard({
               </span>
               <SponsoredBadge isSponsored={isSponsored} />
             </div>
-            <h3 className="text-sm font-semibold text-[#111111] line-clamp-2 group-hover:text-[#c40000] transition-colors">
+            <h3 className="text-sm font-semibold text-[#111111] line-clamp-2 group-hover:text-[#c40000] transition-colors leading-snug">
               {article.title}
             </h3>
             <time className="text-xs text-[#6b6b6b]" dateTime={article.publishedAt}>
@@ -147,11 +151,12 @@ export function NewsCard({
     <article className={`group bg-white border rounded-lg overflow-hidden card-hover ${isSponsored ? 'border-amber-200 shadow-md' : 'border-[#e5e5e5]'}`}>
       <Link href={ROUTES.noticia(article.slug)} className="block">
         <figure className="relative aspect-[16/9] overflow-hidden">
-          <img
+          <Image
             src={article.coverImage}
             alt={article.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {article.breaking && (
             <span className="absolute top-3 left-3 px-2 py-1 bg-[#c40000] text-white text-xs font-bold uppercase">

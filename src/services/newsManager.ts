@@ -39,6 +39,68 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
+// ==================== TIPOS DO SUPABASE ====================
+
+interface CategoryRow {
+  categories?: { slug?: string } | null;
+}
+
+interface TagRow {
+  tags?: { name?: string } | null;
+}
+
+interface ArticleRow {
+  id: string;
+  slug: string;
+  title: string;
+  title_en?: string | null;
+  excerpt?: string | null;
+  excerpt_en?: string | null;
+  content?: string | null;
+  content_en?: string | null;
+  cover_image?: string | null;
+  author_id?: string | null;
+  author_name?: string | null;
+  status?: string | null;
+  published_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  reading_time?: number | null;
+  is_featured?: boolean | null;
+  is_breaking?: boolean | null;
+  views?: number | null;
+  likes?: number | null;
+  shares?: number | null;
+  comments_count?: number | null;
+  news_article_categories?: CategoryRow[] | null;
+  news_article_tags?: TagRow[] | null;
+}
+
+interface SearchResultRow {
+  id?: string;
+}
+
+// Type guard para verificar se um valor é um objeto
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+// Type guard para verificar se um valor é um array
+function isArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
+
+// Type guard para ArticleRow
+function isArticleRow(value: unknown): value is ArticleRow {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string' && typeof value.slug === 'string' && typeof value.title === 'string';
+}
+
+// Type guard para SearchResultRow
+function isSearchResultRow(value: unknown): value is SearchResultRow {
+  return isRecord(value) && (value.id === undefined || typeof value.id === 'string');
+}
+
 // ==================== HELPERS ====================
 
 const ARTICLE_SELECT = `
@@ -83,36 +145,64 @@ const slugify = (value: string): string => {
     .slice(0, 60);
 };
 
+const extractCategorySlug = (row: ArticleRow): string => {
+  const categories = row.news_article_categories;
+  if (!isArray(categories) || categories.length === 0) return 'economia';
+  
+  const firstCategory = categories[0];
+  if (!isRecord(firstCategory)) return 'economia';
+  
+  const categoryData = firstCategory.categories;
+  if (!isRecord(categoryData)) return 'economia';
+  
+  return typeof categoryData.slug === 'string' ? categoryData.slug : 'economia';
+};
+
+const extractTags = (row: ArticleRow): string[] => {
+  const tags = row.news_article_tags;
+  if (!isArray(tags)) return [];
+  
+  return tags
+    .map((t: unknown) => {
+      if (!isRecord(t)) return null;
+      const tagData = t.tags;
+      if (!isRecord(tagData)) return null;
+      return typeof tagData.name === 'string' ? tagData.name : null;
+    })
+    .filter((name): name is string => name !== null);
+};
+
 const mapArticleRow = (row: unknown): NewsArticle => {
-  const r = row as Record<string, unknown>;
-  const categorySlug =
-    (r?.news_article_categories as { categories?: { slug?: string } }[])?.[0]?.categories?.slug ?? 'economia';
-  const tags =
-    ((r?.news_article_tags as { tags?: { name?: string } }[])?.map((t) => t?.tags?.name).filter(Boolean) as string[]) ?? [];
+  if (!isArticleRow(row)) {
+    throw new Error('Invalid article row structure');
+  }
+
+  const categorySlug = extractCategorySlug(row);
+  const tags = extractTags(row);
 
   return {
-    id: r.id as string,
-    slug: r.slug as string,
-    title: r.title as string,
-    titleEn: (r.title_en as string | null) ?? undefined,
-    excerpt: (r.excerpt as string | null) ?? '',
-    excerptEn: (r.excerpt_en as string | null) ?? undefined,
-    content: (r.content as string | null) ?? '',
-    contentEn: (r.content_en as string | null) ?? undefined,
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    titleEn: row.title_en ?? undefined,
+    excerpt: row.excerpt ?? '',
+    excerptEn: row.excerpt_en ?? undefined,
+    content: row.content ?? '',
+    contentEn: row.content_en ?? undefined,
     category: categorySlug as NewsArticle['category'],
-    author: (r.author_name as string | null) ?? 'Redação PEM',
-    authorId: (r.author_id as string | null) ?? '',
-    publishedAt: (r.published_at as string | null) ?? (r.created_at as string | null) ?? new Date().toISOString(),
-    updatedAt: (r.updated_at as string | null) ?? (r.created_at as string | null) ?? new Date().toISOString(),
-    readingTime: (r.reading_time as number | null) ?? 0,
-    coverImage: toWebpUrl((r.cover_image as string | null) ?? '/images/news/hero.webp'),
+    author: row.author_name ?? 'Redação PEM',
+    authorId: row.author_id ?? '',
+    publishedAt: row.published_at ?? row.created_at ?? new Date().toISOString(),
+    updatedAt: row.updated_at ?? row.created_at ?? new Date().toISOString(),
+    readingTime: row.reading_time ?? 0,
+    coverImage: toWebpUrl(row.cover_image ?? '/images/news/hero.webp'),
     tags,
-    featured: Boolean(r.is_featured),
-    breaking: Boolean(r.is_breaking),
-    views: (r.views as number | null) ?? 0,
-    likes: (r.likes as number | null) ?? 0,
-    shares: (r.shares as number | null) ?? 0,
-    comments: (r.comments_count as number | null) ?? 0,
+    featured: Boolean(row.is_featured),
+    breaking: Boolean(row.is_breaking),
+    views: row.views ?? 0,
+    likes: row.likes ?? 0,
+    shares: row.shares ?? 0,
+    comments: row.comments_count ?? 0,
   };
 };
 
@@ -124,7 +214,7 @@ const getArticleIdBySlug = async (slug: string): Promise<string | null> => {
     .single();
 
   if (error) return null;
-  return data?.id ?? null;
+  return isRecord(data) && typeof data.id === 'string' ? data.id : null;
 };
 
 // ==================== QUERIES ====================
@@ -148,7 +238,9 @@ export async function getAllArticles(options?: { includeDrafts?: boolean }): Pro
     logger.warn('[newsManager] getAllArticles failed:', error);
     return [];
   }
-  return (data ?? []).map(mapArticleRow);
+  
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function getArticleBySlug(
@@ -195,7 +287,8 @@ export async function getArticlesByCategory(category: string): Promise<NewsArtic
     return [];
   }
 
-  return (data ?? []).map(mapArticleRow);
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
@@ -213,7 +306,9 @@ export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
     logger.warn('[newsManager] getFeaturedArticles failed:', error);
     return [];
   }
-  return (data ?? []).map(mapArticleRow);
+  
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function getBreakingNews(): Promise<NewsArticle[]> {
@@ -230,7 +325,9 @@ export async function getBreakingNews(): Promise<NewsArticle[]> {
     logger.warn('[newsManager] getBreakingNews failed:', error);
     return [];
   }
-  return (data ?? []).map(mapArticleRow);
+  
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function getLatestArticles(limit = 10): Promise<NewsArticle[]> {
@@ -247,7 +344,9 @@ export async function getLatestArticles(limit = 10): Promise<NewsArticle[]> {
     logger.warn('[newsManager] getLatestArticles failed:', error);
     return [];
   }
-  return (data ?? []).map(mapArticleRow);
+  
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function getRelatedArticles(
@@ -275,7 +374,9 @@ export async function getTrendingArticles(limit = 5): Promise<NewsArticle[]> {
     logger.warn('[newsManager] getTrendingArticles failed:', error);
     return [];
   }
-  return (data ?? []).map(mapArticleRow);
+  
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function searchArticles(query: string): Promise<NewsArticle[]> {
@@ -291,8 +392,10 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
       lim: 30,
     });
 
-    if (!rpcError && Array.isArray(ids) && ids.length > 0) {
-      const orderedIds = ids.map((r: unknown) => (r as { id?: string }).id).filter(Boolean) as string[];
+    if (!rpcError && isArray(ids) && ids.length > 0) {
+      const orderedIds = ids
+        .map((r: unknown) => isSearchResultRow(r) ? r.id : null)
+        .filter((id): id is string => id !== null);
 
       const { data, error } = await supabase
         .from('news_articles')
@@ -305,9 +408,10 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
         return [];
       }
 
-      const mapped = (data ?? []).map(mapArticleRow);
+      if (!isArray(data)) return [];
+      const mapped = data.map(mapArticleRow);
       const byId = new Map(mapped.map((a) => [a.id, a]));
-      return orderedIds.map((id: string) => byId.get(id)).filter(Boolean) as NewsArticle[];
+      return orderedIds.map((id: string) => byId.get(id)).filter((a): a is NewsArticle => a !== undefined);
     }
   } catch (err) {
     logger.warn('[newsManager] searchArticles rpc failed:', err);
@@ -327,7 +431,8 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
     return [];
   }
 
-  return (data ?? []).map(mapArticleRow);
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 export async function getArticlesByAuthor(authorSlug: string, limit = 6): Promise<NewsArticle[]> {
@@ -343,11 +448,12 @@ export async function getArticlesByAuthor(authorSlug: string, limit = 6): Promis
     .limit(limit);
 
   if (error) {
-    console.error('Error fetching articles by author:', error);
+    // Intencionalmente não logamos erros em produção
     return [];
   }
 
-  return (data ?? []).map(mapArticleRow);
+  if (!isArray(data)) return [];
+  return data.map(mapArticleRow);
 }
 
 // ==================== CRUD ADMIN ====================
@@ -386,6 +492,7 @@ export async function createArticle(
     .single();
 
   if (error) throw error;
+  if (!inserted) throw new Error('Failed to create article');
 
   // Categoria
   const categorySlug = articleData.category;
@@ -395,9 +502,9 @@ export async function createArticle(
     .eq('slug', categorySlug)
     .single();
 
-  if (category?.id) {
+  if (isRecord(category) && typeof category.id === 'string') {
     await supabase.from('news_article_categories').insert({
-      article_id: inserted.id,
+      article_id: isRecord(inserted) && typeof inserted.id === 'string' ? inserted.id : '',
       category_id: category.id,
     });
   }
@@ -405,16 +512,16 @@ export async function createArticle(
   // Tags
   const tagNames = articleData.tags ?? [];
   for (const tag of tagNames) {
-    const slug = slugify(tag);
+    const tagSlug = slugify(tag);
     const { data: tagRow } = await supabase
       .from('tags')
-      .upsert({ name: tag, slug }, { onConflict: 'slug' })
+      .upsert({ name: tag, slug: tagSlug }, { onConflict: 'slug' })
       .select('id')
       .single();
 
-    if (tagRow?.id) {
+    if (isRecord(tagRow) && typeof tagRow.id === 'string') {
       await supabase.from('news_article_tags').insert({
-        article_id: inserted.id,
+        article_id: isRecord(inserted) && typeof inserted.id === 'string' ? inserted.id : '',
         tag_id: tagRow.id,
       });
     }
@@ -485,7 +592,7 @@ export async function updateArticle(
       .select('id')
       .eq('slug', updates.category)
       .single();
-    if (category?.id) {
+    if (isRecord(category) && typeof category.id === 'string') {
       await supabase.from('news_article_categories').delete().eq('article_id', articleId);
       await supabase.from('news_article_categories').insert({
         article_id: articleId,
@@ -503,7 +610,8 @@ export async function updateArticle(
         .upsert({ name: tag, slug: slugTag }, { onConflict: 'slug' })
         .select('id')
         .single();
-      if (tagRow?.id) {
+
+      if (isRecord(tagRow) && typeof tagRow.id === 'string') {
         await supabase.from('news_article_tags').insert({
           article_id: articleId,
           tag_id: tagRow.id,
@@ -528,7 +636,7 @@ export async function getRedirectTargetSlug(fromSlug: string): Promise<string | 
       .maybeSingle();
 
     if (error) return null;
-    const toSlug = (data as { to_slug?: string } | null)?.to_slug;
+    const toSlug = isRecord(data) && typeof data.to_slug === 'string' ? data.to_slug : null;
     if (!toSlug || toSlug === slug) return null;
     return toSlug;
   } catch {
@@ -563,7 +671,7 @@ export async function scheduleArticle(
   articleData: Omit<NewsArticle, 'id' | 'publishedAt' | 'updatedAt'>,
   scheduledDate: string,
   scheduledTime: string,
-  timezone: string = 'America/Sao_Paulo'
+  timezone = 'America/Sao_Paulo'
 ): Promise<ScheduledArticle> {
   const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
   const created = await createArticle(
@@ -591,8 +699,9 @@ export async function getScheduledArticles(): Promise<ScheduledArticle[]> {
     .order('published_at', { ascending: true, nullsFirst: false });
 
   if (error) throw error;
+  if (!isArray(data)) return [];
 
-  return (data ?? []).map(row => {
+  return data.map(row => {
     const article = mapArticleRow(row);
     const scheduledAt = new Date(article.publishedAt);
     return {
@@ -641,7 +750,7 @@ export async function checkAndPublishScheduled(): Promise<number> {
     .select('id');
 
   if (error) throw error;
-  return data?.length ?? 0;
+  return isArray(data) ? data.length : 0;
 }
 
 // ==================== ESTATÍSTICAS ====================
@@ -675,8 +784,8 @@ export async function filterArticles(filters: ArticleFilters): Promise<NewsArtic
 
 export async function getArticlesPaginated(
   filters: ArticleFilters,
-  page: number = 1,
-  perPage: number = 10,
+  page = 1,
+  perPage = 10,
   options?: { includeDrafts?: boolean }
 ): Promise<PaginatedResult<NewsArticle>> {
   if (!isSupabaseConfigured) {
@@ -757,7 +866,7 @@ export async function getArticlesPaginated(
   else if (sortBy === 'likes') query = query.order('likes', { ascending });
   else query = query.order('published_at', { ascending, nullsFirst: false });
 
-  const { data, error, count } = await query.range(from, to);
+  const { data, error, count } = await query.range(from, to) as { data: unknown; error: Error | null; count: number | null };
   if (error) {
     logger.warn('[newsManager] getArticlesPaginated failed:', error);
     return { items: [], total: 0, page: safePage, perPage: safePerPage, totalPages: 0 };
@@ -765,7 +874,7 @@ export async function getArticlesPaginated(
 
   const total = count ?? 0;
   const totalPages = Math.ceil(total / safePerPage);
-  const items = (data ?? []).map(mapArticleRow);
+  const items = isArray(data) ? data.map(mapArticleRow) : [];
 
   return { items, total, page: safePage, perPage: safePerPage, totalPages };
 }
@@ -783,9 +892,9 @@ export async function isSlugAvailable(slug: string, excludeSlug?: string): Promi
     .eq('slug', slug)
     .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') return false;
+  if (error && 'code' in error && error.code !== 'PGRST116') return false;
   if (!data) return true;
-  return data.slug === excludeSlug;
+  return isRecord(data) && typeof data.slug === 'string' && data.slug === excludeSlug;
 }
 
 export async function resetToDefault(): Promise<void> {
@@ -805,5 +914,8 @@ export async function assignAllArticlesToAuthor(
     .select('id');
 
   if (error) throw error;
-  return data?.length ?? 0;
+  return isArray(data) ? data.length : 0;
 }
+
+// Re-exporta tipos para facilitar imports
+export type { NewsArticle } from '@/types';

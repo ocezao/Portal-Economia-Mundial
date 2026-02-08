@@ -1,57 +1,30 @@
 /**
  * Admin Dashboard - Painel Administrativo Completo
  * 100% Responsivo - Mobile First
+ * Refatorado: Componentes divididos para melhor manutenibilidade
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-
 import { useRouter } from 'next/navigation';
-import { 
-  FileText, 
-  Users, 
-  TrendingUp, 
-  AlertTriangle, 
-  ArrowRight,
-  Plus,
-  Edit2,
-  Trash2,
-  Copy,
-  Eye,
-  CheckCircle,
-  Clock,
-  Calendar,
-  RefreshCw,
-  Search,
-  MoreHorizontal,
-  Star,
-  Zap,
-  ChevronLeft,
-  ChevronRight,
+import {
   Settings,
   LogOut,
   X,
   LayoutDashboard,
   Newspaper,
   UserCog,
-  PieChart,
-  Bell,
-  Check,
-  User,
-  Shield,
+  Users,
+  Calendar,
   Download,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-  Save,
-  Menu
+  AlertTriangle,
+  Bell,
+  Menu,
 } from 'lucide-react';
-import { useAuth, type UserRole } from '@/contexts/AuthContext';
-import { CONTENT_CONFIG } from '@/config/content';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -62,108 +35,70 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Tabs,
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { 
-  getAllArticles, 
-  deleteArticle, 
-  duplicateArticle, 
-  getArticleStats,
-  getArticlesPaginated,
-  getScheduledArticles,
+import {
+  deleteArticle,
+  duplicateArticle,
   cancelScheduledArticle,
   updateScheduledArticle,
-  checkAndPublishScheduled,
+  resetToDefault,
   assignAllArticlesToAuthor,
-  type ArticleFilters,
-  type ScheduledArticle,
-  resetToDefault
+  getAllArticles,
+  getScheduledArticles,
 } from '@/services/newsManager';
-import { getAppSettings, updateAppSettings } from '@/services/appSettings';
-import type { AppSettings } from '@/hooks/useAppSettings';
-import type { NewsArticle } from '@/types';
+import { updateAppSettings } from '@/services/appSettings';
 import {
-  listAdminUsers,
   createAdminUser,
   updateAdminUser,
   updateAdminUserPassword,
   deleteAdminUser,
-  type AdminUser,
 } from '@/services/adminUsers';
-import type { Author } from '@/config/authors';
 import {
-  listAdminAuthors,
   createAdminAuthor,
   updateAdminAuthor,
   deleteAdminAuthor,
   restoreAdminAuthor,
 } from '@/services/adminAuthors';
-import { SUPABASE_FREE_LIMITS } from '@/config/supabaseLimits';
+import type { Author } from '@/config/authors';
+import type { UserRole } from '@/types/user';
 
-// Interface para usuários do sistema
-type SystemUser = AdminUser;
+
+// Componentes divididos
+import { DashboardStats } from './components/DashboardStats';
+import { ArticleTable } from './components/ArticleTable';
+import { UserManagement } from './components/UserManagement';
+import { AuthorManagement } from './components/AuthorManagement';
+import { CalendarView } from './components/CalendarView';
+import { SettingsPanel } from './components/SettingsPanel';
+import { useAdminData, getInitialAuthorFormState } from './hooks/useAdminData';
+import type { AdminTab, SystemUser, AuthorFormState } from './types';
 
 export default function AdminDashboardPage() {
   const { user: currentUser, logout } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // Estados para gerenciamento de artigos
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [scheduledArticles, setScheduledArticles] = useState<ScheduledArticle[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    published: 0,
-    breaking: 0,
-    featured: 0,
-    scheduled: 0,
-    totalViews: 0,
-    totalLikes: 0,
-    byCategory: { economia: 0, geopolitica: 0, tecnologia: 0 },
-  });
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Configurações globais
-  const [appSettings, setAppSettings] = useState<AppSettings>({
-    readingLimitEnabled: true,
-    readingLimitPercentage: 0.2,
-    maxFreeArticles: 3,
-    readingLimitScope: 'anon',
-  });
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
-  const [isSettingsSaving, setIsSettingsSaving] = useState(false);
-  
-  // Estados para usuários
-  const [users, setUsers] = useState<SystemUser[]>([]);
-  const [userSearch, setUserSearch] = useState('');
-  const [userToDelete, setUserToDelete] = useState<SystemUser | null>(null);
-  const [userToEdit, setUserToEdit] = useState<SystemUser | null>(null);
+  // Tabs
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Calendário
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Dialogs
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState<{ slug: string; title: string } | null>(null);
+  const [editScheduledOpen, setEditScheduledOpen] = useState(false);
+  const [scheduledToEdit, setScheduledToEdit] = useState<{ id: string; scheduledDate: string; scheduledTime: string } | null>(null);
+
+  // Formulários
   const [showUserForm, setShowUserForm] = useState(false);
   const [isEditingUser, setIsEditingUser] = useState(false);
-
-  // Estados para autores
-  const [authors, setAuthors] = useState<Author[]>([]);
-  const [authorSearch, setAuthorSearch] = useState('');
-  const [authorToDelete, setAuthorToDelete] = useState<Author | null>(null);
-  const [authorToEdit, setAuthorToEdit] = useState<Author | null>(null);
-  const [showAuthorForm, setShowAuthorForm] = useState(false);
-  const [isEditingAuthor, setIsEditingAuthor] = useState(false);
-  
-  // Form de usuário
-  const [userFormData, setUserFormData] = useState<
-    Partial<SystemUser> & { password?: string; confirmPassword?: string }
-  >({
+  const [userToEdit, setUserToEdit] = useState<SystemUser | null>(null);
+  const [userFormData, setUserFormData] = useState<Partial<SystemUser> & { password?: string; confirmPassword?: string }>({
     name: '',
     email: '',
     role: 'user',
@@ -176,82 +111,51 @@ export default function AdminDashboardPage() {
     confirmPassword: '',
   });
 
-  type AuthorEducationItem = { institution: string; degree: string; year: string };
+  const [showAuthorForm, setShowAuthorForm] = useState(false);
+  const [isEditingAuthor, setIsEditingAuthor] = useState(false);
+  const [authorToEdit, setAuthorToEdit] = useState<Author | null>(null);
+  const [authorFormData, setAuthorFormData] = useState<AuthorFormState>(getInitialAuthorFormState());
 
-  type AuthorFormState = {
-    slug: string;
-    name: string;
-    shortName: string;
-    title: string;
-    bio: string;
-    longBio: string;
-    photo: string;
-    email: string;
-    social: {
-      twitter?: string;
-      linkedin?: string;
-      facebook?: string;
-      instagram?: string;
-    };
-    expertise: string; // comma-separated
-    awards: string; // one per line
-    languages: string; // comma-separated
-    joinedAt: string;
-    isActive: boolean;
-    factChecker: boolean;
-    editor: boolean;
-    education: AuthorEducationItem[];
-  };
+  // Hooks de dados
+  const {
+    articles,
+    scheduledArticles,
+    stats,
+    isLoading,
+    searchTerm,
+    setSearchTerm,
+    categoryFilter,
+    setCategoryFilter,
+    statusFilter,
+    setStatusFilter,
+    currentPage,
+    setCurrentPage,
+    perPage,
+    setPerPage,
+    totalPages,
+    selectedArticles,
+    toggleArticleSelection,
+    selectAllArticles,
+    appSettings,
+    setAppSettings,
+    isSettingsLoading,
+    isSettingsSaving,
+    setIsSettingsSaving,
+    users,
+    loadUsers,
+    authors,
+    loadAuthors,
+    loadData,
 
-  const [authorFormData, setAuthorFormData] = useState<AuthorFormState>({
-    slug: '',
-    name: '',
-    shortName: '',
-    title: '',
-    bio: '',
-    longBio: '',
-    photo: '',
-    email: '',
-    social: {},
-    expertise: '',
-    awards: '',
-    languages: '',
-    joinedAt: '',
-    isActive: true,
-    factChecker: false,
-    editor: false,
-    education: [],
-  });
-  
-  // Filtros de artigos
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<ArticleFilters['status']>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedArticles, setSelectedArticles] = useState<string[]>([]);
+    checkScheduled,
+  } = useAdminData();
 
-  
-  // Calendário
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  
-  // Dialogs
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null);
-
-  const [editScheduledOpen, setEditScheduledOpen] = useState(false);
-  const [scheduledToEdit, setScheduledToEdit] = useState<ScheduledArticle | null>(null);
-  const [bulkActionDialog, setBulkActionDialog] = useState(false);
-  const [dateDetailsOpen, setDateDetailsOpen] = useState(false);
-
-  // Ler hash da URL
+  // Buscar hash da URL
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
       if (hash && ['dashboard', 'noticias', 'agendamentos', 'usuarios', 'autores', 'settings'].includes(hash)) {
-        setActiveTab(hash);
+        setActiveTab(hash as AdminTab);
       }
     }
   }, []);
@@ -259,195 +163,59 @@ export default function AdminDashboardPage() {
   // Verificar publicações agendadas periodicamente
   useEffect(() => {
     const interval = setInterval(() => {
-    void (async () => {
-      const published = await checkAndPublishScheduled();
-      if (published > 0) {
-        toast.success(`${published} artigo(s) agendado(s) publicado(s)!`);
-        await loadData();
-      }
-    })();
-  }, 60000);
-    
+      void checkScheduled();
+    }, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [checkScheduled]);
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    
-    const filters: ArticleFilters = {
-      search: searchTerm,
-      category: categoryFilter,
-      status: statusFilter,
-    };
-    
-    const result = await getArticlesPaginated(filters, currentPage, perPage, { includeDrafts: true });
-    setArticles(result.items);
-    setTotalPages(result.totalPages);
-    
-    setStats(await getArticleStats());
-    setScheduledArticles((await getScheduledArticles()).filter(s => s.status === 'pending'));
-    
-    loadUsers();
-    loadAuthors();
-    
-    setIsLoading(false);
-  }, [searchTerm, categoryFilter, statusFilter, currentPage, perPage]);
-
-  const loadUsers = async () => {
-    try {
-      const data = await listAdminUsers();
-      setUsers(data);
-    } catch (error) {
-      // Erro silenciado em produção
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.error('Erro ao carregar usuários:', error);
-      }
-      toast.error('Erro ao carregar usuários');
-    }
-  };
-
-  const loadAuthors = async () => {
-    try {
-      const data = await listAdminAuthors();
-      setAuthors(data);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.error('Erro ao carregar autores:', error);
-      }
-      toast.error('Erro ao carregar autores');
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadSettings = async () => {
-      try {
-        const data = await getAppSettings();
-        if (isMounted) setAppSettings(data);
-      } catch (error) {
-        // Erro silenciado em produção
-        if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console
-          console.error('Erro ao carregar configurações:', error);
-        }
-      } finally {
-        if (isMounted) setIsSettingsLoading(false);
-      }
-    };
-
-    void loadSettings();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, categoryFilter, statusFilter]);
-
-  // Funções do calendário
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDay = firstDay.getDay();
-    
-    const days = [];
-    
-    for (let i = 0; i < startingDay; i++) {
-      days.push(null);
-    }
-    
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-    
-    return days;
-  };
-
-  const getScheduledForDate = (day: number) => {
-    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return scheduledArticles.filter(s => s.scheduledDate === dateStr);
-  };
-
-  const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-  ];
-
-  const prevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-  };
-
-  const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-  };
-
-  const handleDateClick = (day: number) => {
-    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    setSelectedDate(dateStr);
-    setDateDetailsOpen(true);
-  };
-
-  const handleDelete = (article: NewsArticle) => {
+  // Handlers de artigos
+  const handleDelete = useCallback((article: { slug: string; title: string }) => {
     setArticleToDelete(article);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (!articleToDelete) return;
-    
     const success = await deleteArticle(articleToDelete.slug);
     if (success) {
       toast.success(`Artigo "${articleToDelete.title}" excluído!`);
-      loadData();
+      await loadData();
     }
     setDeleteDialogOpen(false);
-  };
+  }, [articleToDelete, loadData]);
 
-  const handleDuplicate = async (article: NewsArticle) => {
+  const handleDuplicate = useCallback(async (article: { slug: string; title: string }) => {
     const newArticle = await duplicateArticle(article.slug);
     if (newArticle) {
       toast.success(`Artigo "${article.title}" duplicado!`);
-      loadData();
+      await loadData();
     }
-  };
+  }, [loadData]);
 
-  const handleCancelScheduled = async (id: string) => {
+  const handleCancelScheduled = useCallback(async (id: string) => {
     await cancelScheduledArticle(id);
     toast.success('Agendamento cancelado!');
-    loadData();
-  };
+    await loadData();
+  }, [loadData]);
 
-  const handleEditScheduled = (scheduled: ScheduledArticle) => {
+  const handleEditScheduled = useCallback((scheduled: { id: string; scheduledDate: string; scheduledTime: string }) => {
     setScheduledToEdit(scheduled);
     setEditScheduledOpen(true);
-  };
+  }, []);
 
-  const saveScheduledChanges = async () => {
+  const saveScheduledChanges = useCallback(async () => {
     if (!scheduledToEdit) return;
-    
     await updateScheduledArticle(scheduledToEdit.id, {
       scheduledDate: scheduledToEdit.scheduledDate,
       scheduledTime: scheduledToEdit.scheduledTime,
     });
-    
     toast.success('Agendamento atualizado!');
     setEditScheduledOpen(false);
-    loadData();
-  };
+    await loadData();
+  }, [scheduledToEdit, loadData]);
 
-  // Funções de usuários
-  const handleAddUser = () => {
+  // Handlers de usuários
+  const handleAddUser = useCallback(() => {
     setIsEditingUser(false);
     setUserFormData({
       name: '',
@@ -462,9 +230,9 @@ export default function AdminDashboardPage() {
       confirmPassword: '',
     });
     setShowUserForm(true);
-  };
+  }, []);
 
-  const handleEditUser = (user: SystemUser) => {
+  const handleEditUser = useCallback((user: SystemUser) => {
     setIsEditingUser(true);
     setUserToEdit(user);
     setUserFormData({
@@ -480,9 +248,9 @@ export default function AdminDashboardPage() {
       confirmPassword: '',
     });
     setShowUserForm(true);
-  };
+  }, []);
 
-  const saveUser = async () => {
+  const saveUser = useCallback(async () => {
     if (!userFormData.name || !userFormData.email) {
       toast.error('Nome e email são obrigatórios!');
       return;
@@ -538,73 +306,47 @@ export default function AdminDashboardPage() {
       }
 
       setShowUserForm(false);
-      loadUsers();
+      await loadUsers();
     } catch {
       toast.error('Erro ao salvar usuário');
     }
-  };
+  }, [userFormData, isEditingUser, userToEdit, loadUsers]);
 
-  const handleDeleteUser = (user: SystemUser) => {
-    setUserToDelete(user);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
-    
-    if (userToDelete.id === currentUser?.id) {
+  const handleDeleteUser = useCallback(async (user: SystemUser) => {
+    if (user.id === currentUser?.id) {
       toast.error('Você não pode excluir sua própria conta!');
-      setUserToDelete(null);
       return;
     }
-    
     try {
-      await deleteAdminUser({ userId: userToDelete.id });
-      toast.success(`Usuário "${userToDelete.name}" excluído!`);
-      setUserToDelete(null);
-      loadUsers();
+      await deleteAdminUser({ userId: user.id });
+      toast.success(`Usuário "${user.name}" excluído!`);
+      await loadUsers();
     } catch {
       toast.error('Erro ao excluir usuário');
     }
-  };
+  }, [currentUser?.id, loadUsers]);
 
-  const splitCommaList = (value: string) =>
+  // Handlers de autores
+  const splitCommaList = useCallback((value: string) =>
     value
       .split(',')
       .map((s) => s.trim())
-      .filter(Boolean);
+      .filter(Boolean), []);
 
-  const splitLinesList = (value: string) =>
+  const splitLinesList = useCallback((value: string) =>
     value
       .split(/\r?\n/)
       .map((s) => s.trim())
-      .filter(Boolean);
+      .filter(Boolean), []);
 
-  const handleAddAuthor = () => {
+  const handleAddAuthor = useCallback(() => {
     setIsEditingAuthor(false);
     setAuthorToEdit(null);
-    setAuthorFormData({
-      slug: '',
-      name: '',
-      shortName: '',
-      title: '',
-      bio: '',
-      longBio: '',
-      photo: '',
-      email: '',
-      social: {},
-      expertise: '',
-      awards: '',
-      languages: '',
-      joinedAt: new Date().toISOString().split('T')[0],
-      isActive: true,
-      factChecker: false,
-      editor: false,
-      education: [],
-    });
+    setAuthorFormData(getInitialAuthorFormState());
     setShowAuthorForm(true);
-  };
+  }, []);
 
-  const handleEditAuthor = (author: Author) => {
+  const handleEditAuthor = useCallback((author: Author) => {
     setIsEditingAuthor(true);
     setAuthorToEdit(author);
     setAuthorFormData({
@@ -627,29 +369,25 @@ export default function AdminDashboardPage() {
       education: author.education ?? [],
     });
     setShowAuthorForm(true);
-  };
+  }, []);
 
-  const saveAuthor = async () => {
+  const saveAuthor = useCallback(async () => {
     if (!authorFormData.name.trim()) {
       toast.error('Nome é obrigatório');
       return;
     }
-
     if (!authorFormData.slug.trim()) {
       toast.error('Slug é obrigatório');
       return;
     }
-
     if (!authorFormData.shortName.trim()) {
       toast.error('Nome curto é obrigatório');
       return;
     }
-
     if (!authorFormData.title.trim()) {
       toast.error('Cargo/título é obrigatório');
       return;
     }
-
     if (!authorFormData.bio.trim()) {
       toast.error('Bio curta é obrigatória');
       return;
@@ -661,7 +399,6 @@ export default function AdminDashboardPage() {
       toast.error('Foto (caminho em /public) é obrigatória');
       return;
     }
-
     if (!authorFormData.email.trim()) {
       toast.error('Email é obrigatório');
       return;
@@ -702,7 +439,6 @@ export default function AdminDashboardPage() {
       if (isEditingAuthor && authorToEdit) {
         const updates: Partial<Author> = { ...payload };
         delete (updates as Partial<Author> & { slug?: string }).slug;
-
         await updateAdminAuthor({ slug: authorToEdit.slug, updates });
         toast.success('Autor atualizado com sucesso!');
       } else {
@@ -711,39 +447,34 @@ export default function AdminDashboardPage() {
       }
 
       setShowAuthorForm(false);
-      loadAuthors();
+      await loadAuthors();
     } catch {
       toast.error('Erro ao salvar autor');
     }
-  };
+  }, [authorFormData, isEditingAuthor, authorToEdit, splitCommaList, splitLinesList, loadAuthors]);
 
-  const handleDeleteAuthor = (author: Author) => {
-    setAuthorToDelete(author);
-  };
-
-  const confirmDeleteAuthor = async () => {
-    if (!authorToDelete) return;
+  const handleDeleteAuthor = useCallback(async (author: Author) => {
     try {
-      await deleteAdminAuthor({ slug: authorToDelete.slug });
-      toast.success(`Autor "${authorToDelete.name}" desativado!`);
-      setAuthorToDelete(null);
-      loadAuthors();
+      await deleteAdminAuthor({ slug: author.slug });
+      toast.success(`Autor "${author.name}" desativado!`);
+      await loadAuthors();
     } catch {
       toast.error('Erro ao desativar autor');
     }
-  };
+  }, [loadAuthors]);
 
-  const handleRestoreAuthor = async (author: Author) => {
+  const handleRestoreAuthor = useCallback(async (author: Author) => {
     try {
       await restoreAdminAuthor({ slug: author.slug });
       toast.success(`Autor "${author.name}" reativado!`);
-      loadAuthors();
+      await loadAuthors();
     } catch {
       toast.error('Erro ao reativar autor');
     }
-  };
+  }, [loadAuthors]);
 
-  const saveAppSettings = async () => {
+  // Handlers de configurações
+  const saveAppSettings = useCallback(async () => {
     setIsSettingsSaving(true);
     try {
       await updateAppSettings(appSettings);
@@ -753,45 +484,37 @@ export default function AdminDashboardPage() {
     } finally {
       setIsSettingsSaving(false);
     }
-  };
+  }, [appSettings, setIsSettingsSaving]);
 
-  const toggleArticleSelection = (slug: string) => {
-    setSelectedArticles(prev => 
-      prev.includes(slug) 
-        ? prev.filter(s => s !== slug)
-        : [...prev, slug]
-    );
-  };
-
-  const selectAllArticles = () => {
-    if (selectedArticles.length === articles.length) {
-      setSelectedArticles([]);
-    } else {
-      setSelectedArticles(articles.map(a => a.slug));
+  const handleReset = useCallback(async () => {
+    if (confirm('ATENÇÃO: Isso apagará todas as alterações. Continuar?')) {
+      await resetToDefault();
+      toast.success('Dados resetados!');
+      await loadData();
     }
-  };
+  }, [loadData]);
 
-  const handleBulkDelete = async () => {
-    if (selectedArticles.length === 0) return;
-    
-    let deleted = 0;
-    for (const slug of selectedArticles) {
-      if (await deleteArticle(slug)) deleted++;
+  const handleAssignPostsToAdmin = useCallback(async () => {
+    if (!currentUser?.id) {
+      toast.error('Admin não identificado');
+      return;
     }
-    
-    toast.success(`${deleted} artigo(s) excluído(s)!`);
-    setSelectedArticles([]);
-    setBulkActionDialog(false);
-    loadData();
-  };
+    if (!confirm('Atribuir todos os posts ao admin atual?')) return;
+    try {
+      const count = await assignAllArticlesToAuthor(currentUser.id, currentUser.name || 'Admin PEM');
+      toast.success(`${count} post(s) atribuídos ao admin atual`);
+      await loadData();
+    } catch {
+      toast.error('Erro ao atribuir posts ao admin');
+    }
+  }, [currentUser, loadData]);
 
-  const exportData = async () => {
+  const handleExport = useCallback(async () => {
     const data = {
       articles: await getAllArticles({ includeDrafts: true }),
       scheduled: await getScheduledArticles(),
       exportedAt: new Date().toISOString(),
     };
-    
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -800,25 +523,33 @@ export default function AdminDashboardPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Backup exportado!');
-  };
+  }, []);
 
-  const exportUsersCSV = () => {
+  const handleCheckScheduled = useCallback(async () => {
+    const published = await checkScheduled();
+    if (published === 0) {
+      toast.info('Nenhum artigo para publicar');
+    }
+  }, [checkScheduled]);
+
+  const exportUsersCSV = useCallback(() => {
     const csv = [
       ['ID', 'Nome', 'Email', 'Tipo', 'Região', 'Profissão', 'Empresa', 'Data de Cadastro', 'Último Login', 'Status'].join(','),
-      ...users.map(u => [
-        u.id,
-        `"${u.name}"`,
-        u.email,
-        u.role,
-        u.region || '',
-        u.profession || '',
-        u.company || '',
-        new Date(u.createdAt).toLocaleDateString('pt-BR'),
-        new Date(u.lastLogin).toLocaleDateString('pt-BR'),
-        u.isActive ? 'Ativo' : 'Inativo',
-      ].join(',')),
+      ...users.map((u) =>
+        [
+          u.id,
+          `"${u.name}"`,
+          u.email,
+          u.role,
+          u.region || '',
+          u.profession || '',
+          u.company || '',
+          new Date(u.createdAt).toLocaleDateString('pt-BR'),
+          new Date(u.lastLogin).toLocaleDateString('pt-BR'),
+          u.isActive ? 'Ativo' : 'Inativo',
+        ].join(',')
+      ),
     ].join('\n');
-    
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -827,69 +558,50 @@ export default function AdminDashboardPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Usuários exportados!');
-  };
+  }, [users]);
 
-  const handleAssignPostsToAdmin = async () => {
-    if (!currentUser?.id) {
-      toast.error('Admin não identificado');
-      return;
-    }
+  // Handlers de calendário
+  const prevMonth = useCallback(() => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  }, [currentMonth]);
 
-    if (!confirm('Atribuir todos os posts ao admin atual?')) return;
+  const nextMonth = useCallback(() => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  }, [currentMonth]);
 
-    try {
-      const count = await assignAllArticlesToAuthor(
-        currentUser.id,
-        currentUser.name || 'Admin PEM'
-      );
-      toast.success(`${count} post(s) atribuídos ao admin atual`);
-      loadData();
-    } catch {
-      toast.error('Erro ao atribuir posts ao admin');
-    }
-  };
+  const handleDateClick = useCallback((day: number) => {
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setSelectedDate(dateStr);
+  }, [currentMonth]);
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(userSearch.toLowerCase())
-  );
-
-  const filteredAuthors = authors.filter((a) => {
-    const q = authorSearch.toLowerCase();
-    if (!q) return true;
-    return (
-      a.name.toLowerCase().includes(q) ||
-      a.slug.toLowerCase().includes(q) ||
-      a.title.toLowerCase().includes(q)
-    );
-  });
-
-  const topArticles = [...articles]
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
-
+  // Alertas
   const alerts = [];
   if (stats.scheduled > 0) {
-    alerts.push({ type: 'info', message: `${stats.scheduled} artigo(s) agendado(s) para publicação` });
+    alerts.push({ type: 'info' as const, message: `${stats.scheduled} artigo(s) agendado(s) para publicação` });
   }
   if (selectedArticles.length > 0) {
-    alerts.push({ type: 'warning', message: `${selectedArticles.length} artigo(s) selecionado(s)` });
+    alerts.push({ type: 'warning' as const, message: `${selectedArticles.length} artigo(s) selecionado(s)` });
   }
 
-  const calendarDays = getDaysInMonth(currentMonth);
-  const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
   // Navegação mobile
-  const TabButton = ({ value, icon: Icon, label, count }: { value: string; icon: React.ComponentType<{ className?: string }>; label: string; count?: number }) => (
+  const TabButton = ({
+    value,
+    icon: Icon,
+    label,
+    count,
+  }: {
+    value: AdminTab;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    count?: number;
+  }) => (
     <button
       onClick={() => {
         setActiveTab(value);
         setMobileMenuOpen(false);
       }}
       className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors w-full ${
-        activeTab === value
-          ? 'bg-[#c40000] text-white'
-          : 'text-[#6b6b6b] hover:bg-[#f5f5f5]'
+        activeTab === value ? 'bg-[#c40000] text-white' : 'text-[#6b6b6b] hover:bg-[#f5f5f5]'
       }`}
     >
       <Icon className="w-5 h-5" />
@@ -904,7 +616,6 @@ export default function AdminDashboardPage() {
 
   return (
     <>
-
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-[#e5e5e5]">
         <div className="flex items-center justify-between px-4 py-3">
@@ -923,12 +634,12 @@ export default function AdminDashboardPage() {
             </Button>
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="border-t border-[#e5e5e5] p-4 bg-white">
             <nav className="space-y-1">
-              <TabButton value="dashboard" icon={PieChart} label="Dashboard" />
+              <TabButton value="dashboard" icon={LayoutDashboard} label="Dashboard" />
               <TabButton value="noticias" icon={Newspaper} label="Notícias" count={stats.total} />
               <TabButton value="agendamentos" icon={Calendar} label="Calendário" count={stats.scheduled} />
               <TabButton value="usuarios" icon={UserCog} label="Usuários" count={users.length} />
@@ -953,9 +664,9 @@ export default function AdminDashboardPage() {
               </p>
             </section>
           </section>
-          
+
           <section className="flex items-center gap-2">
-            <Button variant="outline" onClick={exportData} className="gap-2">
+            <Button variant="outline" onClick={handleExport} className="gap-2">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Exportar</span>
             </Button>
@@ -970,11 +681,14 @@ export default function AdminDashboardPage() {
         {alerts.length > 0 && (
           <section className="space-y-2 mb-4 sm:mb-6">
             {alerts.map((alert, index) => (
-              <aside key={index} className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
-                alert.type === 'warning' 
-                  ? 'bg-orange-50 border border-orange-200' 
-                  : 'bg-blue-50 border border-blue-200'
-              }`}>
+              <aside
+                key={index}
+                className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                  alert.type === 'warning'
+                    ? 'bg-orange-50 border border-orange-200'
+                    : 'bg-blue-50 border border-blue-200'
+                }`}
+              >
                 {alert.type === 'warning' ? (
                   <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0" />
                 ) : (
@@ -983,16 +697,6 @@ export default function AdminDashboardPage() {
                 <p className={`flex-1 ${alert.type === 'warning' ? 'text-orange-800' : 'text-blue-800'}`}>
                   {alert.message}
                 </p>
-                {selectedArticles.length > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-orange-600"
-                    onClick={() => setBulkActionDialog(true)}
-                  >
-                    Ações
-                  </Button>
-                )}
               </aside>
             ))}
           </section>
@@ -1000,31 +704,39 @@ export default function AdminDashboardPage() {
 
         {/* Tabs Desktop */}
         <div className="hidden lg:block mb-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AdminTab)}>
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="dashboard" className="gap-2">
-                <PieChart className="w-4 h-4" />
+                <LayoutDashboard className="w-4 h-4" />
                 Dashboard
               </TabsTrigger>
               <TabsTrigger value="noticias" className="gap-2">
                 <Newspaper className="w-4 h-4" />
                 Notícias
-                <Badge variant="secondary" className="ml-1">{stats.total}</Badge>
+                <Badge variant="secondary" className="ml-1">
+                  {stats.total}
+                </Badge>
               </TabsTrigger>
               <TabsTrigger value="agendamentos" className="gap-2">
                 <Calendar className="w-4 h-4" />
                 Calendário
-                <Badge variant="secondary" className="ml-1">{stats.scheduled}</Badge>
+                <Badge variant="secondary" className="ml-1">
+                  {stats.scheduled}
+                </Badge>
               </TabsTrigger>
               <TabsTrigger value="usuarios" className="gap-2">
                 <UserCog className="w-4 h-4" />
                 Usuários
-                <Badge variant="secondary" className="ml-1">{users.length}</Badge>
+                <Badge variant="secondary" className="ml-1">
+                  {users.length}
+                </Badge>
               </TabsTrigger>
               <TabsTrigger value="autores" className="gap-2">
                 <Users className="w-4 h-4" />
                 Autores
-                <Badge variant="secondary" className="ml-1">{authors.length}</Badge>
+                <Badge variant="secondary" className="ml-1">
+                  {authors.length}
+                </Badge>
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-2">
                 <Settings className="w-4 h-4" />
@@ -1036,961 +748,96 @@ export default function AdminDashboardPage() {
 
         {/* Conteúdo das Tabs */}
         <div className="space-y-4">
-          {/* TAB DASHBOARD */}
           {activeTab === 'dashboard' && (
-            <section className="space-y-4 sm:space-y-6">
-              {/* Stats Grid - Responsivo */}
-              <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
-                {[
-                  { icon: FileText, label: 'Total', value: stats.total, color: 'text-[#3b82f6]', bg: 'bg-[#dbeafe]' },
-                  { icon: CheckCircle, label: 'Publicados', value: stats.published, color: 'text-[#22c55e]', bg: 'bg-[#dcfce7]' },
-                  { icon: Zap, label: 'Urgentes', value: stats.breaking, color: 'text-[#c40000]', bg: 'bg-[#fef2f2]' },
-                  { icon: Star, label: 'Destaques', value: stats.featured, color: 'text-[#a16207]', bg: 'bg-[#fef3c7]' },
-                  { icon: Clock, label: 'Agendados', value: stats.scheduled, color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { icon: TrendingUp, label: 'Views', value: (stats.totalViews / 1000).toFixed(1) + 'k', color: 'text-[#111111]', bg: 'bg-gray-100' },
-                ].map((stat, index) => (
-                  <article key={index} className={`p-3 sm:p-4 ${stat.bg} rounded-xl`}>
-                    <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color} mb-2`} />
-                    <p className="text-xl sm:text-2xl font-bold text-[#111111]">{stat.value}</p>
-                    <p className="text-xs text-[#6b6b6b]">{stat.label}</p>
-                  </article>
-                ))}
-              </section>
-
-              {/* Grid Principal */}
-              <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                {/* Ações Rápidas */}
-                <article className="bg-white border border-[#e5e5e5] rounded-xl p-4 sm:p-6">
-                  <h2 className="text-lg font-bold text-[#111111] mb-4">Ações Rápidas</h2>
-                  <ul className="space-y-2">
-                    <li>
-                      <Button 
-                        className="w-full bg-[#c40000] hover:bg-[#a00000] gap-2"
-                        onClick={() => router.push('/admin/noticias/novo')}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Nova Notícia
-                      </Button>
-                    </li>
-                    <li>
-                      <Button 
-                        variant="outline" 
-                        className="w-full gap-2" 
-                        onClick={() => setActiveTab('noticias')}
-                      >
-                        <FileText className="w-4 h-4" />
-                        Lista de Notícias
-                      </Button>
-                    </li>
-                    <li>
-                      <Button 
-                        variant="outline" 
-                        className="w-full gap-2" 
-                        onClick={() => setActiveTab('agendamentos')}
-                      >
-                        <Calendar className="w-4 h-4" />
-                        Ver Calendário
-                      </Button>
-                    </li>
-                    <li>
-                      <Button 
-                        variant="outline" 
-                        className="w-full gap-2" 
-                        onClick={() => setActiveTab('usuarios')}
-                      >
-                        <Users className="w-4 h-4" />
-                        Gerenciar Usuários
-                      </Button>
-                    </li>
-                  </ul>
-                </article>
-
-                {/* Artigos Mais Lidos */}
-                <article className="lg:col-span-2 bg-white border border-[#e5e5e5] rounded-xl p-4 sm:p-6">
-                  <header className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-[#111111]">Artigos Mais Lidos</h2>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('noticias')}>
-                      Ver todos <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </header>
-                  
-                  {topArticles.length > 0 ? (
-                    <ul className="space-y-3">
-                      {topArticles.map((article, index) => (
-                        <li key={article.slug}>
-                          <article className="flex items-center gap-3 p-3 bg-[#f8fafb] rounded-lg">
-                            <span className="w-8 h-8 rounded-full bg-[#c40000] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-                              {index + 1}
-                            </span>
-                            <section className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[#111111] truncate">{article.title}</p>
-                              <p className="text-xs text-[#6b6b6b]">
-                                {article.views.toLocaleString('pt-BR')} visualizações
-                              </p>
-                            </section>
-                            <section className="flex items-center gap-1">
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(`/noticias/${article.slug}`, '_blank')}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => router.push(`/admin/noticias/editar/${article.slug}`)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                            </section>
-                          </article>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-center text-[#6b6b6b] py-8">Nenhum artigo encontrado</p>
-                  )}
-                </article>
-              </section>
-            </section>
+            <DashboardStats
+              stats={stats}
+              topArticles={[...articles].sort((a, b) => b.views - a.views).slice(0, 5)}
+              onNewArticle={() => router.push('/admin/noticias/novo')}
+              onViewArticles={() => setActiveTab('noticias')}
+              onViewCalendar={() => setActiveTab('agendamentos')}
+              onManageUsers={() => setActiveTab('usuarios')}
+            />
           )}
 
-          {/* TAB NOTICIAS */}
           {activeTab === 'noticias' && (
-            <section className="space-y-4">
-              {/* Filtros - Responsivo */}
-              <section className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <section className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
-                  <Input
-                    placeholder="Buscar artigos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </section>
-                
-                {/* Filtros em dropdown no mobile */}
-                <div className="flex gap-2">
-                  <select 
-                    value={categoryFilter} 
-                    onChange={(e) => setCategoryFilter(e.target.value)} 
-                    className="flex-1 sm:flex-none px-3 py-2 border rounded-md text-sm"
-                  >
-                    <option value="all">Todas categorias</option>
-                    {Object.values(CONTENT_CONFIG.categories).map(cat => (
-                      <option key={cat.slug} value={cat.slug}>{cat.name}</option>
-                    ))}
-                  </select>
-                  <select 
-                    value={statusFilter} 
-                    onChange={(e) => setStatusFilter(e.target.value as ArticleFilters['status'])} 
-                    className="flex-1 sm:flex-none px-3 py-2 border rounded-md text-sm"
-                  >
-                    <option value="all">Todos status</option>
-                    <option value="published">Publicado</option>
-                    <option value="breaking">Urgente</option>
-                    <option value="featured">Destaque</option>
-                  </select>
-                  <Button 
-                    className="bg-[#c40000] hover:bg-[#a00000] gap-2 whitespace-nowrap"
-                    onClick={() => router.push('/admin/noticias/novo')}
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Novo</span>
-                  </Button>
-                </div>
-              </section>
-
-              {/* Lista de Artigos - Cards no mobile, tabela no desktop */}
-              <section className="bg-white border rounded-xl overflow-hidden">
-                {isLoading ? (
-                  <section className="p-12 text-center">
-                    <section className="w-8 h-8 border-2 border-[#e5e5e5] border-t-[#c40000] rounded-full animate-spin mx-auto" />
-                  </section>
-                ) : (
-                  <>
-                    {/* Desktop: Tabela */}
-                    <div className="hidden md:block">
-                      <table className="w-full">
-                        <thead className="bg-[#f9fafb] border-b">
-                          <tr>
-                            <th className="px-4 py-3 w-10">
-                              <input 
-                                type="checkbox" 
-                                checked={selectedArticles.length === articles.length && articles.length > 0} 
-                                onChange={selectAllArticles} 
-                              />
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Artigo</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Categoria</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Views</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {articles.map((article) => (
-                            <tr key={article.slug} className={`hover:bg-[#f9fafb] ${selectedArticles.includes(article.slug) ? 'bg-[#fef2f2]' : ''}`}>
-                              <td className="px-4 py-3">
-                                <input 
-                                  type="checkbox" 
-                                  checked={selectedArticles.includes(article.slug)} 
-                                  onChange={() => toggleArticleSelection(article.slug)} 
-                                />
-                              </td>
-                              <td className="px-4 py-3">
-                                <section className="flex items-center gap-3">
-                                  <img src={article.coverImage} alt="" className="w-12 h-12 rounded object-cover" />
-                                  <section>
-                                    <p className="font-medium text-sm">{article.title}</p>
-                                    <p className="text-xs text-[#6b6b6b]">por {article.author}</p>
-                                  </section>
-                                </section>
-                              </td>
-                              <td className="px-4 py-3">
-                                <Badge variant="secondary">{CONTENT_CONFIG.categories[article.category as keyof typeof CONTENT_CONFIG.categories]?.name}</Badge>
-                              </td>
-                              <td className="px-4 py-3">
-                                {article.breaking ? (
-                                  <Badge className="bg-[#fef2f2] text-[#c40000]"><Zap className="w-3 h-3 mr-1" />Urgente</Badge>
-                                ) : article.featured ? (
-                                  <Badge className="bg-[#fefce8] text-[#a16207]"><Star className="w-3 h-3 mr-1" />Destaque</Badge>
-                                ) : (
-                                  <Badge className="bg-[#f0fdf4] text-[#166534]">Publicado</Badge>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-[#6b6b6b]">{article.views.toLocaleString('pt-BR')}</td>
-                              <td className="px-4 py-3">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="w-4 h-4" /></Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => window.open(`/noticias/${article.slug}`, '_blank')}>
-                                      <Eye className="w-4 h-4 mr-2" /> Visualizar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => router.push(`/admin/noticias/editar/${article.slug}`)}>
-                                      <Edit2 className="w-4 h-4 mr-2" /> Editar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDuplicate(article)}>
-                                      <Copy className="w-4 h-4 mr-2" /> Duplicar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => handleDelete(article)} className="text-[#ef4444]">
-                                      <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Mobile: Cards */}
-                    <div className="md:hidden">
-                      {articles.map((article) => (
-                        <article key={article.slug} className="p-4 border-b last:border-b-0">
-                          <div className="flex gap-3">
-                            <input 
-                              type="checkbox" 
-                              checked={selectedArticles.includes(article.slug)}
-                              onChange={() => toggleArticleSelection(article.slug)}
-                              className="mt-1"
-                            />
-                            <img src={article.coverImage} alt="" className="w-20 h-20 rounded object-cover flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-sm text-[#111111] line-clamp-2">{article.title}</h3>
-                              <p className="text-xs text-[#6b6b6b] mt-1">{article.author}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                {article.breaking ? (
-                                  <Badge className="text-xs bg-[#fef2f2] text-[#c40000]">Urgente</Badge>
-                                ) : article.featured ? (
-                                  <Badge className="text-xs bg-[#fefce8] text-[#a16207]">Destaque</Badge>
-                                ) : (
-                                  <Badge className="text-xs bg-[#f0fdf4] text-[#166534]">Publicado</Badge>
-                                )}
-                                <span className="text-xs text-[#6b6b6b]">{article.views.toLocaleString('pt-BR')} views</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 mt-3">
-                            <Button variant="outline" size="sm" className="flex-1" onClick={() => window.open(`/noticias/${article.slug}`, '_blank')}>
-                              <Eye className="w-4 h-4 mr-1" /> Ver
-                            </Button>
-                            <Button variant="outline" size="sm" className="flex-1" onClick={() => router.push(`/admin/noticias/editar/${article.slug}`)}>
-                              <Edit2 className="w-4 h-4 mr-1" /> Editar
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-[#ef4444]" onClick={() => handleDelete(article)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-
-                    {/* Paginação */}
-                    {totalPages > 1 && (
-                      <section className="flex flex-col sm:flex-row items-center justify-between px-4 py-4 border-t gap-4">
-                        <section className="flex items-center gap-2">
-                          <span className="text-sm text-[#6b6b6b]">Itens:</span>
-                          <select 
-                            value={perPage} 
-                            onChange={(e) => setPerPage(Number(e.target.value))} 
-                            className="px-2 py-1 border rounded text-sm"
-                          >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                          </select>
-                        </section>
-                        <section className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-                          <span className="text-sm text-[#6b6b6b]">Página {currentPage} de {totalPages}</span>
-                          <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
-                        </section>
-                      </section>
-                    )}
-                  </>
-                )}
-              </section>
-            </section>
+            <ArticleTable
+              articles={articles}
+              isLoading={isLoading}
+              searchTerm={searchTerm}
+              categoryFilter={categoryFilter}
+              statusFilter={statusFilter}
+              currentPage={currentPage}
+              perPage={perPage}
+              totalPages={totalPages}
+              selectedArticles={selectedArticles}
+              onSearchChange={setSearchTerm}
+              onCategoryChange={setCategoryFilter}
+              onStatusChange={setStatusFilter}
+              onPageChange={setCurrentPage}
+              onPerPageChange={setPerPage}
+              onToggleSelection={toggleArticleSelection}
+              onSelectAll={selectAllArticles}
+              onViewArticle={(slug) => window.open(`/noticias/${slug}`, '_blank')}
+              onEditArticle={(slug) => router.push(`/admin/noticias/editar/${slug}`)}
+              onDuplicateArticle={(article) => handleDuplicate(article)}
+              onDeleteArticle={(article) => handleDelete(article)}
+              onNewArticle={() => router.push('/admin/noticias/novo')}
+            />
           )}
 
-          {/* TAB CALENDÁRIO */}
           {activeTab === 'agendamentos' && (
-            <section className="space-y-4">
-              <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                {/* Calendário */}
-                <article className="lg:col-span-2 bg-white border rounded-xl p-4 sm:p-6">
-                  <header className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h2 className="text-lg font-bold text-[#111111]">
-                      {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                    </h2>
-                    <section className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={prevMonth}>
-                        <ChevronLeftIcon className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={nextMonth}>
-                        <ChevronRightIcon className="w-4 h-4" />
-                      </Button>
-                    </section>
-                  </header>
-
-                  {/* Dias da semana */}
-                  <section className="grid grid-cols-7 gap-1 mb-2">
-                    {weekDays.map(day => (
-                      <section key={day} className="text-center text-xs sm:text-sm font-medium text-[#6b6b6b] py-2">
-                        {day}
-                      </section>
-                    ))}
-                  </section>
-
-                  {/* Dias do mês */}
-                  <section className="grid grid-cols-7 gap-1">
-                    {calendarDays.map((day, index) => {
-                      if (day === null) {
-                        return <section key={`empty-${index}`} className="aspect-square" />;
-                      }
-
-                      const scheduledForDay = getScheduledForDate(day);
-                      const hasScheduled = scheduledForDay.length > 0;
-
-                      return (
-                        <button
-                          key={day}
-                          onClick={() => hasScheduled && handleDateClick(day)}
-                          className={`aspect-square p-1 sm:p-2 rounded-lg border transition-all relative ${
-                            hasScheduled 
-                              ? 'bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer' 
-                              : 'bg-white border-gray-100 hover:bg-gray-50'
-                          }`}
-                        >
-                          <span className="text-xs sm:text-sm font-medium">{day}</span>
-                          {hasScheduled && (
-                            <section className="absolute bottom-0.5 right-0.5 left-0.5">
-                              <Badge className="w-full justify-center text-xs sm:text-xs bg-blue-600 text-white px-0.5">
-                                {scheduledForDay.length}
-                              </Badge>
-                            </section>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </section>
-
-                  {/* Legenda */}
-                  <section className="flex items-center gap-4 mt-4 text-xs sm:text-sm text-[#6b6b6b]">
-                    <section className="flex items-center gap-2">
-                      <section className="w-4 h-4 bg-blue-50 border border-blue-300 rounded" />
-                      <span>Com agendamentos</span>
-                    </section>
-                  </section>
-                </article>
-
-                {/* Lista de Agendados */}
-                <article className="bg-white border rounded-xl p-4 sm:p-6">
-                  <header className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-[#111111]">Agendamentos</h2>
-                    <Badge variant="secondary">{scheduledArticles.length}</Badge>
-                  </header>
-
-                  <section className="space-y-3 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
-                    {scheduledArticles.length > 0 ? (
-                      scheduledArticles.map((scheduled) => (
-                        <article key={scheduled.id} className="p-3 bg-[#f8fafb] rounded-lg border">
-                          <p className="font-medium text-sm line-clamp-1">{scheduled.articleData.title}</p>
-                          <p className="text-xs text-[#6b6b6b] mt-1">
-                            <Clock className="w-3 h-3 inline mr-1" />
-                            {new Date(`${scheduled.scheduledDate}T${scheduled.scheduledTime}`).toLocaleString('pt-BR')}
-                          </p>
-                          <section className="flex flex-wrap gap-2 mt-2">
-                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleEditScheduled(scheduled)}>
-                              Editar
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-7 text-xs text-orange-600" onClick={() => handleCancelScheduled(scheduled.id)}>
-                              Cancelar
-                            </Button>
-                          </section>
-                        </article>
-                      ))
-                    ) : (
-                      <p className="text-center text-[#6b6b6b] py-8">Nenhum agendamento</p>
-                    )}
-                  </section>
-
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 gap-2 mt-4"
-                    onClick={() => router.push('/admin/noticias/novo')}
-                  >
-                    <Plus className="w-4 h-4" /> Agendar Novo
-                  </Button>
-                </article>
-              </section>
-            </section>
+            <CalendarView
+              currentMonth={currentMonth}
+              scheduledArticles={scheduledArticles}
+              onPrevMonth={prevMonth}
+              onNextMonth={nextMonth}
+              onDateClick={handleDateClick}
+              onEditScheduled={handleEditScheduled}
+              onCancelScheduled={handleCancelScheduled}
+              onNewScheduled={() => router.push('/admin/noticias/novo')}
+            />
           )}
 
-          {/* TAB USUÁRIOS */}
           {activeTab === 'usuarios' && (
-            <section className="space-y-4">
-              <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <section>
-                  <h2 className="text-lg font-bold text-[#111111]">Gerenciamento de Usuários</h2>
-                  <p className="text-sm text-[#6b6b6b]">{users.length} usuário(s) no sistema</p>
-                </section>
-                <section className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button variant="outline" onClick={exportUsersCSV} className="gap-2 flex-1 sm:flex-none">
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Exportar CSV</span>
-                  </Button>
-                  <Button onClick={handleAddUser} className="bg-[#c40000] hover:bg-[#a00000] gap-2 flex-1 sm:flex-none">
-                    <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Novo Usuário</span>
-                  </Button>
-                </section>
-              </section>
-
-              <section className="flex gap-3">
-                <section className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
-                  <Input 
-                    placeholder="Buscar usuários..." 
-                    value={userSearch} 
-                    onChange={(e) => setUserSearch(e.target.value)} 
-                    className="pl-10" 
-                  />
-                </section>
-              </section>
-
-              {/* Desktop: Tabela / Mobile: Cards */}
-              <section className="bg-white border rounded-xl overflow-hidden">
-                {/* Desktop */}
-                <div className="hidden md:block">
-                  <table className="w-full">
-                    <thead className="bg-[#f9fafb] border-b">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Usuário</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Tipo</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Profissão</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {filteredUsers.map((user) => (
-                        <tr key={user.id} className="hover:bg-[#f9fafb]">
-                          <td className="px-4 py-3">
-                            <section className="flex items-center gap-3">
-                              <section className="w-10 h-10 rounded-full bg-[#e5e5e5] flex items-center justify-center">
-                                <User className="w-5 h-5 text-[#6b6b6b]" />
-                              </section>
-                              <section>
-                                <p className="font-medium text-sm">{user.name}</p>
-                                <p className="text-xs text-[#6b6b6b]">{user.email}</p>
-                              </section>
-                            </section>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge className={user.role === 'admin' ? 'bg-[#fef2f2] text-[#c40000]' : 'bg-[#f0fdf4] text-[#166534]'}>
-                              {user.role === 'admin' ? <><Shield className="w-3 h-3 mr-1" /> Admin</> : 'Usuário'}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-[#6b6b6b]">{user.profession || '-'}</td>
-                          <td className="px-4 py-3">
-                            <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                              {user.isActive ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <section className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user)} disabled={user.id === currentUser?.id} className="text-[#ef4444]">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </section>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile */}
-                <div className="md:hidden">
-                  {filteredUsers.map((user) => (
-                    <article key={user.id} className="p-4 border-b last:border-b-0">
-                      <div className="flex items-start gap-3">
-                        <section className="w-10 h-10 rounded-full bg-[#e5e5e5] flex items-center justify-center flex-shrink-0">
-                          <User className="w-5 h-5 text-[#6b6b6b]" />
-                        </section>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-[#111111]">{user.name}</p>
-                          <p className="text-xs text-[#6b6b6b]">{user.email}</p>
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <Badge className={user.role === 'admin' ? 'text-xs bg-[#fef2f2] text-[#c40000]' : 'text-xs bg-[#f0fdf4] text-[#166534]'}>
-                              {user.role === 'admin' ? 'Admin' : 'Usuário'}
-                            </Badge>
-                            <Badge variant={user.isActive ? 'default' : 'secondary'} className="text-xs">
-                              {user.isActive ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                          </div>
-                          {user.profession && (
-                            <p className="text-xs text-[#6b6b6b] mt-1">{user.profession}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEditUser(user)}>
-                          <Edit2 className="w-4 h-4 mr-1" /> Editar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-[#ef4444]" 
-                          onClick={() => handleDeleteUser(user)} 
-                          disabled={user.id === currentUser?.id}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                {filteredUsers.length === 0 && (
-                  <section className="p-12 text-center text-[#6b6b6b]">
-                    <Users className="w-12 h-12 mx-auto mb-3 text-[#e5e5e5]" />
-                    <p>Nenhum usuário encontrado</p>
-                  </section>
-                )}
-              </section>
-            </section>
+            <UserManagement
+              users={users}
+              currentUserId={currentUser?.id}
+              userSearch={searchTerm}
+              onSearchChange={setSearchTerm}
+              onAddUser={handleAddUser}
+              onEditUser={handleEditUser}
+              onDeleteUser={handleDeleteUser}
+              onExportCSV={exportUsersCSV}
+            />
           )}
 
-          {/* TAB AUTORES */}
           {activeTab === 'autores' && (
-            <section className="space-y-4">
-              <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <section>
-                  <h2 className="text-lg font-bold text-[#111111]">Gerenciamento de Autores</h2>
-                  <p className="text-sm text-[#6b6b6b]">{authors.length} autor(es) cadastrados</p>
-                </section>
-                <section className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button
-                    onClick={handleAddAuthor}
-                    className="bg-[#c40000] hover:bg-[#a00000] gap-2 flex-1 sm:flex-none"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Novo Autor</span>
-                  </Button>
-                </section>
-              </section>
-
-              <section className="flex gap-3">
-                <section className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
-                  <Input
-                    placeholder="Buscar autores..."
-                    value={authorSearch}
-                    onChange={(e) => setAuthorSearch(e.target.value)}
-                    className="pl-10"
-                  />
-                </section>
-              </section>
-
-              <section className="bg-white border rounded-xl overflow-hidden">
-                {/* Desktop */}
-                <div className="hidden md:block">
-                  <table className="w-full">
-                    <thead className="bg-[#f9fafb] border-b">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Autor</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Slug</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Papéis</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {filteredAuthors.map((author) => (
-                        <tr key={author.slug} className="hover:bg-[#f9fafb]">
-                          <td className="px-4 py-3">
-                            <section>
-                              <p className="font-medium text-sm">{author.name}</p>
-                              <p className="text-xs text-[#6b6b6b]">{author.title}</p>
-                            </section>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-[#6b6b6b]">{author.slug}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap gap-1">
-                              {author.editor && (
-                                <Badge className="bg-[#fef2f2] text-[#c40000] text-xs">Editor</Badge>
-                              )}
-                              {author.factChecker && (
-                                <Badge className="bg-[#f0fdf4] text-[#166534] text-xs">Fact-check</Badge>
-                              )}
-                              {!author.editor && !author.factChecker && (
-                                <span className="text-xs text-[#6b6b6b]">Autor</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge variant={author.isActive ? 'default' : 'secondary'}>
-                              {author.isActive ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <section className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleEditAuthor(author)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              {author.isActive ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteAuthor(author)}
-                                  className="text-[#ef4444]"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => void handleRestoreAuthor(author)}
-                                  className="text-blue-600"
-                                >
-                                  <RefreshCw className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </section>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile */}
-                <div className="md:hidden">
-                  {filteredAuthors.map((author) => (
-                    <article key={author.slug} className="p-4 border-b last:border-b-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm text-[#111111] truncate">{author.name}</p>
-                          <p className="text-xs text-[#6b6b6b] truncate">{author.title}</p>
-                          <p className="text-xs text-[#6b6b6b] mt-1">{author.slug}</p>
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <Badge variant={author.isActive ? 'default' : 'secondary'} className="text-xs">
-                              {author.isActive ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                            {author.editor && (
-                              <Badge className="text-xs bg-[#fef2f2] text-[#c40000]">Editor</Badge>
-                            )}
-                            {author.factChecker && (
-                              <Badge className="text-xs bg-[#f0fdf4] text-[#166534]">Fact-check</Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-2 flex-shrink-0">
-                          <Button variant="outline" size="sm" onClick={() => handleEditAuthor(author)}>
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          {author.isActive ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-[#ef4444]"
-                              onClick={() => handleDeleteAuthor(author)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-600"
-                              onClick={() => void handleRestoreAuthor(author)}
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                {filteredAuthors.length === 0 && (
-                  <section className="p-12 text-center text-[#6b6b6b]">
-                    <Users className="w-12 h-12 mx-auto mb-3 text-[#e5e5e5]" />
-                    <p>Nenhum autor encontrado</p>
-                  </section>
-                )}
-              </section>
-            </section>
+            <AuthorManagement
+              authors={authors}
+              authorSearch={searchTerm}
+              onSearchChange={setSearchTerm}
+              onAddAuthor={handleAddAuthor}
+              onEditAuthor={handleEditAuthor}
+              onDeleteAuthor={handleDeleteAuthor}
+              onRestoreAuthor={handleRestoreAuthor}
+            />
           )}
 
-          {/* TAB CONFIGURAÇÕES */}
           {activeTab === 'settings' && (
-            <section className="space-y-4">
-              <section className="bg-white border rounded-xl p-4 sm:p-6">
-                <h2 className="text-lg font-bold text-[#111111] mb-4">Configurações do Sistema</h2>
-                <section className="space-y-3">
-                  <section className="p-4 bg-[#f8fafc] rounded-lg">
-                    <h3 className="font-medium text-sm mb-3">Limite de Leitura</h3>
-                    {isSettingsLoading ? (
-                      <p className="text-xs text-[#6b6b6b]">Carregando configurações...</p>
-                    ) : (
-                      <section className="space-y-4">
-                        <section className="flex items-center justify-between">
-                          <section>
-                            <p className="text-sm font-medium text-[#111111]">Ativar limite</p>
-                            <p className="text-xs text-[#6b6b6b]">Exibe apenas parte do artigo</p>
-                          </section>
-                          <Switch
-                            checked={appSettings.readingLimitEnabled}
-                            onCheckedChange={(checked) =>
-                              setAppSettings(prev => ({ ...prev, readingLimitEnabled: checked }))
-                            }
-                          />
-                        </section>
-
-                        <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <fieldset>
-                            <Label>Percentual visível (0–1)</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={appSettings.readingLimitPercentage}
-                              onChange={(e) =>
-                                setAppSettings(prev => ({
-                                  ...prev,
-                                  readingLimitPercentage: Number(e.target.value),
-                                }))
-                              }
-                            />
-                          </fieldset>
-                          <fieldset>
-                            <Label>Artigos grátis</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={appSettings.maxFreeArticles}
-                              onChange={(e) =>
-                                setAppSettings(prev => ({
-                                  ...prev,
-                                  maxFreeArticles: Number(e.target.value),
-                                }))
-                              }
-                            />
-                          </fieldset>
-                          <fieldset>
-                            <Label>Aplica para</Label>
-                            <select
-                              value={appSettings.readingLimitScope}
-                              onChange={(e) =>
-                                setAppSettings(prev => ({
-                                  ...prev,
-                                  readingLimitScope: e.target.value as AppSettings['readingLimitScope'],
-                                }))
-                              }
-                              className="w-full px-3 py-2 border rounded-md"
-                            >
-                              <option value="anon">Apenas não logados</option>
-                              <option value="all">Todos</option>
-                            </select>
-                          </fieldset>
-                        </section>
-
-                        <Button
-                          variant="outline"
-                          onClick={saveAppSettings}
-                          disabled={isSettingsSaving}
-                          className="w-full sm:w-auto"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {isSettingsSaving ? 'Salvando...' : 'Salvar limite'}
-                        </Button>
-                      </section>
-                    )}
-                  </section>
-
-                  <section className="p-4 bg-[#f8fafc] rounded-lg">
-                    <h3 className="font-medium text-sm mb-3">Limites do Plano Free (Supabase)</h3>
-                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Banco de dados</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.databaseSizeMb} MB</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Storage</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.fileStorageGb} GB</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Egress</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.egressGb} GB</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Egress cache</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.cachedEgressGb} GB</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Funções (mês)</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionInvocations.toLocaleString('pt-BR')}</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Tempo máx. função</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMaxDurationSeconds}s</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">CPU máx. função</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMaxCpuSeconds}s</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Memória função</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMemoryMb} MB</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Arquivo máx.</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.maxFileSizeMb} MB</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Funções/projeto</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.maxFunctionsPerProject}</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Projetos ativos</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.maxActiveProjects}</p>
-                      </section>
-                      <section className="p-3 bg-white border rounded-md">
-                        <p className="text-[#6b6b6b]">Auto-pause</p>
-                        <p className="font-medium">{SUPABASE_FREE_LIMITS.freeProjectAutoPauseDays} dias</p>
-                      </section>
-                    </section>
-                    <p className="text-xs text-[#6b6b6b] mt-3">
-                      Valores de referência do plano Free. Verifique no painel do Supabase, pois podem mudar.
-                    </p>
-                  </section>
-
-                  <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
-                    <section>
-                      <p className="font-medium text-sm">Resetar Dados</p>
-                      <p className="text-xs text-[#6b6b6b]">Restaura artigos para estado inicial</p>
-                    </section>
-                    <Button 
-                      variant="outline" 
-                      onClick={async () => { 
-                        if (confirm('ATENÇÃO: Isso apagará todas as alterações. Continuar?')) { 
-                          await resetToDefault(); 
-                          toast.success('Dados resetados!'); 
-                          loadData(); 
-                        }
-                      }} 
-                      className="text-[#ef4444] w-full sm:w-auto"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" /> Resetar
-                    </Button>
-                  </section>
-
-                  <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
-                    <section>
-                      <p className="font-medium text-sm">Atribuir posts ao admin</p>
-                      <p className="text-xs text-[#6b6b6b]">Define o admin atual como autor de todos os posts</p>
-                    </section>
-                    <Button
-                      variant="outline"
-                      onClick={handleAssignPostsToAdmin}
-                      className="w-full sm:w-auto"
-                    >
-                      <User className="w-4 h-4 mr-2" /> Atribuir
-                    </Button>
-                  </section>
-                  
-                  <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
-                    <section>
-                      <p className="font-medium text-sm">Exportar Backup</p>
-                      <p className="text-xs text-[#6b6b6b]">Download de todos os dados</p>
-                    </section>
-                    <Button variant="outline" onClick={exportData} className="w-full sm:w-auto">
-                      <Download className="w-4 h-4 mr-2" /> Exportar
-                    </Button>
-                  </section>
-                  
-                  <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
-                    <section>
-                      <p className="font-medium text-sm">Verificar Agendamentos</p>
-                      <p className="text-xs text-[#6b6b6b]">Força verificação manual</p>
-                    </section>
-                    <Button 
-                      variant="outline" 
-                      onClick={async () => { 
-                        const published = await checkAndPublishScheduled(); 
-                        if (published > 0) { 
-                          toast.success(`${published} artigo(s) publicado(s)!`); 
-                          loadData(); 
-                        } else { 
-                          toast.info('Nenhum artigo para publicar'); 
-                        }
-                      }}
-                      className="w-full sm:w-auto"
-                    >
-                      <Check className="w-4 h-4 mr-2" /> Verificar
-                    </Button>
-                  </section>
-                </section>
-              </section>
-            </section>
+            <SettingsPanel
+              appSettings={appSettings}
+              isLoading={isSettingsLoading}
+              isSaving={isSettingsSaving}
+              onSettingsChange={setAppSettings}
+              onSave={saveAppSettings}
+              onReset={handleReset}
+              onAssignPosts={handleAssignPostsToAdmin}
+              onExport={handleExport}
+              onCheckScheduled={handleCheckScheduled}
+            />
           )}
         </div>
 
-        {/* Dialogs - Todos responsivos */}
-        
         {/* Dialog de Exclusão de Artigo */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent className="max-w-sm sm:max-w-md">
@@ -1999,15 +846,17 @@ export default function AdminDashboardPage() {
                 <AlertTriangle className="w-5 h-5" /> Confirmar Exclusão
               </DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja excluir <strong>&quot;{articleToDelete?.title}&quot;</strong>?
+                Tem certeza que deseja excluir o artigo <strong>&quot;{articleToDelete?.title}&quot;</strong>?
+                <br />
+                Esta ação não pode ser desfeita.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="w-full sm:w-auto">
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={confirmDelete} className="bg-[#ef4444] hover:bg-[#dc2626] w-full sm:w-auto">
-                <Trash2 className="w-4 h-4 mr-2" /> Excluir
+              <Button variant="destructive" onClick={confirmDelete}>
+                Excluir
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -2015,573 +864,212 @@ export default function AdminDashboardPage() {
 
         {/* Dialog de Edição de Agendamento */}
         <Dialog open={editScheduledOpen} onOpenChange={setEditScheduledOpen}>
-          <DialogContent className="max-w-sm sm:max-w-md">
+          <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle>Editar Agendamento</DialogTitle>
-              <DialogDescription>Altere a data/hora de <strong>&quot;{scheduledToEdit?.articleData.title}&quot;</strong></DialogDescription>
             </DialogHeader>
-            <section className="space-y-4 py-4">
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>Data</Label>
-                  <Input 
-                    type="date" 
-                    value={scheduledToEdit?.scheduledDate} 
-                    onChange={(e) => setScheduledToEdit(prev => prev ? {...prev, scheduledDate: e.target.value} : null)} 
+            {scheduledToEdit && (
+              <section className="space-y-4 py-4">
+                <section>
+                  <label className="text-sm font-medium">Data</label>
+                  <input
+                    type="date"
+                    value={scheduledToEdit.scheduledDate}
+                    onChange={(e) => setScheduledToEdit({ ...scheduledToEdit, scheduledDate: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
                   />
-                </fieldset>
-                <fieldset>
-                  <Label>Hora</Label>
-                  <Input 
-                    type="time" 
-                    value={scheduledToEdit?.scheduledTime} 
-                    onChange={(e) => setScheduledToEdit(prev => prev ? {...prev, scheduledTime: e.target.value} : null)} 
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Hora</label>
+                  <input
+                    type="time"
+                    value={scheduledToEdit.scheduledTime}
+                    onChange={(e) => setScheduledToEdit({ ...scheduledToEdit, scheduledTime: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
                   />
-                </fieldset>
+                </section>
               </section>
-            </section>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setEditScheduledOpen(false)} className="w-full sm:w-auto">
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditScheduledOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={saveScheduledChanges} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
-                <Check className="w-4 h-4 mr-2" /> Salvar
-              </Button>
+              <Button onClick={saveScheduledChanges}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Dialog de Formulário de Usuário */}
         <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
-          <DialogContent className="max-w-sm sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{isEditingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
-              <DialogDescription>{isEditingUser ? 'Atualize as informações do usuário' : 'Preencha os dados do novo usuário'}</DialogDescription>
             </DialogHeader>
             <section className="space-y-4 py-4">
-              <section className="grid grid-cols-1 gap-4">
-                <fieldset>
-                  <Label>Nome *</Label>
-                  <Input 
-                    value={userFormData.name} 
-                    onChange={(e) => setUserFormData({...userFormData, name: e.target.value})} 
-                    placeholder="Nome completo" 
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Email *</Label>
-                  <Input 
-                    type="email" 
-                    value={userFormData.email} 
-                    onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} 
-                    placeholder="email@exemplo.com" 
-                  />
-                </fieldset>
-              </section>
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>{isEditingUser ? 'Nova senha' : 'Senha *'}</Label>
-                  <Input
-                    type="password"
-                    value={userFormData.password || ''}
-                    onChange={(e) => setUserFormData({...userFormData, password: e.target.value})}
-                    placeholder={isEditingUser ? 'Deixe em branco para manter' : 'Digite a senha'}
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>{isEditingUser ? 'Confirmar nova senha' : 'Confirmar senha *'}</Label>
-                  <Input
-                    type="password"
-                    value={userFormData.confirmPassword || ''}
-                    onChange={(e) => setUserFormData({...userFormData, confirmPassword: e.target.value})}
-                    placeholder={isEditingUser ? 'Confirme a nova senha' : 'Repita a senha'}
-                  />
-                </fieldset>
-              </section>
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>Tipo de Usuário</Label>
-                  <select 
-                    value={userFormData.role} 
-                    onChange={(e) => setUserFormData({...userFormData, role: e.target.value as UserRole})} 
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="user">Usuário</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </fieldset>
-                <fieldset>
-                  <Label>Status</Label>
-                  <select 
-                    value={userFormData.isActive ? 'true' : 'false'} 
-                    onChange={(e) => setUserFormData({...userFormData, isActive: e.target.value === 'true'})} 
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="true">Ativo</option>
-                    <option value="false">Inativo</option>
-                  </select>
-                </fieldset>
-              </section>
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>Profissão</Label>
-                  <Input 
-                    value={userFormData.profession ?? ''} 
-                    onChange={(e) => setUserFormData({...userFormData, profession: e.target.value})} 
-                    placeholder="Ex: Jornalista" 
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Empresa</Label>
-                  <Input 
-                    value={userFormData.company ?? ''} 
-                    onChange={(e) => setUserFormData({...userFormData, company: e.target.value})} 
-                    placeholder="Ex: Empresa XYZ" 
-                  />
-                </fieldset>
-              </section>
-              <fieldset>
-                <Label>Região</Label>
-                <select 
-                  value={userFormData.region ?? ''} 
-                  onChange={(e) => setUserFormData({...userFormData, region: e.target.value})} 
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="">Selecione...</option>
-                  <option value="BR">Brasil</option>
-                  <option value="NA">América do Norte</option>
-                  <option value="EU">Europa</option>
-                  <option value="AS">Ásia</option>
-                  <option value="AF">África</option>
-                  <option value="SA">América do Sul</option>
-                  <option value="ME">Oriente Médio</option>
-                  <option value="OC">Oceania</option>
-                </select>
-              </fieldset>
-              <fieldset>
-                <Label>Biografia</Label>
-                <textarea 
-                  value={userFormData.bio ?? ''} 
-                  onChange={(e) => setUserFormData({...userFormData, bio: e.target.value})} 
-                  placeholder="Breve descrição do usuário..." 
-                  rows={3} 
+              <section>
+                <label className="text-sm font-medium">Nome *</label>
+                <input
+                  type="text"
+                  value={userFormData.name}
+                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                 />
-              </fieldset>
+              </section>
+              <section>
+                <label className="text-sm font-medium">Email *</label>
+                <input
+                  type="email"
+                  value={userFormData.email}
+                  onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </section>
+              <section>
+                <label className="text-sm font-medium">Tipo</label>
+                <select
+                  value={userFormData.role}
+                  onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value as UserRole })}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="user">Usuário</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </section>
+              {!isEditingUser && (
+                <>
+                  <section>
+                    <label className="text-sm font-medium">Senha *</label>
+                    <input
+                      type="password"
+                      value={userFormData.password}
+                      onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                    />
+                  </section>
+                  <section>
+                    <label className="text-sm font-medium">Confirmar Senha *</label>
+                    <input
+                      type="password"
+                      value={userFormData.confirmPassword}
+                      onChange={(e) => setUserFormData({ ...userFormData, confirmPassword: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                    />
+                  </section>
+                </>
+              )}
+              {isEditingUser && (
+                <section>
+                  <label className="text-sm font-medium">Nova Senha (deixe em branco para não alterar)</label>
+                  <input
+                    type="password"
+                    value={userFormData.password}
+                    onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+              )}
             </section>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setShowUserForm(false)} className="w-full sm:w-auto">
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowUserForm(false)}>
                 Cancelar
               </Button>
-              <Button onClick={saveUser} className="bg-[#c40000] hover:bg-[#a00000] w-full sm:w-auto">
-                <Save className="w-4 h-4 mr-2" /> {isEditingUser ? 'Atualizar' : 'Criar'}
-              </Button>
+              <Button onClick={saveUser}>{isEditingUser ? 'Salvar' : 'Criar'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Dialog de Formulário de Autor */}
         <Dialog open={showAuthorForm} onOpenChange={setShowAuthorForm}>
-          <DialogContent className="max-w-sm sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{isEditingAuthor ? 'Editar Autor' : 'Novo Autor'}</DialogTitle>
-              <DialogDescription>
-                {isEditingAuthor ? 'Atualize as informações do autor' : 'Preencha os dados do novo autor'}
-              </DialogDescription>
             </DialogHeader>
-
             <section className="space-y-4 py-4">
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>Slug *</Label>
-                  <Input
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Nome *</label>
+                  <input
+                    type="text"
+                    value={authorFormData.name}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Slug *</label>
+                  <input
+                    type="text"
                     value={authorFormData.slug}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                    placeholder="ex: ana-silva"
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, slug: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
                     disabled={isEditingAuthor}
                   />
-                  <p className="text-xs text-[#6b6b6b] mt-1">Usado na URL: /autor/&lt;slug&gt;/</p>
-                </fieldset>
-                <fieldset>
-                  <Label>Nome *</Label>
-                  <Input
-                    value={authorFormData.name}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nome completo"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Nome curto *</Label>
-                  <Input
+                </section>
+              </section>
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Nome Curto *</label>
+                  <input
+                    type="text"
                     value={authorFormData.shortName}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, shortName: e.target.value }))}
-                    placeholder="Ex: Ana Silva"
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, shortName: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
                   />
-                </fieldset>
-                <fieldset>
-                  <Label>Cargo/Título *</Label>
-                  <Input
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Título/Cargo *</label>
+                  <input
+                    type="text"
                     value={authorFormData.title}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, title: e.target.value }))}
-                    placeholder="Ex: Editora Chefe"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Email *</Label>
-                  <Input
-                    type="email"
-                    value={authorFormData.email}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="autor@dominio.com"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Foto (path) *</Label>
-                  <Input
-                    value={authorFormData.photo}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, photo: e.target.value }))}
-                    placeholder="/images/authors/autor.webp"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Entrada na equipe</Label>
-                  <Input
-                    type="date"
-                    value={authorFormData.joinedAt}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, joinedAt: e.target.value }))}
-                  />
-                </fieldset>
-                <fieldset className="flex items-center justify-between gap-3 border rounded-md px-3 py-2">
-                  <div>
-                    <p className="text-sm font-medium text-[#111111]">Ativo</p>
-                    <p className="text-xs text-[#6b6b6b]">Aparece no /editorial e /autor</p>
-                  </div>
-                  <Switch
-                    checked={authorFormData.isActive}
-                    onCheckedChange={(checked) => setAuthorFormData((prev) => ({ ...prev, isActive: checked }))}
-                  />
-                </fieldset>
-                <fieldset className="flex items-center justify-between gap-3 border rounded-md px-3 py-2">
-                  <div>
-                    <p className="text-sm font-medium text-[#111111]">Editor</p>
-                    <p className="text-xs text-[#6b6b6b]">Sinal E-E-A-T</p>
-                  </div>
-                  <Switch
-                    checked={authorFormData.editor}
-                    onCheckedChange={(checked) => setAuthorFormData((prev) => ({ ...prev, editor: checked }))}
-                  />
-                </fieldset>
-                <fieldset className="flex items-center justify-between gap-3 border rounded-md px-3 py-2">
-                  <div>
-                    <p className="text-sm font-medium text-[#111111]">Fact-checker</p>
-                    <p className="text-xs text-[#6b6b6b]">ReviewedBy em artigos</p>
-                  </div>
-                  <Switch
-                    checked={authorFormData.factChecker}
-                    onCheckedChange={(checked) => setAuthorFormData((prev) => ({ ...prev, factChecker: checked }))}
-                  />
-                </fieldset>
-              </section>
-
-              <section className="grid grid-cols-1 gap-4">
-                <fieldset>
-                  <Label>Bio curta *</Label>
-                  <textarea
-                    value={authorFormData.bio}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, bio: e.target.value }))}
-                    placeholder="Resumo em 1-2 frases (aparece em cards e SEO)."
-                    rows={3}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, title: e.target.value })}
                     className="w-full px-3 py-2 border rounded-md"
                   />
-                </fieldset>
-                <fieldset>
-                  <Label>Bio completa</Label>
-                  <textarea
-                    value={authorFormData.longBio}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, longBio: e.target.value }))}
-                    placeholder="Texto completo do autor (página /autor). Se vazio, usaremos a bio curta."
-                    rows={8}
-                    className="w-full px-3 py-2 border rounded-md"
-                  />
-                </fieldset>
+                </section>
               </section>
-
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>Expertise (separado por vírgula)</Label>
-                  <Input
-                    value={authorFormData.expertise}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, expertise: e.target.value }))}
-                    placeholder="Economia, Geopolítica, Tecnologia"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Idiomas (separado por vírgula)</Label>
-                  <Input
-                    value={authorFormData.languages}
-                    onChange={(e) => setAuthorFormData((prev) => ({ ...prev, languages: e.target.value }))}
-                    placeholder="Português, Inglês"
-                  />
-                </fieldset>
-              </section>
-
-              <fieldset>
-                <Label>Prêmios (1 por linha)</Label>
-                <textarea
-                  value={authorFormData.awards}
-                  onChange={(e) => setAuthorFormData((prev) => ({ ...prev, awards: e.target.value }))}
-                  placeholder="Prêmio X (2024)\nCertificação Y"
-                  rows={4}
+              <section>
+                <label className="text-sm font-medium">Email *</label>
+                <input
+                  type="email"
+                  value={authorFormData.email}
+                  onChange={(e) => setAuthorFormData({ ...authorFormData, email: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                 />
-              </fieldset>
-
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <Label>Twitter</Label>
-                  <Input
-                    value={authorFormData.social.twitter ?? ''}
-                    onChange={(e) =>
-                      setAuthorFormData((prev) => ({
-                        ...prev,
-                        social: { ...prev.social, twitter: e.target.value },
-                      }))
-                    }
-                    placeholder="handle (sem @)"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>LinkedIn</Label>
-                  <Input
-                    value={authorFormData.social.linkedin ?? ''}
-                    onChange={(e) =>
-                      setAuthorFormData((prev) => ({
-                        ...prev,
-                        social: { ...prev.social, linkedin: e.target.value },
-                      }))
-                    }
-                    placeholder="slug do perfil"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Facebook</Label>
-                  <Input
-                    value={authorFormData.social.facebook ?? ''}
-                    onChange={(e) =>
-                      setAuthorFormData((prev) => ({
-                        ...prev,
-                        social: { ...prev.social, facebook: e.target.value },
-                      }))
-                    }
-                    placeholder="perfil/página"
-                  />
-                </fieldset>
-                <fieldset>
-                  <Label>Instagram</Label>
-                  <Input
-                    value={authorFormData.social.instagram ?? ''}
-                    onChange={(e) =>
-                      setAuthorFormData((prev) => ({
-                        ...prev,
-                        social: { ...prev.social, instagram: e.target.value },
-                      }))
-                    }
-                    placeholder="handle (sem @)"
-                  />
-                </fieldset>
               </section>
-
-              {/* Educação */}
-              <section className="border rounded-lg p-4">
-                <header className="flex items-center justify-between gap-3 mb-3">
-                  <div>
-                    <p className="font-medium text-sm text-[#111111]">Educação</p>
-                    <p className="text-xs text-[#6b6b6b]">Itens usados no schema.org Person</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setAuthorFormData((prev) => ({
-                        ...prev,
-                        education: [...(prev.education ?? []), { institution: '', degree: '', year: '' }],
-                      }))
-                    }
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Adicionar
-                  </Button>
-                </header>
-
-                <div className="space-y-3">
-                  {(authorFormData.education ?? []).map((edu, idx) => (
-                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start">
-                      <div className="sm:col-span-5">
-                        <Input
-                          value={edu.institution}
-                          onChange={(e) =>
-                            setAuthorFormData((prev) => {
-                              const copy = [...(prev.education ?? [])];
-                              copy[idx] = { ...copy[idx], institution: e.target.value };
-                              return { ...prev, education: copy };
-                            })
-                          }
-                          placeholder="Instituição"
-                        />
-                      </div>
-                      <div className="sm:col-span-5">
-                        <Input
-                          value={edu.degree}
-                          onChange={(e) =>
-                            setAuthorFormData((prev) => {
-                              const copy = [...(prev.education ?? [])];
-                              copy[idx] = { ...copy[idx], degree: e.target.value };
-                              return { ...prev, education: copy };
-                            })
-                          }
-                          placeholder="Grau/Curso"
-                        />
-                      </div>
-                      <div className="sm:col-span-2 flex gap-2">
-                        <Input
-                          value={edu.year}
-                          onChange={(e) =>
-                            setAuthorFormData((prev) => {
-                              const copy = [...(prev.education ?? [])];
-                              copy[idx] = { ...copy[idx], year: e.target.value };
-                              return { ...prev, education: copy };
-                            })
-                          }
-                          placeholder="Ano"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-[#ef4444]"
-                          onClick={() =>
-                            setAuthorFormData((prev) => ({
-                              ...prev,
-                              education: (prev.education ?? []).filter((_, i) => i !== idx),
-                            }))
-                          }
-                          aria-label="Remover item de educação"
-                          title="Remover"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {(authorFormData.education ?? []).length === 0 && (
-                    <p className="text-xs text-[#6b6b6b]">Nenhuma formação adicionada.</p>
-                  )}
-                </div>
+              <section>
+                <label className="text-sm font-medium">Bio Curta *</label>
+                <textarea
+                  value={authorFormData.bio}
+                  onChange={(e) => setAuthorFormData({ ...authorFormData, bio: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={2}
+                />
               </section>
-            </section>
-
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setShowAuthorForm(false)} className="w-full sm:w-auto">
-                Cancelar
-              </Button>
-              <Button onClick={saveAuthor} className="bg-[#c40000] hover:bg-[#a00000] w-full sm:w-auto">
-                <Save className="w-4 h-4 mr-2" /> {isEditingAuthor ? 'Atualizar' : 'Criar'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Desativação de Autor */}
-        <Dialog open={!!authorToDelete} onOpenChange={() => setAuthorToDelete(null)}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-[#ef4444]">
-                <AlertTriangle className="w-5 h-5" /> Desativar Autor
-              </DialogTitle>
-              <DialogDescription>
-                Tem certeza que deseja desativar <strong>&quot;{authorToDelete?.name}&quot;</strong>? Isso remove o autor do /editorial e /autor, mas mantém os registros no banco.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setAuthorToDelete(null)} className="w-full sm:w-auto">
-                Cancelar
-              </Button>
-              <Button onClick={confirmDeleteAuthor} className="bg-[#ef4444] hover:bg-[#dc2626] w-full sm:w-auto">
-                <Trash2 className="w-4 h-4 mr-2" /> Desativar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Exclusão de Usuário */}
-        <Dialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-[#ef4444]">
-                <AlertTriangle className="w-5 h-5" /> Excluir Usuário
-              </DialogTitle>
-              <DialogDescription>
-                Tem certeza que deseja excluir <strong>&quot;{userToDelete?.name}&quot;</strong>?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setUserToDelete(null)} className="w-full sm:w-auto">
-                Cancelar
-              </Button>
-              <Button onClick={confirmDeleteUser} className="bg-[#ef4444] hover:bg-[#dc2626] w-full sm:w-auto">
-                <Trash2 className="w-4 h-4 mr-2" /> Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Detalhes da Data */}
-        <Dialog open={dateDetailsOpen} onOpenChange={setDateDetailsOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Agendamentos para {selectedDate ? new Date(selectedDate).toLocaleDateString('pt-BR') : ''}</DialogTitle>
-            </DialogHeader>
-            <section className="space-y-3 py-4 max-h-[300px] overflow-y-auto">
-              {selectedDate && getScheduledForDate(parseInt(selectedDate.split('-')[2])).map((scheduled) => (
-                <article key={scheduled.id} className="p-3 bg-[#f8fafb] rounded-lg border">
-                  <p className="font-medium text-sm">{scheduled.articleData.title}</p>
-                  <p className="text-xs text-[#6b6b6b]">
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    {scheduled.scheduledTime}
-                  </p>
-                  <section className="flex gap-2 mt-2">
-                    <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => { setDateDetailsOpen(false); handleEditScheduled(scheduled); }}>
-                      Editar
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs text-orange-600 flex-1" onClick={() => { handleCancelScheduled(scheduled.id); setDateDetailsOpen(false); }}>
-                      Cancelar
-                    </Button>
-                  </section>
-                </article>
-              ))}
+              <section>
+                <label className="text-sm font-medium">Bio Longa</label>
+                <textarea
+                  value={authorFormData.longBio}
+                  onChange={(e) => setAuthorFormData({ ...authorFormData, longBio: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={4}
+                />
+              </section>
+              <section>
+                <label className="text-sm font-medium">Foto (caminho em /public) *</label>
+                <input
+                  type="text"
+                  value={authorFormData.photo}
+                  onChange={(e) => setAuthorFormData({ ...authorFormData, photo: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="/images/authors/nome.webp"
+                />
+              </section>
             </section>
             <DialogFooter>
-              <Button onClick={() => setDateDetailsOpen(false)} className="w-full">Fechar</Button>
+              <Button variant="outline" onClick={() => setShowAuthorForm(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={saveAuthor}>{isEditingAuthor ? 'Salvar' : 'Criar'}</Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Ações em Massa */}
-        <Dialog open={bulkActionDialog} onOpenChange={setBulkActionDialog}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Ações em Massa</DialogTitle>
-              <DialogDescription>{selectedArticles.length} artigo(s) selecionado(s)</DialogDescription>
-            </DialogHeader>
-            <section className="space-y-3 py-4">
-              <Button variant="outline" className="w-full justify-start text-[#ef4444]" onClick={handleBulkDelete}>
-                <Trash2 className="w-4 h-4 mr-2" /> Excluir Selecionados
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => setSelectedArticles([])}>
-                <X className="w-4 h-4 mr-2" /> Limpar Seleção
-              </Button>
-            </section>
           </DialogContent>
         </Dialog>
       </main>

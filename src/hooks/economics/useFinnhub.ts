@@ -86,6 +86,9 @@ export function useMultipleQuotes(symbols: string[]): UseMultipleQuotesReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Chave estável para o array de símbolos
+  const symbolsKey = symbols.sort().join(',');
+
   const fetchQuotes = useCallback(async () => {
     if (!symbols.length) return;
     
@@ -100,7 +103,8 @@ export function useMultipleQuotes(symbols: string[]): UseMultipleQuotesReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [symbols.join(',')]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbolsKey]);
 
   useEffect(() => {
     fetchQuotes();
@@ -554,6 +558,9 @@ export function useRealtimeQuotes(symbols: string[]): UseRealtimeQuotesReturn {
   const [error, setError] = useState<Error | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
+  // Chave estável para o array de símbolos
+  const symbolsKey = symbols.sort().join(',');
+
   useEffect(() => {
     const ws = createFinnhubWebSocket((msg: unknown) => {
       const message = msg as { type: string; data?: Array<{ s: string; p: number; t: number }> };
@@ -600,7 +607,8 @@ export function useRealtimeQuotes(symbols: string[]): UseRealtimeQuotesReturn {
         wsRef.current.close();
       }
     };
-  }, [symbols.join(',')]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbolsKey]);
 
   return { quotes, isConnected, error };
 }

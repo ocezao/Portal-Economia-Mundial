@@ -117,12 +117,8 @@ export default function UserDashboardPage() {
       try {
         const data = await getAllArticles();
         if (isMounted) setAllArticles(data);
-      } catch (error) {
-        // Erro silenciado em produção
-        if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console
-          console.error('Erro ao carregar artigos:', error);
-        }
+      } catch {
+        // Erro silenciado - não logamos intencionalmente
       }
     };
     load();
@@ -196,7 +192,7 @@ export default function UserDashboardPage() {
     const totalTime = readingHistory.reduce((sum, h) => sum + (h.timeSpent || 0), 0);
     const totalArticles = readingHistory.length;
     const uniqueArticles = new Set(readingHistory.map(h => h.articleSlug)).size;
-    const comments = storage.get<Array<{ articleSlug: string }>>('pem_comments') || [];
+    const comments = storage.get<{ articleSlug: string }[]>('pem_comments') || [];
     
     return {
       totalArticles,
@@ -803,7 +799,7 @@ export default function UserDashboardPage() {
                                 <span>{achievement.progress}/{achievement.maxProgress}</span>
                               </section>
                               <Progress 
-                                value={(achievement.progress! / achievement.maxProgress!) * 100} 
+                                value={((achievement.progress ?? 0) / (achievement.maxProgress ?? 1)) * 100} 
                                 className="h-1.5"
                               />
                             </section>

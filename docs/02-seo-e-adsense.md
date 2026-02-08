@@ -48,7 +48,7 @@ Boas práticas aplicadas no projeto:
 }
 ```
 
-#### Article
+#### Article (Básico)
 ```json
 {
   "@context": "https://schema.org",
@@ -61,9 +61,59 @@ Boas práticas aplicadas no projeto:
 }
 ```
 
+#### Article Avançado (Competitivo)
+Para igualar grandes portais (Infomoney, Estadão), adicione:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "Título do Artigo",
+  "description": "Resumo/lead do artigo",
+  "image": "https://seusite.com/imagem.webp",
+  "datePublished": "2026-02-08T10:00:00Z",
+  "dateModified": "2026-02-08T12:00:00Z",
+  "author": {
+    "@type": "Person",
+    "name": "Nome do Autor",
+    "jobTitle": "Editor de Economia",
+    "url": "https://seusite.com/autor/nome-autor",
+    "image": "https://seusite.com/foto-autor.webp"
+  },
+  "reviewedBy": {
+    "@type": "Person",
+    "name": "Nome do Revisor",
+    "jobTitle": "Chefe de Redação"
+  },
+  "publisher": {
+    "@type": "NewsMediaOrganization",
+    "name": "Portal Econômico Mundial",
+    "logo": "https://seusite.com/logo.webp"
+  },
+  "articleSection": "Economia",
+  "articleBody": "Conteúdo completo do artigo...",
+  "wordCount": 1200,
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": [".article-title", ".article-summary"]
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://seusite.com/noticias/slug-do-artigo"
+  }
+}
+```
+
+**Benefícios dos campos avançados:**
+- `reviewedBy`: Mostra "Revisado por" no Google (credibilidade)
+- `speakable`: Permite Google Assistant ler o artigo em voz alta
+- `articleSection`: Melhora categorização no Google Discover
+- `wordCount`: Sinal de qualidade para algoritmo
+
 Observação de coerência:
 - Em JSON-LD, URLs e imagens devem ser absolutas (o projeto agora normaliza isso em `src/config/seo.ts`).
 - Listagens usam `BreadcrumbList` + `ItemList` (com `item` em `ListItem`) para ficar alinhado ao schema.
+- Validar sempre no [Rich Results Test](https://search.google.com/test/rich-results)
 
 ### Otimizações Técnicas
 

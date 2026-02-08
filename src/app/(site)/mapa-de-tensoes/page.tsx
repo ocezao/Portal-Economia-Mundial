@@ -3,7 +3,7 @@
  */
 
 import { APP_CONFIG } from '@/config/app';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { SEO_CONFIG, generateBreadcrumbJsonLd } from '@/config/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { getSiteUrl } from '@/lib/siteUrl';

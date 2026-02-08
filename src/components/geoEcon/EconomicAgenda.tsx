@@ -164,7 +164,7 @@ export function EconomicAgenda() {
         </ul>
       )}
 
-      {(events as Array<{impact: string}>).some((e: {impact: string}) => e.impact === 'high') && (
+      {(events as {impact: string}[]).some((e: {impact: string}) => e.impact === 'high') && (
         <footer className="mt-4 pt-4 border-t border-[#e5e5e5]">
           <p className="flex items-center gap-1.5 text-xs text-[#c40000]">
             <AlertTriangle className="w-3.5 h-3.5" />

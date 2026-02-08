@@ -5,6 +5,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   Clock,
@@ -34,7 +35,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import type { NewsArticle } from '@/types';
 
-type NoticiaPageClientProps = {
+interface NoticiaPageClientProps {
   article: NewsArticle;
   reviewedBy?: { name: string; slug: string } | null;
 };
@@ -231,12 +232,14 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
             </header>
 
             {/* Cover Image */}
-            <figure className="mb-8">
-              <img
+            <figure className="mb-8 relative aspect-video rounded-lg overflow-hidden">
+              <Image
                 src={article.coverImage}
                 alt={article.title}
-                className="w-full aspect-video object-cover rounded-lg"
-                loading="eager"
+                fill
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                priority
+                className="object-cover"
               />
             </figure>
 
@@ -413,4 +416,3 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
     </>
   );
 }
-

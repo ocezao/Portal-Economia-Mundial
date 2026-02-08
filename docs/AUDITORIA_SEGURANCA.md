@@ -1,9 +1,11 @@
 # 🔒 Relatório de Auditoria de Segurança
 
+> ⚠️ **NOTA HISTÓRICA:** Este relatório foi gerado em 04/02/2026. Algumas referências de arquivos podem estar desatualizadas devido à migração para Next.js App Router e limpeza de código realizada posteriormente. Consulte a documentação atual para a estrutura de arquivos mais recente.
+
 **Data:** 04/02/2026  
 **Projeto:** Portal Econômico Mundial (PEM)  
 **Realizado por:** Kimi Code CLI  
-**Status:** ✅ CONCLUÍDO
+**Status:** ✅ CONCLUÍDO (Histórico)
 
 ---
 

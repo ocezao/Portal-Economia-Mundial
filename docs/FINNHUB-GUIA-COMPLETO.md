@@ -422,7 +422,7 @@ const [quote, news, peers] = await Promise.all([
 | `src/services/economics/finnhubService.ts` | Serviço completo com 24 funções |
 | `src/hooks/economics/useFinnhub.ts` | Hooks React otimizados |
 | `src/components/layout/MarketTicker.tsx` | Ticker implementado |
-| `src/pages/Home.tsx` | Widget de Earnings |
+| `src/app/(site)/page.tsx` | Widget de Earnings |
 | `src/components/geoEcon/EconomicAgenda.tsx` | Calendário econômico |
 
 ---

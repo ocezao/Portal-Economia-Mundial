@@ -39,9 +39,15 @@ export interface DeleteCommentParams {
   authorId: string;
 }
 
+export interface UpdateCommentParams {
+  commentId: string;
+  content: string;
+}
+
 export interface CommentService {
   getComments(params: GetCommentsParams): Promise<Comment[]>;
   createComment(params: CreateCommentParams, author: Comment['author']): Promise<Comment>;
   deleteComment(params: DeleteCommentParams): Promise<void>;
+  updateComment(commentId: string, content: string): Promise<Comment>;
   likeComment(commentId: string, userId: string): Promise<void>;
 }

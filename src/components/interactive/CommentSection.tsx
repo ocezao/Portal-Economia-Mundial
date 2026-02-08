@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Send, Trash2, User, AlertCircle, Clock } from 'lucide-react';
 import { useComments } from '@/hooks/useComments';
 import { useAuth } from '@/hooks/useAuth';
@@ -205,12 +206,14 @@ export function CommentSection({ articleSlug }: CommentSectionProps) {
               <article className="p-4 bg-[#f9fafb] rounded-lg">
                 <header className="flex items-start justify-between mb-3">
                   <section className="flex items-center gap-3">
-                    <figure className="w-10 h-10 rounded-full bg-[#e5e5e5] flex items-center justify-center flex-shrink-0">
+                    <figure className="w-10 h-10 rounded-full bg-[#e5e5e5] flex items-center justify-center flex-shrink-0 relative overflow-hidden">
                       {comment.authorAvatar ? (
-                        <img
+                        <Image
                           src={comment.authorAvatar}
                           alt=""
-                          className="w-full h-full rounded-full object-cover"
+                          fill
+                          sizes="40px"
+                          className="object-cover rounded-full"
                         />
                       ) : (
                         <User className="w-5 h-5 text-[#6b6b6b]" />

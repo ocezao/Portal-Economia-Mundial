@@ -112,7 +112,11 @@ export class PEMAnalytics extends AnalyticsSDK {
   }): void {
     const consent = this.getConsentState();
     if (consent !== 'granted') {
-      console.log('[PEM Analytics] Article tracking requires consent');
+      // Silently return - não logar em produção para evitar poluição do console
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.log('[PEM Analytics] Article tracking requires consent');
+      }
       return;
     }
 
@@ -262,8 +266,12 @@ if (typeof window !== 'undefined') {
         debug
       });
 
-      globalInstance.init().catch(err => {
-        console.error('[PEM Analytics] Falha ao inicializar:', err);
+      globalInstance.init().catch(() => {
+        // Erro silenciado em produção para não expor detalhes internos
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('[PEM Analytics] Falha ao inicializar');
+        }
       });
 
       // Expor globalmente

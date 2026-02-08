@@ -3,47 +3,18 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  corsHeaders,
+  jsonResponse,
+  errorResponse,
+  requireAdmin,
+  parseBody,
+  validateMethod,
+} from "../_shared/auth.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const GNEWS_API_KEY = Deno.env.get("GNEWS_API_KEY") ?? "";
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const OPENROUTER_TEXT_MODEL = Deno.env.get("OPENROUTER_TEXT_MODEL") ?? "z-ai/glm-4.5-air:free";
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-
-const getAuthUser = async (req: Request) => {
-  const auth = req.headers.get("Authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) return null;
-
-  const { data, error } = await admin.auth.getUser(token);
-  if (error) return null;
-  return data.user ?? null;
-};
-
-const requireAdmin = async (req: Request) => {
-  const user = await getAuthUser(req);
-  if (!user) return { ok: false, status: 401, message: "Não autenticado" };
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.role !== "admin") {
-    return { ok: false, status: 403, message: "Sem permissão" };
-  }
-
-  return { ok: true, user };
-};
 
 const fetchGnews = async (params: { topic?: string; category?: string }) => {
   if (!GNEWS_API_KEY) throw new Error("GNEWS_API_KEY não configurada");
@@ -154,7 +125,7 @@ ${JSON.stringify(sources, null, 2)}
     }),
   });
 
-    if (!response.ok) {
+  if (!response.ok) {
     throw new Error(`OpenRouter error: ${response.status}`);
   }
 
@@ -174,15 +145,31 @@ const parseJson = (raw: string) => {
 };
 
 serve(async (req) => {
-  if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
+  // Validar método
+  const methodCheck = validateMethod(req, ["POST"]);
+  if (!methodCheck.valid) {
+    return methodCheck.response;
+  }
+
+  // Verificar autenticação e permissão de admin
   const auth = await requireAdmin(req);
-  if (!auth.ok) return json({ error: auth.message }, auth.status);
+  if (!auth.ok) {
+    return jsonResponse({ error: auth.message }, auth.status);
+  }
+
+  // Parse do body
+  const bodyResult = await parseBody(req);
+  if (!bodyResult.ok) {
+    return bodyResult.response;
+  }
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body = bodyResult.data;
     const params = {
       topic: body.topic,
       category: body.category,
@@ -193,8 +180,8 @@ serve(async (req) => {
     const raw = await callOpenRouter(sources, params);
     const parsed = parseJson(raw);
 
-    return json({ data: parsed });
+    return jsonResponse({ data: parsed });
   } catch (error) {
-    return json({ error: String(error?.message ?? error) }, 500);
+    return errorResponse(error, 500);
   }
 });

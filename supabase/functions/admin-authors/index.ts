@@ -2,51 +2,15 @@
 // CRUD de autores (tabela `authors`) com checagem de admin via `profiles.role`.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
-
-const getAuthUser = async (req: Request) => {
-  const auth = req.headers.get("Authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) return null;
-
-  const { data, error } = await admin.auth.getUser(token);
-  if (error) return null;
-  return data.user ?? null;
-};
-
-const requireAdmin = async (req: Request) => {
-  const user = await getAuthUser(req);
-  if (!user) return { ok: false, status: 401, message: "Não autenticado" };
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.role !== "admin") {
-    return { ok: false, status: 403, message: "Sem permissão" };
-  }
-
-  return { ok: true, user };
-};
+import {
+  corsHeaders,
+  jsonResponse,
+  errorResponse,
+  requireAdmin,
+  parseBody,
+  validateMethod,
+  getAdminClient,
+} from "../_shared/auth.ts";
 
 const mapAuthorRow = (row: any) => ({
   slug: row.slug,
@@ -72,24 +36,32 @@ const pickDefined = (obj: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
-  if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+
+  // Validar método
+  const methodCheck = validateMethod(req, ["POST"]);
+  if (!methodCheck.valid) {
+    return methodCheck.response;
   }
 
+  // Verificar autenticação e permissão de admin
   const auth = await requireAdmin(req);
-  if (!auth.ok) return json({ error: auth.message }, auth.status);
-
-  let payload: any = {};
-  try {
-    payload = await req.json();
-  } catch {
-    return json({ error: "JSON inválido" }, 400);
+  if (!auth.ok) {
+    return jsonResponse({ error: auth.message }, auth.status);
   }
 
+  // Parse do body
+  const bodyResult = await parseBody(req);
+  if (!bodyResult.ok) {
+    return bodyResult.response;
+  }
+
+  const payload = bodyResult.data;
   const { action } = payload ?? {};
+  const admin = getAdminClient();
 
   try {
     if (action === "list_authors") {
@@ -100,7 +72,7 @@ serve(async (req) => {
         .order("fact_checker", { ascending: false })
         .order("name", { ascending: true });
       if (error) throw error;
-      return json({ authors: (data ?? []).map(mapAuthorRow) });
+      return jsonResponse({ authors: (data ?? []).map(mapAuthorRow) });
     }
 
     if (action === "create_author") {
@@ -117,7 +89,7 @@ serve(async (req) => {
         "email",
       ];
       for (const k of required) {
-        if (!author?.[k]) return json({ error: `${k} é obrigatório` }, 400);
+        if (!author?.[k]) return jsonResponse({ error: `${k} é obrigatório` }, 400);
       }
 
       const insertRow = {
@@ -146,17 +118,17 @@ serve(async (req) => {
         .select("*")
         .single();
       if (error) throw error;
-      return json({ ok: true, author: mapAuthorRow(data) });
+      return jsonResponse({ ok: true, author: mapAuthorRow(data) });
     }
 
     if (action === "update_author") {
       const slug = payload.slug ?? payload.authorSlug;
       const updates = payload.updates ?? payload.author ?? {};
-      if (!slug) return json({ error: "slug é obrigatório" }, 400);
+      if (!slug) return jsonResponse({ error: "slug é obrigatório" }, 400);
 
       // Prevent changing primary key through update endpoint.
       if (updates.slug && updates.slug !== slug) {
-        return json({ error: "Não é permitido alterar o slug do autor" }, 400);
+        return jsonResponse({ error: "Não é permitido alterar o slug do autor" }, 400);
       }
 
       const dbUpdates = pickDefined({
@@ -179,7 +151,7 @@ serve(async (req) => {
       });
 
       if (Object.keys(dbUpdates).length === 0) {
-        return json({ error: "Nenhuma alteração enviada" }, 400);
+        return jsonResponse({ error: "Nenhuma alteração enviada" }, 400);
       }
 
       const { data, error } = await admin
@@ -189,12 +161,12 @@ serve(async (req) => {
         .select("*")
         .single();
       if (error) throw error;
-      return json({ ok: true, author: mapAuthorRow(data) });
+      return jsonResponse({ ok: true, author: mapAuthorRow(data) });
     }
 
     if (action === "delete_author") {
       const slug = payload.slug ?? payload.authorSlug;
-      if (!slug) return json({ error: "slug é obrigatório" }, 400);
+      if (!slug) return jsonResponse({ error: "slug é obrigatório" }, 400);
 
       // Soft delete: keep references from articles, just deactivate.
       const { error } = await admin
@@ -203,12 +175,12 @@ serve(async (req) => {
         .eq("slug", slug);
       if (error) throw error;
 
-      return json({ ok: true });
+      return jsonResponse({ ok: true });
     }
 
     if (action === "restore_author") {
       const slug = payload.slug ?? payload.authorSlug;
-      if (!slug) return json({ error: "slug é obrigatório" }, 400);
+      if (!slug) return jsonResponse({ error: "slug é obrigatório" }, 400);
 
       const { error } = await admin
         .from("authors")
@@ -216,12 +188,11 @@ serve(async (req) => {
         .eq("slug", slug);
       if (error) throw error;
 
-      return json({ ok: true });
+      return jsonResponse({ ok: true });
     }
 
-    return json({ error: "Ação inválida" }, 400);
+    return jsonResponse({ error: "Ação inválida" }, 400);
   } catch (error) {
-    return json({ error: String((error as any)?.message ?? error) }, 500);
+    return errorResponse(error, 500);
   }
 });
-

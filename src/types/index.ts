@@ -43,28 +43,15 @@ export interface NewsCard {
 }
 
 // ==================== USER ====================
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  isLoggedIn: boolean;
-  isAdmin: boolean;
-  createdAt: string;
-  lastLogin: string;
-  preferences: UserPreferences;
-}
-
-export interface UserPreferences {
-  categories: string[];
-  notifications: boolean;
-  darkMode: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  language: 'pt-BR' | 'en';
-  emailDigest: boolean;
-  pushNotifications: boolean;
-}
+// Re-exporta de user.ts para manter compatibilidade
+export type { 
+  User, 
+  UserPreferences, 
+  UserRole, 
+  LoginCredentials, 
+  RegisterData, 
+  AuthError 
+} from './user';
 
 // ==================== MARKET ====================
 

@@ -6,6 +6,70 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+// Tipos para o cliente desabilitado
+interface DisabledQueryResult {
+  data: null;
+  error: Error;
+}
+
+type QueryMethod = () => DisabledQueryBuilder;
+type PromiseMethod = () => Promise<DisabledQueryResult>;
+
+interface DisabledQueryBuilder {
+  eq: QueryMethod;
+  neq: QueryMethod;
+  gt: QueryMethod;
+  gte: QueryMethod;
+  lt: QueryMethod;
+  lte: QueryMethod;
+  like: QueryMethod;
+  ilike: QueryMethod;
+  in: QueryMethod;
+  contains: QueryMethod;
+  overlaps: QueryMethod;
+  or: QueryMethod;
+  order: QueryMethod;
+  limit: QueryMethod;
+  range: QueryMethod;
+  single: PromiseMethod;
+  maybeSingle: PromiseMethod;
+  select: QueryMethod;
+  insert: QueryMethod;
+  update: QueryMethod;
+  upsert: QueryMethod;
+  delete: QueryMethod;
+  then: <TResult1 = DisabledQueryResult, TResult2 = never>(
+    onfulfilled?: ((value: DisabledQueryResult) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ) => Promise<TResult1 | TResult2>;
+  catch: <TResult = never>(
+    onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null
+  ) => Promise<DisabledQueryResult | TResult>;
+  finally: (onfinally?: (() => void) | null) => Promise<DisabledQueryResult>;
+}
+
+interface AuthSubscription {
+  unsubscribe: () => void;
+}
+
+interface AuthStateChangeCallback {
+  (cb: unknown): { data: { subscription: AuthSubscription } };
+}
+
+interface DisabledSupabaseClient {
+  from: (table: string) => DisabledQueryBuilder;
+  rpc: (fn: string, args?: Record<string, unknown>) => DisabledQueryBuilder;
+  auth: {
+    getSession: () => Promise<{ data: { session: null; user: null }; error: Error }>;
+    getUser: () => Promise<{ data: { user: null }; error: Error }>;
+    onAuthStateChange: AuthStateChangeCallback;
+    signInWithPassword: (args: Record<string, unknown>) => Promise<{ data: { session: null; user: null }; error: Error }>;
+    signUp: (args: Record<string, unknown>) => Promise<{ data: { session: null; user: null }; error: Error }>;
+    signOut: () => Promise<{ error: Error }>;
+    updateUser: (args: Record<string, unknown>) => Promise<{ data: { user: null }; error: Error }>;
+  };
+}
+
 /**
  * If the project is started without a configured `.env`, creating a Supabase
  * client with an empty URL/key can throw at import-time, leading to a blank
@@ -15,54 +79,55 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
  * real client when env vars exist. Otherwise we export a disabled client that
  * returns `{ data: null, error }` instead of throwing.
  */
-function createDisabledSupabaseClient() {
-  const makeError = (op: string) =>
+function createDisabledSupabaseClient(): DisabledSupabaseClient {
+  const makeError = (op: string): Error =>
     new Error(
       `Supabase not configured (${op}). Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.`,
     );
 
-  const disabledResult = (op: string) => ({ data: null, error: makeError(op) });
+  const disabledResult = (op: string): DisabledQueryResult => ({ data: null, error: makeError(op) });
 
   // Minimal thenable query builder so `await supabase.from(...).select(...)` works.
-  const makeQuery = (op: string) => {
-    const result = disabledResult(op);
-    const q: Record<string, unknown> = {};
+  const makeQuery = (): DisabledQueryBuilder => {
+    const result = disabledResult('query');
 
-    const returnSelf = () => q;
-    const returnPromise = () => Promise.resolve(result);
+    const returnSelf: QueryMethod = () => makeQuery();
+    const returnPromise: PromiseMethod = () => Promise.resolve(result);
 
-    // Chainable modifiers (common subset).
-    q.eq = returnSelf;
-    q.neq = returnSelf;
-    q.gt = returnSelf;
-    q.gte = returnSelf;
-    q.lt = returnSelf;
-    q.lte = returnSelf;
-    q.like = returnSelf;
-    q.ilike = returnSelf;
-    q.in = returnSelf;
-    q.contains = returnSelf;
-    q.overlaps = returnSelf;
-    q.or = returnSelf;
-    q.order = returnSelf;
-    q.limit = returnSelf;
-    q.range = returnSelf;
+    const q: DisabledQueryBuilder = {
+      // Chainable modifiers (common subset).
+      eq: returnSelf,
+      neq: returnSelf,
+      gt: returnSelf,
+      gte: returnSelf,
+      lt: returnSelf,
+      lte: returnSelf,
+      like: returnSelf,
+      ilike: returnSelf,
+      in: returnSelf,
+      contains: returnSelf,
+      overlaps: returnSelf,
+      or: returnSelf,
+      order: returnSelf,
+      limit: returnSelf,
+      range: returnSelf,
 
-    // Explicit terminal helpers.
-    q.single = returnPromise;
-    q.maybeSingle = returnPromise;
+      // Explicit terminal helpers.
+      single: returnPromise,
+      maybeSingle: returnPromise,
 
-    // CRUD starters (still thenable).
-    q.select = returnSelf;
-    q.insert = returnSelf;
-    q.update = returnSelf;
-    q.upsert = returnSelf;
-    q.delete = returnSelf;
+      // CRUD starters (still thenable).
+      select: returnSelf,
+      insert: returnSelf,
+      update: returnSelf,
+      upsert: returnSelf,
+      delete: returnSelf,
 
-    // Thenable contract (await works).
-    q.then = (onFulfilled: unknown, onRejected: unknown) => Promise.resolve(result).then(onFulfilled as never, onRejected as never);
-    q.catch = (onRejected: unknown) => Promise.resolve(result).catch(onRejected as never);
-    q.finally = (onFinally: unknown) => Promise.resolve(result).finally(onFinally as never);
+      // Thenable contract (await works).
+      then: (onfulfilled, onrejected) => Promise.resolve(result).then(onfulfilled, onrejected),
+      catch: (onrejected) => Promise.resolve(result).catch(onrejected),
+      finally: (onfinally) => Promise.resolve(result).finally(onfinally),
+    };
 
     return q;
   };
@@ -72,26 +137,14 @@ function createDisabledSupabaseClient() {
     error: makeError(op),
   });
 
-  interface DisabledSupabaseClient {
-    from: (table: string) => ReturnType<typeof makeQuery>;
-    rpc: (fn: string, args?: unknown) => ReturnType<typeof makeQuery>;
-    auth: {
-      getSession: () => Promise<ReturnType<typeof authResult>>;
-      onAuthStateChange: (cb: unknown) => { data: { subscription: { unsubscribe: () => undefined } } };
-      signInWithPassword: (args: unknown) => Promise<ReturnType<typeof authResult>>;
-      signUp: (args: unknown) => Promise<ReturnType<typeof authResult>>;
-      signOut: () => Promise<{ error: Error }>;
-      updateUser: (args: unknown) => Promise<{ data: { user: null }; error: Error }>;
-    };
-  }
-
   const client: DisabledSupabaseClient = {
-    from: () => makeQuery('from'),
-    rpc: () => makeQuery('rpc'),
+    from: () => makeQuery(),
+    rpc: () => makeQuery(),
     auth: {
       getSession: async () => authResult('auth.getSession'),
+      getUser: async () => ({ data: { user: null }, error: makeError('auth.getUser') }),
       onAuthStateChange: () => ({
-        data: { subscription: { unsubscribe: () => undefined } },
+        data: { subscription: { unsubscribe: () => { /* no-op */ } } },
       }),
       signInWithPassword: async () => authResult('auth.signInWithPassword'),
       signUp: async () => authResult('auth.signUp'),
@@ -103,6 +156,7 @@ function createDisabledSupabaseClient() {
   return client;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
       auth: {
@@ -112,7 +166,7 @@ export const supabase = isSupabaseConfigured
         autoRefreshToken: typeof window !== 'undefined',
       },
     })
-  : (createDisabledSupabaseClient() as unknown as ReturnType<typeof createClient>);
+  : createDisabledSupabaseClient();
 
 if (!isSupabaseConfigured) {
   logger.warn(

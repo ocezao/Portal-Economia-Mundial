@@ -534,6 +534,262 @@ A aplicação está **100% pronta para produção** quando:
 
 ---
 
+## 🆕 NOVOS ITENS RECOMENDADOS (Competitivo com grandes portais)
+
+### 21. Push Notifications (OneSignal) ⭐ ALTO IMPACTO
+**Status:** ❌ Não implementado  
+**Impacto:** Aumenta retenção em 40%, tráfego recorrente  
+**Tempo estimado:** 2-3 horas  
+**Custo:** $0 (até 10k subscribers)
+
+#### Por que é importante:
+- Infomoney, Valor, Estadão usam push para breaking news
+- Google Discover prioriza sites que têm retenção
+- Maior fator de diferenciação vs concorrentes pequenos
+
+#### Implementação:
+```bash
+npm install react-onesignal
+```
+
+```typescript
+// src/components/OneSignalProvider.tsx
+'use client';
+import { useEffect } from 'react';
+import OneSignal from 'react-onesignal';
+
+export function OneSignalProvider() {
+  useEffect(() => {
+    OneSignal.init({
+      appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID!,
+      allowLocalhostAsSecureOrigin: true,
+    });
+  }, []);
+
+  return null;
+}
+```
+
+```typescript
+// Enviar notificação via API (quando publicar breaking news)
+await fetch('https://onesignal.com/api/v1/notifications', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    app_id: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+    included_segments: ['Subscribed Users'],
+    headings: { pt: 'Urgente: BC mantém Selic' },
+    contents: { pt: 'Copom decide manter taxa básica em 12,75%...' },
+    url: 'https://seusite.com/noticias/selic-bc',
+  }),
+});
+```
+
+#### Checklist:
+- [ ] Criar conta OneSignal (grátis)
+- [ ] Adicionar `NEXT_PUBLIC_ONESIGNAL_APP_ID` no .env
+- [ ] Criar componente OneSignalProvider
+- [ ] Integrar no layout.tsx
+- [ ] Criar API route para enviar push quando publicar breaking news
+- [ ] Testar em Chrome/Android
+- [ ] Testar em Safari/iOS
+
+---
+
+### 22. Páginas AMP (Accelerated Mobile Pages) ⭐ ALTO IMPACTO SEO
+**Status:** ❌ Não implementado  
+**Impacto:** Prioridade no Google mobile, especialmente Discover  
+**Tempo estimado:** 4-6 horas  
+**Custo:** $0
+
+#### Por que é importante:
+- Google Discover prioriza AMP
+- Carregamento instantâneo em mobile
+- Infomoney, G1, Estadão usam AMP para notícias
+
+#### Implementação Next.js:
+```typescript
+// src/app/amp/[slug]/page.tsx
+export const config = { amp: 'hybrid' };
+
+export default function ArticleAMP({ params }: { params: { slug: string } }) {
+  // Versão simplificada do artigo em AMP
+  return (
+    <article className="amp-article">
+      {/* Componentes AMP válidos */}
+    </article>
+  );
+}
+```
+
+#### Restrições AMP:
+- CSS inline máximo 75KB
+- JavaScript só via componentes AMP (amp-img, amp-analytics)
+- Imagens devem ter width/height explícitos
+
+#### Checklist:
+- [ ] Criar template AMP para artigos
+- [ ] Validar no [AMP Validator](https://validator.ampproject.org/)
+- [ ] Adicionar link rel="amphtml" na versão normal
+- [ ] Configurar analytics AMP
+- [ ] Testar no Google Search Console
+
+---
+
+### 23. Schema.org Avançado (Speakable, ReviewedBy) ⭐ SEO RICH SNIPPETS
+**Status:** ⚠️ Básico implementado  
+**Impacto:** Rich snippets no Google, voz no Assistant  
+**Tempo estimado:** 1-2 horas  
+**Custo:** $0
+
+#### O que adicionar:
+```json
+{
+  "@type": "NewsArticle",
+  "headline": "Título do Artigo",
+  "author": {
+    "@type": "Person",
+    "name": "Nome Autor",
+    "jobTitle": "Editor de Economia",
+    "url": "https://seusite.com/autor/nome-autor"
+  },
+  "reviewedBy": {
+    "@type": "Person",
+    "name": "Nome Revisor",
+    "jobTitle": "Chefe de Redação"
+  },
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": [".article-title", ".article-summary"]
+  },
+  "articleSection": "Economia",
+  "wordCount": 1200
+}
+```
+
+#### Checklist:
+- [ ] Adicionar `reviewedBy` para artigos (mostra "Revisado por" no Google)
+- [ ] Adicionar `speakable` (para Google Assistant ler)
+- [ ] Adicionar `wordCount`
+- [ ] Validar no [Rich Results Test](https://search.google.com/test/rich-results)
+
+---
+
+### 24. Cache Avançado (ISR + unstable_cache) ⭐ PERFORMANCE
+**Status:** ⚠️ Básico (revalidate)  
+**Impacto:** Reduz requisições Supabase em ~80%  
+**Tempo estimado:** 2-3 horas  
+**Custo:** $0
+
+#### Implementação:
+```typescript
+// src/lib/cache.ts
+import { unstable_cache } from 'next/cache';
+import { getLatestArticles, getFeaturedArticles } from '@/services/newsManager';
+
+// Cache de 5 minutos para artigos
+export const getCachedLatestArticles = unstable_cache(
+  async (limit = 10) => getLatestArticles(limit),
+  ['latest-articles'],
+  { revalidate: 300, tags: ['articles'] }
+);
+
+export const getCachedFeaturedArticles = unstable_cache(
+  async (limit = 3) => getFeaturedArticles(limit),
+  ['featured-articles'],
+  { revalidate: 300, tags: ['articles'] }
+);
+
+// Invalidação quando publicar novo artigo
+// No admin, após criar/editar artigo:
+import { revalidateTag } from 'next/cache';
+revalidateTag('articles');
+```
+
+#### Uso na Home:
+```typescript
+// src/app/(site)/page.tsx
+import { getCachedLatestArticles, getCachedFeaturedArticles } from '@/lib/cache';
+
+export default async function HomePage() {
+  const [featured, latest] = await Promise.all([
+    getCachedFeaturedArticles(),
+    getCachedLatestArticles(),
+  ]);
+  
+  return <HomePageClient featured={featured} latest={latest} />;
+}
+```
+
+#### Checklist:
+- [ ] Criar lib/cache.ts com funções cacheadas
+- [ ] Substituir chamadas diretas nas Server Components
+- [ ] Adicionar invalidação no admin (quando publicar/editar)
+- [ ] Monitorar taxa de cache hit
+
+---
+
+### 25. Infinite Scroll + Virtualização ⭐ UX
+**Status:** ❌ Paginação tradicional  
+**Impacto:** Melhora engagement, reduz bounce  
+**Tempo estimado:** 3-4 horas  
+**Custo:** $0
+
+#### Implementação:
+```typescript
+// Usar TanStack Query + react-intersection-observer
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
+
+const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+  queryKey: ['articles'],
+  queryFn: ({ pageParam = 1 }) => getArticlesPaginated(pageParam),
+  getNextPageParam: (lastPage) => lastPage.nextPage,
+});
+
+// Virtualização para listas grandes
+import { FixedSizeList } from 'react-window';
+```
+
+---
+
+## 🎯 RANKING DE PRIORIDADES (ROI)
+
+| Rank | Item | Impacto | Esforço | ROI | Prazo |
+|------|------|---------|---------|-----|-------|
+| 1 | **OneSignal Push** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
+| 2 | **Newsletter (Buttondown)** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
+| 3 | **Comentários (Giscus)** | ⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥 | 1 dia |
+| 4 | **Cache (ISR)** | ⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥 | 1 dia |
+| 5 | **PWA** | ⭐⭐⭐⭐ | 3-4h | 🔥🔥🔥🔥 | 2 dias |
+| 6 | **Schema.org Avançado** | ⭐⭐⭐ | 1-2h | 🔥🔥🔥 | 1 dia |
+| 7 | **AMP** | ⭐⭐⭐ | 4-6h | 🔥🔥🔥 | 3 dias |
+| 8 | **Infinite Scroll** | ⭐⭐⭐ | 3-4h | 🔥🔥🔥 | 2 dias |
+
+**Foco nos 4 primeiros = 80% do valor com 20% do esforço**
+
+---
+
+## 💰 CUSTOS MENSAIS ATUALIZADOS
+
+| Serviço | Plano | Custo | Status |
+|---------|-------|-------|--------|
+| VPS Hostinger KVM 2 | 2 cores, 8GB RAM | $6.99/mês | Opcional |
+| Supabase | Free tier (500MB) | $0 | ✅ |
+| Cloudinary | Free (25GB) | $0 | ✅ |
+| Sentry | Developer (5k erros) | $0 | ✅ |
+| UptimeRobot | Free (50 monitores) | $0 | ✅ |
+| Buttondown | Free (1k subs) | $0 | ✅ |
+| OneSignal | Free (10k subs) | $0 | ✅ |
+| Backup S3 | ~5GB | ~$0.50/mês | Opcional |
+| **TOTAL MÍNIMO** | | **$0** | ✅ |
+| **TOTAL COM VPS** | | **~$7.50/mês** | ✅ |
+
+---
+
 ## 📝 NOTAS FINAIS
 
 1. **Não pule os CRÍTICOS** - Sem eles, o site vai quebrar
@@ -541,6 +797,7 @@ A aplicação está **100% pronta para produção** quando:
 3. **Monitore os logs** - Os primeiros dias são críticos
 4. **Tenha um rollback plan** - Snapshot do VPS antes do deploy
 5. **Documente tudo** - Você vai esquecer daqui 6 meses
+6. **Implemente Push + Newsletter primeiro** - São os itens de maior ROI e gratuito
 
 ---
 

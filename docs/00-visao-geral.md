@@ -193,5 +193,5 @@ docker-compose up -d
 
 ---
 
-**Versão:** 1.1.0  
-**Última atualização:** 2024-02-03
+**Versão:** 1.2.0  
+**Última atualização:** 2026-02-08

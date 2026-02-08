@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   },
 };
 
-type LegalSection = {
+interface LegalSection {
   id: string;
   title: string;
   content?: string;

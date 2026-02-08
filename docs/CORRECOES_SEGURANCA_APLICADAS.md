@@ -1,8 +1,10 @@
 # ✅ Correções de Segurança Aplicadas
 
+> ⚠️ **NOTA HISTÓRICA:** Documento de correções aplicadas em 04/02/2026. Algumas referências de arquivos (como `src/pages/*`) refletem a estrutura anterior à migração para Next.js App Router. Alguns arquivos mencionados podem ter sido movidos para `src/app/` ou removidos em limpezas de código subsequentes.
+
 **Data:** 04/02/2026  
 **Responsável:** Kimi Code CLI  
-**Status:** ✅ CONCLUÍDO
+**Status:** ✅ CONCLUÍDO (Histórico)
 
 ---
 

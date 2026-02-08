@@ -11,118 +11,11 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { usePathname, useRouter } from 'next/navigation';
+import type { User, UserRole, UserPreferences, LoginCredentials, RegisterData, AuthError } from '@/types/user';
 
 // ==================== TIPOS ====================
-
-export type UserRole = 'user' | 'admin';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  region?: string;
-  avatar?: string;
-  bio?: string;
-  profession?: string;
-  company?: string;
-  socialLinks?: {
-    website?: string;
-    twitter?: string;
-    linkedin?: string;
-    github?: string;
-  };
-  twoFactorEnabled?: boolean;
-  createdAt: string;
-  lastLogin: string;
-  isActive: boolean;
-  preferences: UserPreferences;
-}
-
-export interface UserPreferences {
-  // Categorias e tags
-  categories: string[];
-  tags: string[];
-  customTags?: string[];
-
-  // Idioma e acessibilidade
-  language: 'pt-BR' | 'en';
-  theme?: 'light' | 'dark' | 'system';
-  fontSize?: 'small' | 'medium' | 'large';
-  layoutDensity?: 'compact' | 'comfortable' | 'spacious';
-  reducedMotion: boolean;
-
-  // Notificações
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  newsletterWeekly?: boolean;
-  newsletterDaily?: boolean;
-  breakingNewsAlerts?: boolean;
-  marketAlerts?: boolean;
-  notificationSchedule?: {
-    morning: boolean;
-    afternoon: boolean;
-    evening: boolean;
-  };
-  quietHoursStart?: string;
-  quietHoursEnd?: string;
-
-  // Privacidade
-  shareReadingHistory?: boolean;
-  allowPersonalization?: boolean;
-  analyticsConsent?: boolean;
-  marketingConsent?: boolean;
-  cookieConsent?: boolean;
-
-  // Feed
-  feedLayout?: 'grid' | 'list' | 'compact';
-  feedSort?: 'relevance' | 'date' | 'popular';
-  contentDensity?: 'minimal' | 'balanced' | 'detailed';
-  articlesPerPage?: number;
-  hideReadArticles?: boolean;
-  showOnlyPreferred?: boolean;
-  highlightBreaking?: boolean;
-
-  // Conteúdo
-  autoPlayVideos?: boolean;
-  loadImages?: boolean;
-  infiniteScroll?: boolean;
-  showReadingTime?: boolean;
-  showRelatedArticles?: boolean;
-  contentLanguages?: string[];
-
-  // Interações
-  autoBookmarkOnLike?: boolean;
-  shareToSocial?: boolean;
-  commentNotifications?: boolean;
-
-  // Modo Foco
-  focusMode?: boolean;
-  focusModeSettings?: {
-    hideSidebar: boolean;
-    hideComments: boolean;
-    hideRelated: boolean;
-    readerView: boolean;
-  };
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  region?: string;
-}
-
-export interface AuthError {
-  code: string;
-  message: string;
-  field?: string;
-}
+// Tipos re-exportados de @/types/user
+export type { UserRole, UserPreferences, LoginCredentials, RegisterData, AuthError };
 
 interface AuthContextType {
   // Estado
@@ -311,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (signInError) {
       setError({
-        code: signInError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
+        code: 'status' in signInError && signInError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
         message: signInError.message || 'E-mail ou senha incorretos',
       });
       setIsLoading(false);
@@ -365,7 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (signUpError) {
       setError({
-        code: signUpError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
+        code: 'status' in signUpError && signUpError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
         message: signUpError.message || 'Erro ao criar conta. Tente novamente.',
       });
       setIsLoading(false);

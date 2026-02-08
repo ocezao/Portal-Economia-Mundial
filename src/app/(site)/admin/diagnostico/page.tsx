@@ -119,7 +119,7 @@ export default function AdminDiagnosticoPage() {
     });
 
     // 6. Verificar usuários registrados
-    const registeredUsers = storage.get<Array<unknown>>('pem_registered_users') || [];
+    const registeredUsers = storage.get<unknown[]>('pem_registered_users') || [];
     
     checks.push({
       id: 'users',
@@ -129,7 +129,7 @@ export default function AdminDiagnosticoPage() {
     });
 
     // 7. Verificar comentários
-    const comments = storage.get<Array<unknown>>('pem_comments') || [];
+    const comments = storage.get<unknown[]>('pem_comments') || [];
     
     checks.push({
       id: 'comments',

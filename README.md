@@ -155,6 +155,23 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 - ✅ Analytics first-party (LGPD-compliant)
 - ✅ **MCP Server** - Integração com Codex CLI para controle via IA
 
+### 🚀 Roadmap para Competir com Grandes Portais (Gratuito)
+
+Funcionalidades em desenvolvimento para igualar Infomoney, Valor, Estadão:
+
+| Status | Funcionalidade | Impacto |
+|--------|---------------|---------|
+| 🔄 | **Push Notifications** (OneSignal - 10k grátis) | Retenção +40% |
+| 🔄 | **Newsletter** (Buttondown - 1k subs grátis) | Leads recorrentes |
+| 🔄 | **Comentários** (Giscus/GitHub - grátis) | Engajamento |
+| 🔄 | **PWA** (Progressive Web App) | Instalação mobile |
+| 🔄 | **AMP** (Accelerated Mobile Pages) | SEO Discover |
+| 🔄 | **Cache Avançado** (ISR + unstable_cache) | Performance |
+
+📊 **Nota atual:** 6.8/10 | 🎯 **Com roadmap:** 9.0+/10
+
+👉 [Ver checklist completo de implementação](./docs/22-deploy-producao-checklist.md)
+
 ## 🤖 MCP Server (Model Context Protocol)
 
 O portal possui um **servidor MCP completo** para integração com assistentes de IA como o Codex CLI.

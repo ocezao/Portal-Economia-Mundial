@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, TrendingUp, Clock, Zap, Flame, Mail, MessageSquareText } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -16,7 +17,7 @@ import type { NewsArticle } from '@/types';
 import { AdUnit } from '@/components/ads/AdUnit';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EarningsCalendar } from '@/components/economics/EarningsCalendar';
+import { EarningsCalendar } from '@/components/economics/EarningsCalendarWrapper';
 import { ROUTES, CATEGORIES } from '@/config/routes';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { EarningsEvent, MarketNews } from '@/services/economics/finnhubService';
@@ -37,7 +38,7 @@ const RiskThermometer = dynamic(
   { ssr: false, loading: () => <Skeleton className="h-[260px] w-full rounded-lg" /> },
 );
 
-type HomePageClientProps = {
+interface HomePageClientProps {
   featured: NewsArticle[];
   latest: NewsArticle[];
   trending: NewsArticle[];
@@ -260,12 +261,13 @@ export default function HomePageClient({
                 return (
                   <li key={article.slug}>
                     <article className="group flex gap-4">
-                      <figure className="w-32 h-24 md:w-48 md:h-32 flex-shrink-0 overflow-hidden rounded-lg">
-                        <img
+                      <figure className="w-32 h-24 md:w-48 md:h-32 flex-shrink-0 overflow-hidden rounded-lg relative">
+                        <Image
                           src={article.coverImage}
                           alt={article.title}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          fill
+                          sizes="(max-width: 768px) 128px, 192px"
+                          className="object-cover group-hover:scale-105 transition-transform"
                         />
                       </figure>
                       <div className="flex-1 min-w-0">

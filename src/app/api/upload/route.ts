@@ -9,10 +9,12 @@
  * - Adiciona watermark opcional
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +25,8 @@ const MAX_DIMENSION = 4096; // safety limit for resize inputs
 
 // Simple in-memory rate limiter (best-effort).
 // For VPS single instance, this already blocks obvious abuse.
+// TODO: Em produção com múltiplas instâncias, usar Redis para rate limiting centralizado
+// Exemplo: Redis com ioredis ou @upstash/redis para persistência entre nodes
 const rl = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30; // uploads/min per IP
@@ -139,7 +143,7 @@ export async function POST(request: NextRequest) {
     const hasGPS = originalMetadata.exif?.toString().includes('GPS') || false;
 
     if (hasGPS) {
-      console.log('⚠️ Imagem contém dados GPS - serão removidos');
+      logger.warn('⚠️ Imagem contém dados GPS - serão removidos');
     }
 
     // Processa a imagem
@@ -229,7 +233,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro no upload:', error);
+    logger.error('Erro no upload:', error);
     return NextResponse.json(
       { error: 'Erro ao processar imagem' },
       { status: 500 }

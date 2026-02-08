@@ -45,7 +45,7 @@ Este documento define a estratégia completa de testes automatizados do Portal E
 | Unitário | Vitest | ^1.0 | Testes rápidos de componentes/hooks |
 | E2E | Playwright | ^1.40 | Testes de fluxo completo |
 | API | Supertest | ^6.3 | Testes de endpoints HTTP |
-| Mock | MSW | ^2.0 | Mock de API/service worker |
+| Mock | MSW | ^2.0 | Mock de API/service worker (opcional - não instalado por padrão) |
 | Coverage | v8/istanbul | - | Relatório de cobertura |
 | Load | k6 | - | Testes de carga do collector |
 

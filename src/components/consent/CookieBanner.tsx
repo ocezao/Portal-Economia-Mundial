@@ -10,13 +10,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Shield, Cookie, Settings, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export type ConsentType = {
+export interface ConsentType {
   necessary: boolean;
   analytics: boolean;
   advertising: boolean;
 };
 
-type ConsentConfig = {
+interface ConsentConfig {
   v: string;
   consent: ConsentType;
   timestamp: number;

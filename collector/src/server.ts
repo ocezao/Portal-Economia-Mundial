@@ -19,8 +19,13 @@ const server = Fastify({
 async function start() {
   try {
     // Plugins
+    // CORS restrito para origens específicas em produção
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+      ? process.env.CORS_ALLOWED_ORIGINS.split(',')
+      : ['http://localhost:3000', 'http://localhost:5173'];
+    
     await server.register(cors, {
-      origin: true,
+      origin: allowedOrigins,
       credentials: true
     });
 

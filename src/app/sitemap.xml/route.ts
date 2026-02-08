@@ -14,7 +14,7 @@ async function getPublishedNewsCount(): Promise<number> {
   const { error, count } = await supabase
     .from('news_articles')
     .select('id', { count: 'exact', head: true })
-    .eq('status', 'published');
+    .eq('status', 'published') as { error: Error | null; count: number | null };
 
   if (error || typeof count !== 'number') return 0;
   return count;

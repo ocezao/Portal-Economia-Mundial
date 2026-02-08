@@ -10,7 +10,7 @@
 - [ ] Artigos em destaque exibem imagens
 - [ ] Lista de últimas notícias carrega
 - [ ] Sidebar com módulos geo/econômicos
-- [ ] Módulos: TensionMap, EconomicAgenda, RiskThermometer, EconomicComparator
+- [ ] Módulos: TensionMap, EconomicAgenda, RiskThermometer
 
 ### 📰 Página de Artigo (/noticias/[slug])
 
@@ -122,18 +122,18 @@
 
 #### Sem Divs
 ```bash
-grep -r "<div" /mnt/okcomputer/output/app/src/components/ || echo "✅ Nenhum div encontrado"
-grep -r "<div" /mnt/okcomputer/output/app/src/pages/ || echo "✅ Nenhum div encontrado"
+grep -r "<div" src/components/ || echo "✅ Nenhum div encontrado"
+grep -r "<div" src/app/ || echo "✅ Nenhum div encontrado"
 ```
 
 #### TypeScript
 ```bash
-cd /mnt/okcomputer/output/app && npm run build 2>&1 | grep -i "error" || echo "✅ Build sem erros"
+npm run build 2>&1 | grep -i "error" || echo "✅ Build sem erros"
 ```
 
 #### ESLint
 ```bash
-cd /mnt/okcomputer/output/app && npm run lint 2>&1 | grep -i "error" || echo "✅ Lint passou"
+npm run lint 2>&1 | grep -i "error" || echo "✅ Lint passou"
 ```
 
 ### 🎨 Design System

@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { Upload, X, AlertCircle, CheckCircle2, Settings2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -219,6 +220,7 @@ export function ImageUploader({
         <div className="space-y-4">
           {/* Preview */}
           <div className="relative rounded-lg overflow-hidden bg-muted">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt="Preview"

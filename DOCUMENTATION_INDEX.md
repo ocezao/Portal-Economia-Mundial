@@ -112,7 +112,23 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 **🟢 BOM TER (7 itens):**
 - PWA, Testes, Monitoramento, CSP
 
-👉 [Ver checklist completo](./docs/22-deploy-producao-checklist.md)
+### 🆕 Funcionalidades Competitivas (vs Infomoney/Valor)
+**Itens para igualar grandes portais (métodos gratuitos):**
+
+| # | Funcionalidade | ROI | Custo |
+|---|---------------|-----|-------|
+| 1 | **Push Notifications (OneSignal)** | 🔥🔥🔥🔥🔥 | $0 |
+| 2 | **Newsletter (Buttondown)** | 🔥🔥🔥🔥🔥 | $0 |
+| 3 | **Comentários (Giscus)** | 🔥🔥🔥🔥 | $0 |
+| 4 | **Cache Avançado (ISR)** | 🔥🔥🔥🔥 | $0 |
+| 5 | **PWA Completo** | 🔥🔥🔥🔥 | $0 |
+| 6 | **Schema.org Avançado** | 🔥🔥🔥 | $0 |
+| 7 | **Páginas AMP** | 🔥🔥🔥 | $0 |
+
+📊 **Nota atual do projeto:** 6.8/10  
+🎯 **Com esses itens:** 9.0+/10
+
+👉 [Ver checklist completo com implementação](./docs/22-deploy-producao-checklist.md)
 
 ---
 

@@ -30,7 +30,7 @@ O PEM possui arquitetura modular dividida em três grandes camadas:
 **Hooks Customizados** (`/src/hooks`)
 - `useAuth`: Gerenciamento de autenticação
 - `useBookmarks`: Favoritos do usuário
-- `useMarket`: Dados de mercado em tempo real
+- `useFinnhub`: Dados de mercado em tempo real
 - `useReadingProgress`: Tracking de leitura
 - `useSurvey`: Questionário de desbloqueio
 - `useReadingLimit`: Controle de limite de leitura
@@ -261,4 +261,4 @@ Este script verifica:
 ---
 
 **Data de criação:** 2024-01-10  
-**Última atualização:** 2024-02-03 (adicionado Analytics Layer)
+**Última atualização:** 2026-02-08 (corrigido hooks e atualizado estrutura)

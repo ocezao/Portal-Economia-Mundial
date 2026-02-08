@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Você está offline | Portal de Economia e Mercados</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 20px;
+    }
+    
+    .container {
+      text-align: center;
+      max-width: 500px;
+    }
+    
+    .icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    
+    p {
+      font-size: 16px;
+      color: #a0a0a0;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #c40000;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.3s;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .btn:hover {
+      background: #a00000;
+    }
+    
+    .cached-content {
+      margin-top: 40px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .cached-content h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+    
+    .cached-content ul {
+      list-style: none;
+      text-align: left;
+    }
+    
+    .cached-content li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .cached-content a {
+      color: #4a9eff;
+      text-decoration: none;
+    }
+    
+    .cached-content a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📴</div>
+    <h1>Você está offline</h1>
+    <p>Parece que você perdeu a conexão com a internet. Algumas páginas já salvas podem estar disponíveis abaixo.</p>
+    
+    <button class="btn" onclick="window.location.reload()">
+      🔄 Tentar novamente
+    </button>
+    
+    <div class="cached-content">
+      <h2>Conteúdo disponível offline:</h2>
+      <ul>
+        <li>📰 <a href="/">Página inicial</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    // Tentar recarregar quando voltar online
+    window.addEventListener('online', function() {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

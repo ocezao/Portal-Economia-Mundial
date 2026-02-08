@@ -4,6 +4,20 @@
 
 import { pool } from './index';
 
+// Logger seguro para o collector
+const logger = {
+  info: (msg: string) => console.log(msg),
+  warn: (msg: string) => console.warn(msg),
+  error: (msg: string, err?: unknown) => {
+    // Em produção, enviar para serviço de monitoring
+    if (process.env.NODE_ENV === 'production' && err) {
+      console.error(msg, '[Error details sanitized]');
+    } else {
+      console.error(msg, err);
+    }
+  }
+};
+
 /**
  * Verifica se partição do mês atual existe e tem índice único
  * Se não existir, loga erro e encerra processo com exit(1)
@@ -14,7 +28,7 @@ export async function checkCurrentPartition(): Promise<void> {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const partitionName = `events_raw_${year}_${month}`;
   
-  console.log(`[Partition Check] Verificando partição: ${partitionName}`);
+  logger.info(`[Partition Check] Verificando partição: ${partitionName}`);
   
   try {
     // Verificar se partição existe
@@ -26,17 +40,17 @@ export async function checkCurrentPartition(): Promise<void> {
     `, [partitionName]);
     
     if (partitionResult.rowCount === 0) {
-      console.error('');
-      console.error('╔════════════════════════════════════════════════════════════════╗');
-      console.error('║                    ERRO FATAL                                  ║');
-      console.error('╠════════════════════════════════════════════════════════════════╣');
-      console.error(`║  Partição ${partitionName} não existe!                          ║`);
-      console.error('║                                                                ║');
-      console.error('║  O Collector não pode iniciar sem a partição do mês atual.     ║');
-      console.error('║                                                                ║');
-      console.error('║  Execute: docker compose run --rm init-partitions              ║');
-      console.error('╚════════════════════════════════════════════════════════════════╝');
-      console.error('');
+      logger.error('');
+      logger.error('╔════════════════════════════════════════════════════════════════╗');
+      logger.error('║                    ERRO FATAL                                  ║');
+      logger.error('╠════════════════════════════════════════════════════════════════╣');
+      logger.error(`║  Partição ${partitionName} não existe!                          ║`);
+      logger.error('║                                                                ║');
+      logger.error('║  O Collector não pode iniciar sem a partição do mês atual.     ║');
+      logger.error('║                                                                ║');
+      logger.error('║  Execute: docker compose run --rm init-partitions              ║');
+      logger.error('╚════════════════════════════════════════════════════════════════╝');
+      logger.error('');
       process.exit(1);
     }
     
@@ -50,25 +64,25 @@ export async function checkCurrentPartition(): Promise<void> {
     `, [indexName]);
     
     if (indexResult.rowCount === 0) {
-      console.error('');
-      console.error('╔════════════════════════════════════════════════════════════════╗');
-      console.error('║                    ERRO FATAL                                  ║');
-      console.error('╠════════════════════════════════════════════════════════════════╣');
-      console.error(`║  UNIQUE INDEX em ${partitionName} não existe!                   ║`);
-      console.error('║                                                                ║');
-      console.error('║  A deduplicação não funcionará corretamente.                   ║');
-      console.error('║                                                                ║');
-      console.error('║  Execute: docker compose run --rm init-partitions              ║');
-      console.error('╚════════════════════════════════════════════════════════════════╝');
-      console.error('');
+      logger.error('');
+      logger.error('╔════════════════════════════════════════════════════════════════╗');
+      logger.error('║                    ERRO FATAL                                  ║');
+      logger.error('╠════════════════════════════════════════════════════════════════╣');
+      logger.error(`║  UNIQUE INDEX em ${partitionName} não existe!                   ║`);
+      logger.error('║                                                                ║');
+      logger.error('║  A deduplicação não funcionará corretamente.                   ║');
+      logger.error('║                                                                ║');
+      logger.error('║  Execute: docker compose run --rm init-partitions              ║');
+      logger.error('╚════════════════════════════════════════════════════════════════╝');
+      logger.error('');
       process.exit(1);
     }
     
-    console.log(`[Partition Check] ✓ Partição ${partitionName} OK`);
-    console.log(`[Partition Check] ✓ UNIQUE INDEX em event_id OK`);
+    logger.info(`[Partition Check] ✓ Partição ${partitionName} OK`);
+    logger.info(`[Partition Check] ✓ UNIQUE INDEX em event_id OK`);
     
   } catch (err) {
-    console.error('[Partition Check] Erro ao verificar partição:', err);
+    logger.error('[Partition Check] Erro ao verificar partição:', err);
     process.exit(1);
   }
 }

@@ -433,8 +433,8 @@ export function TensionMap() {
                       }}
                     >
                       {(() => {
-                        const Icon = trendConfig[selectedPoint.trend!].icon;
-                        return <Icon className="w-3 h-3" />;
+                        const TrendIcon = trendConfig[selectedPoint.trend].icon;
+                        return <TrendIcon className="w-3 h-3" />;
                       })()}
                       {trendConfig[selectedPoint.trend].label}
                     </span>

@@ -36,7 +36,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   
   // Mock users + registered users
-  const registeredUsers = storage.get<Array<{ email: string }>>('pem_registered_users') || [];
+  const registeredUsers = storage.get<{ email: string }[]>('pem_registered_users') || [];
   
   const mockUsers: MockUser[] = [
     {

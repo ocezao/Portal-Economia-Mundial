@@ -16,7 +16,7 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -170,6 +170,30 @@ const GetDashboardMetricsSchema = z.object({
 });
 
 // ============================================
+// TIPOS
+// ============================================
+
+type AnalyticsEvent = {
+  event_type: string;
+  properties?: { depth?: number };
+};
+
+type Article = {
+  id: string;
+  slug: string;
+  title: string;
+  published_at: string;
+  views: number;
+  likes: number;
+  shares: number;
+  comments_count: number;
+};
+
+type Session = {
+  user_id: string;
+};
+
+// ============================================
 // UTILITÁRIOS
 // ============================================
 
@@ -188,6 +212,15 @@ function generateSlug(title: string): string {
   const baseSlug = slugify(title);
   const timestamp = Date.now().toString(36).slice(-4);
   return `${baseSlug}-${timestamp}`;
+}
+
+// Type guards
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
 }
 
 // ============================================
@@ -473,7 +506,7 @@ async function handleGetAnalyticsEvents(args: z.infer<typeof GetAnalyticsSchema>
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
 
 async function handleGetArticleStats(args: z.infer<typeof GetArticleStatsSchema>) {
@@ -500,12 +533,14 @@ async function handleGetArticleStats(args: z.infer<typeof GetArticleStatsSchema>
     .gte("timestamp", startDate.toISOString());
 
   // Calcula métricas
-  const pageViews = events?.filter(e => e.event_type === "page_view").length || 0;
-  const readStarts = events?.filter(e => e.event_type === "article_read_start").length || 0;
-  const readCompletes = events?.filter(e => e.event_type === "article_read_complete").length || 0;
-  const avgScrollDepth = events
-    ?.filter(e => e.event_type === "scroll_depth")
-    .reduce((acc, e) => acc + (e.properties?.depth || 0), 0) / (events?.filter(e => e.event_type === "scroll_depth").length || 1);
+  const eventsList = Array.isArray(events) ? events as AnalyticsEvent[] : [];
+  const pageViews = eventsList.filter(e => e.event_type === "page_view").length;
+  const readStarts = eventsList.filter(e => e.event_type === "article_read_start").length;
+  const readCompletes = eventsList.filter(e => e.event_type === "article_read_complete").length;
+  const scrollDepthEvents = eventsList.filter(e => e.event_type === "scroll_depth");
+  const avgScrollDepth = scrollDepthEvents.length > 0
+    ? scrollDepthEvents.reduce((acc, e) => acc + (e.properties?.depth ?? 0), 0) / scrollDepthEvents.length
+    : 0;
 
   return {
     article: {
@@ -525,7 +560,7 @@ async function handleGetArticleStats(args: z.infer<typeof GetArticleStatsSchema>
       shares: article.shares,
       comments: article.comments_count,
     },
-    events: events || [],
+    events: eventsList,
   };
 }
 
@@ -538,7 +573,7 @@ async function handleGetTopArticles(args: z.infer<typeof GetTopArticlesSchema>) 
     .limit(args.limit);
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
 
 async function handleGetUserSessions(args: z.infer<typeof GetUserSessionsSchema>) {
@@ -554,7 +589,7 @@ async function handleGetUserSessions(args: z.infer<typeof GetUserSessionsSchema>
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
 
 async function handleGetDashboardMetrics(args: z.infer<typeof GetDashboardMetricsSchema>) {
@@ -582,7 +617,7 @@ async function handleGetDashboardMetrics(args: z.infer<typeof GetDashboardMetric
     .gte("timestamp", startDate.toISOString())
     .not("user_id", "is", null);
 
-  const uniqueUsers = new Set(activeUsers?.map(e => e.user_id)).size;
+  const uniqueUsers = new Set((activeUsers as Session[] | null)?.map(e => e.user_id)).size;
 
   // Artigos publicados no período
   const { count: articlesPublished } = await supabase
@@ -594,11 +629,11 @@ async function handleGetDashboardMetrics(args: z.infer<typeof GetDashboardMetric
   return {
     period: args.period,
     metrics: {
-      pageviews: pageviews || 0,
-      sessions: sessions || 0,
+      pageviews: pageviews ?? 0,
+      sessions: sessions ?? 0,
       uniqueUsers,
-      articlesPublished: articlesPublished || 0,
-      avgPagesPerSession: sessions ? ((pageviews || 0) / sessions).toFixed(2) : "0",
+      articlesPublished: articlesPublished ?? 0,
+      avgPagesPerSession: sessions ? ((pageviews ?? 0) / sessions).toFixed(2) : "0",
     },
   };
 }
@@ -606,6 +641,23 @@ async function handleGetDashboardMetrics(args: z.infer<typeof GetDashboardMetric
 // ============================================
 // CRUD ARTIGOS COMPLETO
 // ============================================
+
+interface ArticleUpdate {
+  title?: string;
+  excerpt?: string;
+  content?: string;
+  title_en?: string | null;
+  excerpt_en?: string | null;
+  content_en?: string | null;
+  meta_description?: string | null;
+  seo_keywords?: string[];
+  cover_image?: string;
+  status?: string;
+  is_featured?: boolean;
+  is_breaking?: boolean;
+  reading_time?: number;
+  updated_at?: string;
+}
 
 async function handleCreateArticle(args: z.infer<typeof CreateArticleSchema>) {
   const slug = generateSlug(args.title);
@@ -643,6 +695,8 @@ async function handleCreateArticle(args: z.infer<typeof CreateArticleSchema>) {
   if (articleError) throw articleError;
   if (!article) throw new Error("Erro ao criar artigo");
 
+  const articleId = isRecord(article) && isString(article.id) ? article.id : '';
+
   // 2. Cria/Busca categoria e relaciona
   if (args.category) {
     const categorySlug = slugify(args.category);
@@ -654,9 +708,9 @@ async function handleCreateArticle(args: z.infer<typeof CreateArticleSchema>) {
       .eq("slug", categorySlug)
       .single();
 
-    if (category?.id) {
+    if (isRecord(category) && isString(category.id)) {
       await supabase.from("news_article_categories").insert({
-        article_id: article.id,
+        article_id: articleId,
         category_id: category.id,
       });
     } else {
@@ -667,9 +721,9 @@ async function handleCreateArticle(args: z.infer<typeof CreateArticleSchema>) {
         .select()
         .single();
       
-      if (newCategory?.id) {
+      if (isRecord(newCategory) && isString(newCategory.id)) {
         await supabase.from("news_article_categories").insert({
-          article_id: article.id,
+          article_id: articleId,
           category_id: newCategory.id,
         });
       }
@@ -688,9 +742,9 @@ async function handleCreateArticle(args: z.infer<typeof CreateArticleSchema>) {
         .select()
         .single();
 
-      if (tag?.id) {
+      if (isRecord(tag) && isString(tag.id)) {
         await supabase.from("news_article_tags").insert({
-          article_id: article.id,
+          article_id: articleId,
           tag_id: tag.id,
         });
       }
@@ -700,10 +754,10 @@ async function handleCreateArticle(args: z.infer<typeof CreateArticleSchema>) {
   return { 
     success: true, 
     article: {
-      id: article.id,
-      slug: article.slug,
-      title: article.title,
-      status: article.status,
+      id: articleId,
+      slug: isRecord(article) && isString(article.slug) ? article.slug : slug,
+      title: isRecord(article) && isString(article.title) ? article.title : args.title,
+      status: isRecord(article) && isString(article.status) ? article.status : args.status,
       category: args.category,
       tags: args.tags,
     }, 
@@ -719,9 +773,11 @@ async function handleUpdateArticle(args: z.infer<typeof UpdateArticleSchema>) {
     .eq("slug", args.slug)
     .single();
 
-  if (!existingArticle) throw new Error("Artigo não encontrado");
+  if (!isRecord(existingArticle) || !isString(existingArticle.id)) {
+    throw new Error("Artigo não encontrado");
+  }
 
-  const updates: any = {};
+  const updates: ArticleUpdate = {};
   
   if (args.title) updates.title = args.title;
   if (args.excerpt) updates.excerpt = args.excerpt;
@@ -764,7 +820,7 @@ async function handleUpdateArticle(args: z.infer<typeof UpdateArticleSchema>) {
       .eq("slug", categorySlug)
       .single();
 
-    if (category?.id) {
+    if (isRecord(category) && isString(category.id)) {
       await supabase.from("news_article_categories").insert({
         article_id: existingArticle.id,
         category_id: category.id,
@@ -787,7 +843,7 @@ async function handleUpdateArticle(args: z.infer<typeof UpdateArticleSchema>) {
         .select()
         .single();
 
-      if (tag?.id) {
+      if (isRecord(tag) && isString(tag.id)) {
         await supabase.from("news_article_tags").insert({
           article_id: existingArticle.id,
           tag_id: tag.id,
@@ -828,10 +884,14 @@ async function handleSearchArticles(args: z.infer<typeof SearchArticlesSchema>) 
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 }
 
-async function handleGetArticleBySlug(args: { slug: string }) {
+interface GetArticleBySlugArgs {
+  slug: string;
+}
+
+async function handleGetArticleBySlug(args: GetArticleBySlugArgs) {
   const { data, error } = await supabase
     .from("news_articles")
     .select(`
@@ -847,8 +907,14 @@ async function handleGetArticleBySlug(args: { slug: string }) {
   return data;
 }
 
-async function handlePublishArticle(args: { slug: string; makeFeatured?: boolean; makeBreaking?: boolean }) {
-  const updates: any = {
+interface PublishArticleArgs {
+  slug: string;
+  makeFeatured?: boolean;
+  makeBreaking?: boolean;
+}
+
+async function handlePublishArticle(args: PublishArticleArgs) {
+  const updates: ArticleUpdate = {
     status: "published",
     published_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -865,9 +931,12 @@ async function handlePublishArticle(args: { slug: string; makeFeatured?: boolean
     .single();
 
   if (error) throw error;
+  
+  const articleTitle = isRecord(data) && isString(data.title) ? data.title : args.slug;
+  
   return { 
     success: true, 
-    message: `Artigo "${data.title}" publicado com sucesso`,
+    message: `Artigo "${articleTitle}" publicado com sucesso`,
     article: data,
     url: `/noticias/${args.slug}/`
   };
@@ -891,7 +960,7 @@ async function handleGetMarketNews(args: z.infer<typeof GetMarketNewsSchema>) {
   );
   if (!response.ok) throw new Error("Erro ao buscar notícias");
   const data = await response.json();
-  return data.slice(0, args.limit);
+  return Array.isArray(data) ? data.slice(0, args.limit) : [];
 }
 
 async function handleGetEarningsCalendar(args: z.infer<typeof GetEarningsCalendarSchema>) {
@@ -901,10 +970,18 @@ async function handleGetEarningsCalendar(args: z.infer<typeof GetEarningsCalenda
   const response = await fetch(url);
   if (!response.ok) throw new Error("Erro ao buscar calendário");
   const data = await response.json();
-  return data.earningsCalendar || [];
+  
+  if (isRecord(data) && Array.isArray(data.earningsCalendar)) {
+    return data.earningsCalendar;
+  }
+  return [];
 }
 
-async function handleGetStockRecommendations(args: { symbol: string }) {
+interface GetStockRecommendationsArgs {
+  symbol: string;
+}
+
+async function handleGetStockRecommendations(args: GetStockRecommendationsArgs) {
   const response = await fetch(
     `https://finnhub.io/api/v1/stock/recommendation?symbol=${args.symbol}&token=${FINNHUB_API_KEY}`
   );
@@ -932,11 +1009,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return { tools: TOOLS };
 });
 
+// Tipo para argumentos de ferramentas
+interface ListArticlesArgs {
+  status?: "all" | "published" | "draft" | "scheduled";
+  category?: string;
+  limit?: number;
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
-    let result;
+    let result: unknown;
 
     switch (name) {
       // Analytics
@@ -972,19 +1056,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "search_articles":
         result = await handleSearchArticles(SearchArticlesSchema.parse(args));
         break;
-      case "list_articles":
+      case "list_articles": {
+        const listArgs = args as ListArticlesArgs;
         result = await handleSearchArticles({ 
           query: "", 
-          status: (args as any).status || "published", 
-          category: (args as any).category,
-          limit: (args as any).limit || 20 
+          status: listArgs.status || "published", 
+          category: listArgs.category,
+          limit: listArgs.limit || 20 
         });
         break;
+      }
       case "get_article_by_slug":
-        result = await handleGetArticleBySlug(args as { slug: string });
+        result = await handleGetArticleBySlug(args as GetArticleBySlugArgs);
         break;
       case "publish_article":
-        result = await handlePublishArticle(args as { slug: string; makeFeatured?: boolean; makeBreaking?: boolean });
+        result = await handlePublishArticle(args as PublishArticleArgs);
         break;
 
       // Dados de Mercado
@@ -998,7 +1084,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleGetEarningsCalendar(GetEarningsCalendarSchema.parse(args));
         break;
       case "get_stock_recommendations":
-        result = await handleGetStockRecommendations({ symbol: (args as any).symbol });
+        result = await handleGetStockRecommendations(args as GetStockRecommendationsArgs);
         break;
 
       default:

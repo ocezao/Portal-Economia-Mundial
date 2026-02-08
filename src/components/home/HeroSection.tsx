@@ -3,6 +3,7 @@
  * Layout impactante para portal de notícias - Totalmente Responsivo
  */
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, TrendingUp, ArrowRight, Flame, ChevronRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -38,10 +39,13 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
           <Link href={ROUTES.noticia(mainArticle.slug)} className="block relative">
             {/* Container da Imagem com Overlay */}
             <figure className="relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-[16/9] overflow-hidden rounded-lg sm:rounded-xl">
-              <img
+              <Image
                 src={mainArticle.coverImage}
                 alt={mainArticle.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                fill
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                priority
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {/* Gradient Overlay - mais forte em mobile para legibilidade */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent sm:from-black/90 sm:via-black/40" />
@@ -168,12 +172,13 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
                     </div>
 
                     {/* Thumbnail mini - mostrar em telas maiores que 400px */}
-                    <figure className="hidden xs:block w-16 h-12 sm:w-20 sm:h-14 flex-shrink-0 overflow-hidden rounded">
-                      <img
+                    <figure className="hidden xs:block w-16 h-12 sm:w-20 sm:h-14 flex-shrink-0 overflow-hidden rounded relative">
+                      <Image
                         src={article.coverImage}
                         alt=""
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        fill
+                        sizes="80px"
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                     </figure>
                   </Link>
