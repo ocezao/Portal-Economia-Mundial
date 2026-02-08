@@ -24,3 +24,8 @@ out/
 public/uploads/
 *.webp
 
+
+# local build artifacts
+*.tsbuildinfo
+supabase/.temp/
+
