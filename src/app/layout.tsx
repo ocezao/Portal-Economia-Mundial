@@ -9,6 +9,7 @@ import { APP_CONFIG } from '@/config/app';
 import { SEO_CONFIG } from '@/config/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { getSiteUrl } from '@/lib/siteUrl';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const siteUrl = getSiteUrl();
 
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AdSenseScript />
           {children}
           <CookieBanner />
+          <SpeedInsights />
         </Providers>
       </body>
     </html>
