@@ -126,6 +126,7 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 ### Fev/2026
 - ✅ **[20-mcp-server.md](./20-mcp-server.md)** - Servidor MCP para integração com Codex CLI
 - ✅ **FINNHUB-GUIA-COMPLETO.md** - Documentação consolidada da Finnhub API
+- ✅ **SEO Portal-Grade** - Canonical/OG/Twitter + noindex + robots hygiene + JSON-LD coerente
 - ✅ **AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md** - Auditoria de arquivos
 - ✅ **RELATORIO_CODIGO_MORTO.md** - Relatório de código morto
 - ✅ **RESUMO_LIMPEZA_FINAL.md** - Resumo da limpeza
@@ -145,4 +146,4 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 
 ---
 
-**Última atualização:** 07/02/2026
+**Última atualização:** 08/02/2026
