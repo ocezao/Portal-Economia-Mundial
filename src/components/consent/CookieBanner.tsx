@@ -459,7 +459,9 @@ export function ConsentFloatingButton() {
 
   useEffect(() => {
     const saved = getConsentCookie();
-    setIsVisible(!!saved);
+    queueMicrotask(() => {
+      setIsVisible(!!saved);
+    });
   }, []);
 
   const handleReopen = () => {

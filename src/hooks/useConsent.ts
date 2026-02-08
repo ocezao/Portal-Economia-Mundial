@@ -50,10 +50,12 @@ export function useConsent() {
 
   useEffect(() => {
     const saved = getConsentCookie();
-    if (saved) {
-      setConsent(saved.consent);
-    }
-    setIsLoaded(true);
+    queueMicrotask(() => {
+      if (saved) {
+        setConsent(saved.consent);
+      }
+      setIsLoaded(true);
+    });
 
     // Ouvir mudanças de consentimento
     const handleConsentUpdate = (event: CustomEvent<ConsentType>) => {

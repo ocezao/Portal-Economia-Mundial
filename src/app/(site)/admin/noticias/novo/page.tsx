@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+
 import { useRouter } from 'next/navigation';
 import { 
   Save, 
@@ -40,12 +40,12 @@ import {
 import { 
   createArticle, 
   updateArticle, 
-  getArticleBySlug, 
+ 
   generateSlug, 
   isSlugAvailable,
   scheduleArticle,
   updateScheduledArticle,
-  getScheduledArticles,
+
   type ScheduledArticle
 } from '@/services/newsManager';
 import { generateAiNews } from '@/services/aiNews';
@@ -84,7 +84,7 @@ export default function AdminNewsNewPage() {
   
   // Modo de publicação
   const [publishMode, setPublishMode] = useState<'now' | 'schedule'>('now');
-  const [scheduledInfo, setScheduledInfo] = useState<ScheduledArticle | null>(null);
+  const [scheduledInfo] = useState<ScheduledArticle | null>(null);
   
   // Dados do formulário
   const [formData, setFormData] = useState({
@@ -431,7 +431,7 @@ export default function AdminNewsNewPage() {
       localStorage.removeItem('pem_draft_article');
       setHasChanges(false);
       router.push('/admin#noticias');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao salvar artigo');
     } finally {
       setIsSaving(false);
@@ -485,7 +485,7 @@ export default function AdminNewsNewPage() {
       });
       applyAiResult(result);
       toast.success('Notícia gerada com sucesso!');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao gerar notícia');
     } finally {
       setIsGeneratingContent(false);
@@ -1346,7 +1346,7 @@ export default function AdminNewsNewPage() {
                 <Label>Tema principal</Label>
                 <select
                   value={aiTopicCategory}
-                  onChange={(e) => setAiTopicCategory(e.target.value as any)}
+                  onChange={(e) => setAiTopicCategory(e.target.value as 'economia' | 'geopolitica' | 'tecnologia' | 'custom' | '')}
                   className="w-full px-3 py-2 border rounded-md"
                 >
                   <option value="">Sem preferência</option>

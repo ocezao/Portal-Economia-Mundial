@@ -26,7 +26,7 @@ function createDisabledSupabaseClient() {
   // Minimal thenable query builder so `await supabase.from(...).select(...)` works.
   const makeQuery = (op: string) => {
     const result = disabledResult(op);
-    const q: any = {};
+    const q: Record<string, unknown> = {};
 
     const returnSelf = () => q;
     const returnPromise = () => Promise.resolve(result);
@@ -60,9 +60,9 @@ function createDisabledSupabaseClient() {
     q.delete = returnSelf;
 
     // Thenable contract (await works).
-    q.then = (onFulfilled: any, onRejected: any) => Promise.resolve(result).then(onFulfilled, onRejected);
-    q.catch = (onRejected: any) => Promise.resolve(result).catch(onRejected);
-    q.finally = (onFinally: any) => Promise.resolve(result).finally(onFinally);
+    q.then = (onFulfilled: unknown, onRejected: unknown) => Promise.resolve(result).then(onFulfilled as never, onRejected as never);
+    q.catch = (onRejected: unknown) => Promise.resolve(result).catch(onRejected as never);
+    q.finally = (onFinally: unknown) => Promise.resolve(result).finally(onFinally as never);
 
     return q;
   };
@@ -72,18 +72,31 @@ function createDisabledSupabaseClient() {
     error: makeError(op),
   });
 
-  const client: any = {
-    from: (_table: string) => makeQuery('from'),
-    rpc: (_fn: string, _args?: unknown) => makeQuery('rpc'),
+  interface DisabledSupabaseClient {
+    from: (table: string) => ReturnType<typeof makeQuery>;
+    rpc: (fn: string, args?: unknown) => ReturnType<typeof makeQuery>;
+    auth: {
+      getSession: () => Promise<ReturnType<typeof authResult>>;
+      onAuthStateChange: (cb: unknown) => { data: { subscription: { unsubscribe: () => undefined } } };
+      signInWithPassword: (args: unknown) => Promise<ReturnType<typeof authResult>>;
+      signUp: (args: unknown) => Promise<ReturnType<typeof authResult>>;
+      signOut: () => Promise<{ error: Error }>;
+      updateUser: (args: unknown) => Promise<{ data: { user: null }; error: Error }>;
+    };
+  }
+
+  const client: DisabledSupabaseClient = {
+    from: () => makeQuery('from'),
+    rpc: () => makeQuery('rpc'),
     auth: {
       getSession: async () => authResult('auth.getSession'),
-      onAuthStateChange: (_cb: unknown) => ({
-        data: { subscription: { unsubscribe: () => void 0 } },
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => undefined } },
       }),
-      signInWithPassword: async (_args: unknown) => authResult('auth.signInWithPassword'),
-      signUp: async (_args: unknown) => authResult('auth.signUp'),
+      signInWithPassword: async () => authResult('auth.signInWithPassword'),
+      signUp: async () => authResult('auth.signUp'),
       signOut: async () => ({ error: makeError('auth.signOut') }),
-      updateUser: async (_args: unknown) => ({ data: { user: null }, error: makeError('auth.updateUser') }),
+      updateUser: async () => ({ data: { user: null }, error: makeError('auth.updateUser') }),
     },
   };
 
@@ -99,7 +112,7 @@ export const supabase = isSupabaseConfigured
         autoRefreshToken: typeof window !== 'undefined',
       },
     })
-  : (createDisabledSupabaseClient() as ReturnType<typeof createClient>);
+  : (createDisabledSupabaseClient() as unknown as ReturnType<typeof createClient>);
 
 if (!isSupabaseConfigured) {
   logger.warn(

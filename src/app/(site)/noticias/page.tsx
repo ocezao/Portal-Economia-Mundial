@@ -89,7 +89,6 @@ export default async function NoticiasPage({
   const page = parsePage(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page);
   const { items, total, totalPages } = await getData(page);
   const siteUrl = getSiteUrl();
-  const url = canonicalNoticiasUrl(siteUrl, page);
 
   const breadcrumbJsonLd = generateBreadcrumbJsonLd([
     { name: 'Home', url: `${siteUrl}/` },

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 503 });
   }
 
-  let body: any = null;
+  let body: Record<string, unknown> | null = null;
   try {
     const len = req.headers.get('content-length');
     if (len && Number.parseInt(len, 10) > MAX_BODY_BYTES) {

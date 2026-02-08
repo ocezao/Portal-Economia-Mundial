@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, startTransition } from 'react';
 import { 
   User, 
   Mail, 
@@ -133,15 +133,25 @@ export default function PerfilPage() {
 
   // Load stats from Supabase data
   useEffect(() => {
-    setStats({
-      articlesRead: readingHistory.length,
-      totalReadingTime: readingHistory.reduce((sum, h) => sum + (h.timeSpent || 0), 0),
-      bookmarksCount: bookmarks.length,
-      commentsCount: 0,
-      streakDays: Math.min(readingHistory.length, 30),
-      joinedDate: user?.createdAt || '',
+    startTransition(() => {
+      setStats({
+        articlesRead: readingHistory.length,
+        totalReadingTime: readingHistory.reduce((sum, h) => sum + (h.timeSpent || 0), 0),
+        bookmarksCount: bookmarks.length,
+        commentsCount: 0,
+        streakDays: Math.min(readingHistory.length, 30),
+        joinedDate: user?.createdAt || '',
+      });
     });
   }, [user, readingHistory, bookmarks]);
+
+  // Timestamp atual para comparação de conquistas
+  const [now, setNow] = useState<number>(0);
+  useEffect(() => {
+    startTransition(() => {
+      setNow(Date.now());
+    });
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -867,7 +877,7 @@ export default function PerfilPage() {
                   { icon: Heart, label: 'Colecionador', desc: 'Salvou 10 favoritos', unlocked: stats.bookmarksCount >= 10 },
                   { icon: MessageSquare, label: 'Comentarista', desc: 'Deixou 5 comentários', unlocked: stats.commentsCount >= 5 },
                   { icon: Calendar, label: 'Consistente', desc: '7 dias de sequência', unlocked: stats.streakDays >= 7 },
-                  { icon: Award, label: 'Veterano', desc: 'Membro há 1 ano', unlocked: new Date(user?.createdAt || '').getTime() < Date.now() - 365 * 24 * 60 * 60 * 1000 },
+                  { icon: Award, label: 'Veterano', desc: 'Membro há 1 ano', unlocked: new Date(user?.createdAt || '').getTime() < now - 365 * 24 * 60 * 60 * 1000 },
                 ].map((badge, index) => (
                   <section 
                     key={index}

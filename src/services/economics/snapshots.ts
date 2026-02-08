@@ -127,7 +127,7 @@ export async function getGlobalIndicesSnapshot(): Promise<SnapshotQuote[]> {
   try {
     // Fallback uses the existing helper (may call Finnhub).
     const data = await getGlobalIndicesData();
-    return data.map((d: any) => ({
+    return data.map((d: { symbol: string; name: string; region: string; currency: string; price: number; change: number; changePercent: number; high: number; low: number; open: number; previousClose: number; timestamp: number }) => ({
       symbol: d.symbol,
       name: d.name,
       region: d.region,
@@ -164,7 +164,7 @@ export async function getCommoditiesSnapshot(): Promise<SnapshotQuote[]> {
 
   try {
     const data = await getCommoditiesData();
-    return data.map((d: any) => ({
+    return data.map((d: { symbol: string; name: string; unit: string; price: number; change: number; changePercent: number; high: number; low: number; open: number; previousClose: number }) => ({
       symbol: d.symbol,
       name: d.name,
       unit: d.unit,
@@ -207,7 +207,7 @@ export async function getSectorsSnapshot(): Promise<SnapshotSector[]> {
 
   try {
     const data = await getSectorsPerformance();
-    return data.map((d: any) => ({
+    return data.map((d: { key: string; name: string; symbol: string; price: number; change: number; changePercent: number }) => ({
       key: d.key,
       name: d.name,
       symbol: d.symbol,

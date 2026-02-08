@@ -46,7 +46,7 @@ export default function AdminDiagnosticoPage() {
       for (const key of allKeys) {
         try {
           localStorage.getItem(key);
-        } catch (e) {
+        } catch {
           storageOk = false;
           break;
         }
@@ -58,7 +58,7 @@ export default function AdminDiagnosticoPage() {
         status: storageOk ? 'ok' : 'error',
         message: storageOk ? 'Storage acessível' : 'Erro ao acessar storage',
       });
-    } catch (e) {
+    } catch {
       checks.push({
         id: 'storage',
         name: 'Integridade do Storage',

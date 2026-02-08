@@ -83,35 +83,36 @@ const slugify = (value: string): string => {
     .slice(0, 60);
 };
 
-const mapArticleRow = (row: any): NewsArticle => {
+const mapArticleRow = (row: unknown): NewsArticle => {
+  const r = row as Record<string, unknown>;
   const categorySlug =
-    row?.news_article_categories?.[0]?.categories?.slug ?? 'economia';
+    (r?.news_article_categories as { categories?: { slug?: string } }[])?.[0]?.categories?.slug ?? 'economia';
   const tags =
-    row?.news_article_tags?.map((t: any) => t?.tags?.name).filter(Boolean) ?? [];
+    ((r?.news_article_tags as { tags?: { name?: string } }[])?.map((t) => t?.tags?.name).filter(Boolean) as string[]) ?? [];
 
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    titleEn: row.title_en ?? undefined,
-    excerpt: row.excerpt ?? '',
-    excerptEn: row.excerpt_en ?? undefined,
-    content: row.content ?? '',
-    contentEn: row.content_en ?? undefined,
-    category: categorySlug,
-    author: row.author_name ?? 'Redação PEM',
-    authorId: row.author_id ?? '',
-    publishedAt: row.published_at ?? row.created_at ?? new Date().toISOString(),
-    updatedAt: row.updated_at ?? row.created_at ?? new Date().toISOString(),
-    readingTime: row.reading_time ?? 0,
-    coverImage: toWebpUrl(row.cover_image ?? '/images/news/hero.webp'),
+    id: r.id as string,
+    slug: r.slug as string,
+    title: r.title as string,
+    titleEn: (r.title_en as string | null) ?? undefined,
+    excerpt: (r.excerpt as string | null) ?? '',
+    excerptEn: (r.excerpt_en as string | null) ?? undefined,
+    content: (r.content as string | null) ?? '',
+    contentEn: (r.content_en as string | null) ?? undefined,
+    category: categorySlug as NewsArticle['category'],
+    author: (r.author_name as string | null) ?? 'Redação PEM',
+    authorId: (r.author_id as string | null) ?? '',
+    publishedAt: (r.published_at as string | null) ?? (r.created_at as string | null) ?? new Date().toISOString(),
+    updatedAt: (r.updated_at as string | null) ?? (r.created_at as string | null) ?? new Date().toISOString(),
+    readingTime: (r.reading_time as number | null) ?? 0,
+    coverImage: toWebpUrl((r.cover_image as string | null) ?? '/images/news/hero.webp'),
     tags,
-    featured: Boolean(row.is_featured),
-    breaking: Boolean(row.is_breaking),
-    views: row.views ?? 0,
-    likes: row.likes ?? 0,
-    shares: row.shares ?? 0,
-    comments: row.comments_count ?? 0,
+    featured: Boolean(r.is_featured),
+    breaking: Boolean(r.is_breaking),
+    views: (r.views as number | null) ?? 0,
+    likes: (r.likes as number | null) ?? 0,
+    shares: (r.shares as number | null) ?? 0,
+    comments: (r.comments_count as number | null) ?? 0,
   };
 };
 
@@ -291,7 +292,7 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
     });
 
     if (!rpcError && Array.isArray(ids) && ids.length > 0) {
-      const orderedIds = ids.map((r: any) => r.id).filter(Boolean);
+      const orderedIds = ids.map((r: unknown) => (r as { id?: string }).id).filter(Boolean) as string[];
 
       const { data, error } = await supabase
         .from('news_articles')
@@ -527,7 +528,7 @@ export async function getRedirectTargetSlug(fromSlug: string): Promise<string | 
       .maybeSingle();
 
     if (error) return null;
-    const toSlug = (data as any)?.to_slug as string | undefined;
+    const toSlug = (data as { to_slug?: string } | null)?.to_slug;
     if (!toSlug || toSlug === slug) return null;
     return toSlug;
   } catch {

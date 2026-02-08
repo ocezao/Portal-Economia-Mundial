@@ -373,7 +373,7 @@ export async function getMultipleQuotes(symbols: string[]): Promise<Array<{ symb
         const quote = await getQuote(symbol);
         if (!isValidQuote(quote)) return null;
         return { symbol, quote };
-      } catch (error) {
+      } catch {
         return null;
       }
     })
@@ -615,7 +615,7 @@ export async function getSectorsPerformance() {
           change: quote.d,
           changePercent: quote.dp,
         };
-      } catch (error) {
+      } catch {
         return null;
       }
     })

@@ -1,2 +1,4 @@
-export { GET, revalidate } from '../rss.xml/route';
+export { GET } from '../rss.xml/route';
+
+export const revalidate = 600; // 10 min
 

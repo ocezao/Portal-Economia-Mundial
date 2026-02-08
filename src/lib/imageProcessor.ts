@@ -126,7 +126,8 @@ export async function convertToWebP(
  */
 export async function generateResponsiveImages(
   input: Buffer | string,
-  baseName: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _baseName: string
 ): Promise<{ [key: string]: Buffer }> {
   const sizes = [
     { name: 'thumbnail', width: 150, height: 150 },

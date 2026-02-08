@@ -68,8 +68,8 @@ export function useReadingLimit(isLoggedIn: boolean): UseReadingLimitReturn {
 
         const slugs =
           (data ?? [])
-            .map((row: any) => row?.news_articles?.slug)
-            .filter(Boolean) ?? [];
+            .map((row: unknown) => (row as { news_articles?: { slug?: string } })?.news_articles?.slug)
+            .filter((slug): slug is string => Boolean(slug));
 
         if (isMounted) setUnlockedArticles(slugs);
       } catch (error) {

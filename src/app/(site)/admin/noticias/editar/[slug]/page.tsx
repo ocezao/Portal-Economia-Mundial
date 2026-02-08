@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+
 import { useRouter } from 'next/navigation';
 import { 
   Save, 
@@ -83,7 +83,7 @@ interface PageProps {
 export default function AdminNewsEditPage({ params }: PageProps) {
   const router = useRouter();
   const { slug } = params;
-  const isEditing = true;
+
   const { user: currentUser } = useAuth();
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -492,7 +492,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       localStorage.removeItem('pem_draft_article');
       setHasChanges(false);
       router.push('/admin#noticias');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao salvar artigo');
     } finally {
       setIsSaving(false);
@@ -546,7 +546,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       });
       applyAiResult(result);
       toast.success('Notícia gerada com sucesso!');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao gerar notícia');
     } finally {
       setIsGeneratingContent(false);
@@ -1419,7 +1419,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                 <Label>Tema principal</Label>
                 <select
                   value={aiTopicCategory}
-                  onChange={(e) => setAiTopicCategory(e.target.value as any)}
+                  onChange={(e) => setAiTopicCategory(e.target.value as 'economia' | 'geopolitica' | 'tecnologia' | 'custom' | '')}
                   className="w-full px-3 py-2 border rounded-md"
                 >
                   <option value="">Sem preferência</option>

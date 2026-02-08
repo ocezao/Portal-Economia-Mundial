@@ -63,8 +63,10 @@ export default function HomePageClient({
   useEffect(() => {
     const saved = localStorage.getItem('pem_home_poll_vote');
     if (saved) {
-      setPollVote(saved);
-      setPollSubmitted(true);
+      queueMicrotask(() => {
+        setPollVote(saved);
+        setPollSubmitted(true);
+      });
     }
   }, []);
 

@@ -13,7 +13,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { Upload, X, ImageIcon, AlertCircle, CheckCircle2, Settings2, Shield } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle2, Settings2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -62,8 +62,8 @@ export function ImageUploader({
   
   // Opções de processamento
   const [quality, setQuality] = useState(85);
-  const [width, setWidth] = useState<number | undefined>(undefined);
-  const [height, setHeight] = useState<number | undefined>(undefined);
+  const [width, setWidth] = useState<number | undefined>(maxWidth);
+  const [height, setHeight] = useState<number | undefined>(maxHeight);
   const [addWatermark, setAddWatermark] = useState(false);
   const [keepMetadata, setKeepMetadata] = useState(false);
   const [detectedMetadata, setDetectedMetadata] = useState<{
@@ -170,7 +170,7 @@ export function ImageUploader({
       if (data.success) {
         onUploadComplete?.(data);
       }
-    } catch (error) {
+    } catch {
       setResult({ 
         success: false, 
         error: 'Erro ao fazer upload. Tente novamente.' 

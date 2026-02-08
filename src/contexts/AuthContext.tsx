@@ -228,9 +228,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
 
     if (!isSupabaseConfigured || !supabase) {
-      setUser(null);
-      setSessionExpiresAt(null);
-      setIsLoading(false);
+      queueMicrotask(() => {
+        setUser(null);
+        setSessionExpiresAt(null);
+        setIsLoading(false);
+      });
       return () => {
         isMounted = false;
       };

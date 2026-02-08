@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+
 import { useRouter } from 'next/navigation';
 import { 
   FileText, 
@@ -539,7 +539,7 @@ export default function AdminDashboardPage() {
 
       setShowUserForm(false);
       loadUsers();
-    } catch (error) {
+    } catch {
       toast.error('Erro ao salvar usuário');
     }
   };
@@ -562,7 +562,7 @@ export default function AdminDashboardPage() {
       toast.success(`Usuário "${userToDelete.name}" excluído!`);
       setUserToDelete(null);
       loadUsers();
-    } catch (error) {
+    } catch {
       toast.error('Erro ao excluir usuário');
     }
   };
@@ -712,7 +712,7 @@ export default function AdminDashboardPage() {
 
       setShowAuthorForm(false);
       loadAuthors();
-    } catch (error) {
+    } catch {
       toast.error('Erro ao salvar autor');
     }
   };
@@ -748,7 +748,7 @@ export default function AdminDashboardPage() {
     try {
       await updateAppSettings(appSettings);
       toast.success('Configurações salvas!');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao salvar configurações');
     } finally {
       setIsSettingsSaving(false);
@@ -844,7 +844,7 @@ export default function AdminDashboardPage() {
       );
       toast.success(`${count} post(s) atribuídos ao admin atual`);
       loadData();
-    } catch (error) {
+    } catch {
       toast.error('Erro ao atribuir posts ao admin');
     }
   };
@@ -880,7 +880,7 @@ export default function AdminDashboardPage() {
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   // Navegação mobile
-  const TabButton = ({ value, icon: Icon, label, count }: { value: string; icon: any; label: string; count?: number }) => (
+  const TabButton = ({ value, icon: Icon, label, count }: { value: string; icon: React.ComponentType<{ className?: string }>; label: string; count?: number }) => (
     <button
       onClick={() => {
         setActiveTab(value);

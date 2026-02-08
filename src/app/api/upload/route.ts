@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
 
     const { error: uploadError } = await authClient.storage
       .from(storageBucket)
-      .upload(objectPath, new Blob([processedBuffer], { type: 'image/webp' }), {
+      .upload(objectPath, new Blob([new Uint8Array(processedBuffer)], { type: 'image/webp' }), {
         contentType: 'image/webp',
         upsert: false,
       });

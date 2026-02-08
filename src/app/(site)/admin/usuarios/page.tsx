@@ -76,13 +76,13 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesRole;
   });
 
-  const handlePromote = (_userId: string) => {
+  const handlePromote = () => {
     if (confirm('Tem certeza que deseja promover este usuário para administrador?')) {
       alert('Em ambiente de demonstração, esta ação é simulada.');
     }
   };
 
-  const handleDeactivate = (_userId: string) => {
+  const handleDeactivate = () => {
     if (confirm('Tem certeza que deseja desativar este usuário?')) {
       alert('Em ambiente de demonstração, esta ação é simulada.');
     }
@@ -196,7 +196,7 @@ export default function AdminUsersPage() {
                       <nav className="flex items-center gap-1">
                         {user.role === 'user' && (
                           <button
-                            onClick={() => handlePromote(user.id)}
+                            onClick={() => handlePromote()}
                             className="p-1.5 text-[#6b6b6b] hover:text-[#22c55e] hover:bg-[#dcfce7] rounded"
                             title="Promover a Admin"
                           >
@@ -205,7 +205,7 @@ export default function AdminUsersPage() {
                         )}
                         {user.id !== currentUser?.id && (
                           <button
-                            onClick={() => handleDeactivate(user.id)}
+                            onClick={() => handleDeactivate()}
                             className="p-1.5 text-[#6b6b6b] hover:text-[#ef4444] hover:bg-[#fef2f2] rounded"
                             title={user.isActive ? 'Desativar' : 'Reativar'}
                           >

@@ -105,7 +105,7 @@ export async function updateAdminAuthor(input: { slug: string; updates: Partial<
   const { slug, updates } = input;
   if (!slug) throw new Error('slug é obrigatório');
 
-  if ((updates as Partial<Author> & { slug?: string }).slug && (updates as any).slug !== slug) {
+  if ((updates as Partial<Author> & { slug?: string }).slug && (updates as Partial<Author> & { slug?: string }).slug !== slug) {
     throw new Error('Não é permitido alterar o slug do autor');
   }
 

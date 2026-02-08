@@ -49,8 +49,18 @@ export function useBookmarks(): UseBookmarksReturn {
       return;
     }
 
-    const mapped = (data ?? []).map((row: any) => {
-      const article = row.news_articles;
+    const mapped = (data ?? []).map((row: unknown) => {
+      const typedRow = row as {
+        news_articles?: {
+          slug?: string;
+          title?: string;
+          excerpt?: string;
+          cover_image?: string;
+          news_article_categories?: { categories?: { slug?: string } }[];
+        };
+        created_at?: string;
+      };
+      const article = typedRow.news_articles;
       const categorySlug =
         article?.news_article_categories?.[0]?.categories?.slug ?? 'economia';
 
@@ -60,7 +70,7 @@ export function useBookmarks(): UseBookmarksReturn {
         category: categorySlug,
         excerpt: article?.excerpt ?? '',
         coverImage: article?.cover_image ?? '',
-        bookmarkedAt: row.created_at ?? new Date().toISOString(),
+        bookmarkedAt: typedRow.created_at ?? new Date().toISOString(),
       } as Bookmark;
     });
 
@@ -68,7 +78,9 @@ export function useBookmarks(): UseBookmarksReturn {
   }, [user]);
 
   useEffect(() => {
-    void loadBookmarks();
+    queueMicrotask(() => {
+      void loadBookmarks();
+    });
   }, [loadBookmarks]);
 
   const isBookmarked = useCallback((slug: string): boolean => {

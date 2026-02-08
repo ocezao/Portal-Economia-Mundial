@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 // In test env we don't want real network/db calls.
 vi.mock('@/lib/supabaseClient', () => {
   const makeQuery = () => {
-    const q: any = {};
+    const q: Record<string, unknown> = {};
     const chain = () => q;
     q.select = chain;
     q.eq = chain;
@@ -15,7 +15,7 @@ vi.mock('@/lib/supabaseClient', () => {
     q.limit = chain;
     q.in = chain;
     q.range = chain;
-    q.then = (onFulfilled: any, onRejected: any) =>
+    q.then = (onFulfilled: (value: unknown) => unknown, onRejected: (reason: unknown) => unknown) =>
       Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected);
     return q;
   };
@@ -38,7 +38,7 @@ describe('newsManager.searchArticles', () => {
   it('falls back to ilike when RPC is unavailable', async () => {
     const res = await searchArticles('economia');
     expect(Array.isArray(res)).toBe(true);
-    expect((supabase as any).rpc).toHaveBeenCalled();
+    expect((supabase as { rpc: unknown }).rpc).toHaveBeenCalled();
   });
 });
 

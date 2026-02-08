@@ -5,9 +5,8 @@
  * Visão geral completa com estatísticas, gráficos e personalização
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, startTransition } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { 
   BookOpen, 
   Clock, 
@@ -85,7 +84,6 @@ interface DashboardWidget {
 
 export default function UserDashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [currentDate] = useState(new Date());
   
@@ -188,7 +186,9 @@ export default function UserDashboardPage() {
     };
     
     calculateStreak();
-    setIsLoading(false);
+    startTransition(() => {
+      setIsLoading(false);
+    });
   }, [readingHistory]);
 
   // Total de estatísticas
@@ -257,6 +257,7 @@ export default function UserDashboardPage() {
   }, [bookmarks, readingHistory]);
 
   // Conquistas
+  const streakCurrent = streak.current;
   const achievements: Achievement[] = useMemo(() => [
     {
       id: 'first-read',
@@ -290,8 +291,8 @@ export default function UserDashboardPage() {
       icon: Flame,
       label: 'Em Sequência',
       description: 'Leia 3 dias seguidos',
-      unlocked: streak.current >= 3,
-      progress: streak.current,
+      unlocked: streakCurrent >= 3,
+      progress: streakCurrent,
       maxProgress: 3,
     },
     {
@@ -299,8 +300,8 @@ export default function UserDashboardPage() {
       icon: Zap,
       label: 'Semana Perfeita',
       description: 'Leia 7 dias seguidos',
-      unlocked: streak.current >= 7,
-      progress: streak.current,
+      unlocked: streakCurrent >= 7,
+      progress: streakCurrent,
       maxProgress: 7,
     },
     {
@@ -330,7 +331,7 @@ export default function UserDashboardPage() {
       progress: Math.floor(totalStats.totalTime / 60),
       maxProgress: 5,
     },
-  ], [totalStats, streak]);
+  ], [totalStats, streakCurrent]);
 
   const unlockedAchievements = achievements.filter(a => a.unlocked);
 

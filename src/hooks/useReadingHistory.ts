@@ -42,16 +42,25 @@ export function useReadingHistory() {
       return;
     }
 
-    const mapped = (data ?? []).map((row: any) => {
-      const article = row.news_articles;
+    const mapped = (data ?? []).map((row: unknown) => {
+      const typedRow = row as {
+        news_articles?: {
+          slug?: string;
+          title?: string;
+          news_article_categories?: { categories?: { slug?: string } }[];
+        };
+        read_at?: string;
+        time_spent?: number;
+      };
+      const article = typedRow.news_articles;
       const categorySlug =
         article?.news_article_categories?.[0]?.categories?.slug ?? 'economia';
       return {
         articleSlug: article?.slug ?? '',
         title: article?.title ?? '',
         category: categorySlug,
-        readAt: row.read_at ?? new Date().toISOString(),
-        timeSpent: row.time_spent ?? 0,
+        readAt: typedRow.read_at ?? new Date().toISOString(),
+        timeSpent: typedRow.time_spent ?? 0,
         progress: 100,
       } as ReadingHistory;
     }).filter((item: ReadingHistory) => item.articleSlug);
@@ -61,7 +70,9 @@ export function useReadingHistory() {
   }, [user]);
 
   useEffect(() => {
-    void loadHistory();
+    queueMicrotask(() => {
+      void loadHistory();
+    });
   }, [loadHistory]);
 
   return { history, isLoading, reload: loadHistory };

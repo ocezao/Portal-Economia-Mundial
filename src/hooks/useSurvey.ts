@@ -21,8 +21,10 @@ export function useSurvey(): UseSurveyReturn {
   useEffect(() => {
     const completed = storage.hasCompletedSurvey();
     const data = storage.getSurveyData();
-    setIsCompleted(completed);
-    setSurveyData(data);
+    queueMicrotask(() => {
+      setIsCompleted(completed);
+      setSurveyData(data);
+    });
   }, []);
 
   const submitSurvey = useCallback((data: Omit<SurveyData, 'completedAt'>) => {

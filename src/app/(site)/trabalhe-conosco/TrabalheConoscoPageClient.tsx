@@ -74,7 +74,7 @@ export default function TrabalheConoscoPageClient() {
         resumeUrl: '',
         coverLetter: '',
       });
-    } catch (error) {
+    } catch {
       toast.error('Não foi possível enviar. Verifique a configuração do banco.');
     } finally {
       setIsSubmitting(false);

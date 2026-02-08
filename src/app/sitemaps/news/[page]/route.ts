@@ -51,7 +51,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ page?: string 
     .order('published_at', { ascending: false, nullsFirst: false })
     .range(from, to);
 
-  const rows = !error && Array.isArray(data) ? (data as any[]) : [];
+  const rows = !error && Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
 
   const urlEntries = rows
     .map((row) => {

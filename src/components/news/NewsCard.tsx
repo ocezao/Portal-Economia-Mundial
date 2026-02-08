@@ -19,6 +19,21 @@ interface NewsCardProps {
   isBookmarked?: boolean;
 }
 
+interface SponsoredBadgeProps {
+  isSponsored: boolean;
+}
+
+// Badge de Publicação Patrocinada - movido para fora do componente NewsCard
+function SponsoredBadge({ isSponsored }: SponsoredBadgeProps) {
+  if (!isSponsored) return null;
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
+      <Gem className="w-3 h-3" />
+      Patrocinado
+    </span>
+  );
+}
+
 export function NewsCard({ 
   article, 
   variant = 'default',
@@ -35,14 +50,6 @@ export function NewsCard({
 
   // Verifica se é publicação patrocinada
   const isSponsored = article.tags?.includes('Publicação Patrocinada');
-
-  // Badge de Publicação Patrocinada
-  const SponsoredBadge = () => isSponsored ? (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
-      <Gem className="w-3 h-3" />
-      Patrocinado
-    </span>
-  ) : null;
 
   if (variant === 'featured') {
     return (
@@ -74,7 +81,7 @@ export function NewsCard({
               >
                 {category.name}
               </span>
-              <SponsoredBadge />
+              <SponsoredBadge isSponsored={isSponsored} />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-[#111111] leading-tight mb-3 group-hover:text-[#c40000] transition-colors">
               {article.title}
@@ -121,7 +128,7 @@ export function NewsCard({
               >
                 {category.name}
               </span>
-              {isSponsored && <SponsoredBadge />}
+              <SponsoredBadge isSponsored={isSponsored} />
             </div>
             <h3 className="text-sm font-semibold text-[#111111] line-clamp-2 group-hover:text-[#c40000] transition-colors">
               {article.title}
@@ -166,7 +173,7 @@ export function NewsCard({
               >
                 {category.name}
               </span>
-              {isSponsored && <SponsoredBadge />}
+              <SponsoredBadge isSponsored={isSponsored} />
             </div>
             <h3 className="text-lg font-bold text-[#111111] leading-snug mb-2 group-hover:text-[#c40000] transition-colors line-clamp-2">
               {article.title}

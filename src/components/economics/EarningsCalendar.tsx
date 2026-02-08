@@ -3,7 +3,7 @@
  * Calendário de resultados trimestrais com explicações e tooltips
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, startTransition } from 'react';
 import { 
   TrendingUp, 
   Calendar, 
@@ -160,6 +160,15 @@ export function EarningsCalendar({
     return Object.keys(groupedByDate).sort();
   }, [groupedByDate]);
 
+  // Data de amanhã para comparação (calculado apenas no cliente)
+  const [tomorrowDate, setTomorrowDate] = useState<Date | null>(null);
+  
+  useEffect(() => {
+    startTransition(() => {
+      setTomorrowDate(new Date(Date.now() + 86400000));
+    });
+  }, []);
+
   if (earnings.length === 0) {
     return null;
   }
@@ -210,7 +219,7 @@ export function EarningsCalendar({
             const dateEvents = groupedByDate[date];
             const dateObj = new Date(date);
             const isToday = new Date().toDateString() === dateObj.toDateString();
-            const isTomorrow = new Date(Date.now() + 86400000).toDateString() === dateObj.toDateString();
+            const isTomorrow = tomorrowDate?.toDateString() === dateObj.toDateString();
             
             return (
               <section key={date} className="space-y-2">

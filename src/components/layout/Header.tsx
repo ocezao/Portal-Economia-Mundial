@@ -45,7 +45,9 @@ export function Header() {
     // Evita `useSearchParams()` no layout (SSG exige Suspense). Leitura client-side.
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    setSearchQuery(params.get('q') ?? '');
+    queueMicrotask(() => {
+      setSearchQuery(params.get('q') ?? '');
+    });
   }, [pathname]);
 
   return (

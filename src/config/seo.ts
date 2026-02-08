@@ -98,7 +98,7 @@ export const generateArticleJsonLd = (
 
   const articleUrl = new URL(`/noticias/${article.slug}/`, siteUrl).toString();
 
-  const jsonLd: Record<string, any> = {
+  const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title,

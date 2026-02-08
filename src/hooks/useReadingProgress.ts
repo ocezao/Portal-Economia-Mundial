@@ -18,10 +18,11 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
   const [progress, setProgress] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
   const [articleId, setArticleId] = useState<string | null>(null);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    startTimeRef.current = Date.now();
     let isMounted = true;
     const loadArticleId = async () => {
       if (!articleSlug) return;
@@ -90,7 +91,7 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
         const newProgress = docHeight > 0 ? Math.min(100, Math.round((scrollTop / docHeight) * 100)) : 0;
 
         setProgress(prev => Math.max(prev, newProgress));
-        const spent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        const spent = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
         setTimeSpent(spent);
 
         await supabase
@@ -116,7 +117,7 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
   // Timer de tempo gasto
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeSpent(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      setTimeSpent(Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000));
     }, 1000);
 
     return () => clearInterval(interval);
