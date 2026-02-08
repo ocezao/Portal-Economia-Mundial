@@ -1,0 +1,21 @@
+# Exemplo de configuração do Codex CLI para o Portal Econômico Mundial
+# Copie este conteúdo para ~/.codex/config.toml
+
+# Configuração do servidor MCP PEM
+[[servers]]
+name = "pem"
+type = "stdio"
+command = "node"
+# Ajuste o caminho para onde está o mcp-server no seu servidor
+args = ["/var/www/pem/mcp-server/dist/index.js"]
+
+# Variáveis de ambiente (opcional - pode usar .env no servidor)
+[servers.env]
+NEXT_PUBLIC_SUPABASE_URL = "https://seu-projeto.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY = "sua-chave-service-role"
+NEXT_PUBLIC_FINNHUB_API_KEY = "sua-chave-finnhub"
+NEXT_PUBLIC_SITE_URL = "https://seusite.com"
+
+# Configurações adicionais (opcional)
+[servers.timeout]
+request = 30000  # 30 segundos

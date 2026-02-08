@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { commentService } from '@/services/comments';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/config/routes';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 interface CommentSectionProps {
   articleSlug: string;
@@ -92,11 +92,9 @@ export function CommentSection({ articleSlug }: CommentSectionProps) {
           <p className="text-sm text-[#6b6b6b] mb-4">
             Participe da discussão e compartilhe sua opinião com outros leitores.
           </p>
-          <Link to={ROUTES.login}>
-            <Button className="bg-[#c40000] hover:bg-[#a00000]">
-              Entrar
-            </Button>
-          </Link>
+          <Button asChild className="bg-[#c40000] hover:bg-[#a00000]">
+            <Link href={ROUTES.login}>Entrar</Link>
+          </Button>
         </section>
       </aside>
     );

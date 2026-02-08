@@ -4,9 +4,8 @@
 
 import { supabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/ai-news`;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export type AiNewsResponse = {
   title: string;
@@ -26,16 +25,22 @@ export async function generateAiNews(input: {
   category?: 'economia' | 'geopolitica' | 'tecnologia';
   questions?: string;
 }): Promise<AiNewsResponse> {
+  const supabaseUrl = SUPABASE_URL;
+  const apikey = SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl) throw new Error('NEXT_PUBLIC_SUPABASE_URL não configurada');
+  if (!apikey) throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY não configurada');
+
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
 
   if (!token) throw new Error('Sessão inválida');
 
-  const response = await fetch(FUNCTION_URL, {
+  const response = await fetch(`${supabaseUrl}/functions/v1/ai-news`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
-      apikey: SUPABASE_ANON_KEY,
+      apikey,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

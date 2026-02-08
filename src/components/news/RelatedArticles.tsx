@@ -3,8 +3,10 @@
  * Recomendações baseadas na categoria atual
  */
 
+'use client';
+
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { getRelatedArticles } from '@/services/newsManager';
@@ -26,7 +28,7 @@ export function RelatedArticles({ currentArticle, limit = 4 }: RelatedArticlesPr
         if (isMounted) setRelated(data);
       } catch (error) {
         // Erro silenciado em produção
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV !== 'production') {
           // eslint-disable-next-line no-console
           console.error('Erro ao carregar artigos relacionados:', error);
         }
@@ -46,7 +48,7 @@ export function RelatedArticles({ currentArticle, limit = 4 }: RelatedArticlesPr
       <header className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-[#111111]">Leia também</h2>
         <Link 
-          to={ROUTES.categoria(currentArticle.category)}
+          href={ROUTES.categoria(currentArticle.category)}
           className="flex items-center gap-1 text-sm text-[#c40000] hover:underline"
         >
           Ver mais
@@ -58,7 +60,7 @@ export function RelatedArticles({ currentArticle, limit = 4 }: RelatedArticlesPr
         {related.map(article => (
           <li key={article.slug}>
             <article className="group">
-              <Link to={ROUTES.noticia(article.slug)} className="flex gap-4">
+              <Link href={ROUTES.noticia(article.slug)} className="flex gap-4">
                 <figure className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-md">
                   <img
                     src={article.coverImage}

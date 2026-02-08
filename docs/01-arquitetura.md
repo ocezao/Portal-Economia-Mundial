@@ -4,7 +4,7 @@
 
 O PEM possui arquitetura modular dividida em três grandes camadas:
 
-1. **Frontend** - React SPA com dados do Supabase
+1. **Frontend** - Next.js (App Router) com dados do Supabase
 2. **Backend** - Supabase (Auth + Postgres + Edge Functions)
 3. **Analytics** - Stack independente (PostgreSQL + Fastify + Metabase)
 
@@ -20,10 +20,10 @@ O PEM possui arquitetura modular dividida em três grandes camadas:
 - `interactive/`: Elementos interativos (SurveyForm)
 - `ui/`: Componentes base shadcn/ui
 
-**Páginas** (`/src/pages`)
-- Cada página é um componente React independente
-- Roteamento via React Router DOM
-- SEO dinâmico por página
+**Páginas** (`/src/app`)
+- Cada rota é uma pasta/arquivo no App Router (file-based)
+- Layouts compartilhados via `layout.tsx`
+- SEO via `metadata`/`generateMetadata`
 
 ### 2. Business Logic Layer
 

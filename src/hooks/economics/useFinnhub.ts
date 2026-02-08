@@ -31,7 +31,7 @@ import {
   type CompanyProfile,
 } from '@/services/economics/finnhubService';
 
-const FINNHUB_FREE_PLAN = import.meta.env.VITE_FINNHUB_FREE_PLAN === 'true';
+const FINNHUB_FREE_PLAN = process.env.NEXT_PUBLIC_FINNHUB_FREE_PLAN === 'true';
 
 // ==================== HOOK: COTAÇÃO EM TEMPO REAL ====================
 

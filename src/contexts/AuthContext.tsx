@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Auth Context - Sistema de Autenticação com Supabase
  * Provider + Hook para gerenciamento global de autenticação
@@ -8,7 +10,7 @@ import { storage, STORAGE_KEYS } from '@/config/storage';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import { Navigate, useLocation } from 'react-router-dom';
+import { usePathname, useRouter } from 'next/navigation';
 
 // ==================== TIPOS ====================
 
@@ -294,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) {
       setError({
         code: 'AUTH_SUPABASE_NOT_CONFIGURED',
-        message: 'Supabase nÃ£o configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.',
+        message: 'Supabase nÃ£o configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.',
       });
       setIsLoading(false);
       return false;
@@ -341,7 +343,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) {
       setError({
         code: 'AUTH_SUPABASE_NOT_CONFIGURED',
-        message: 'Supabase nÃ£o configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.',
+        message: 'Supabase nÃ£o configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.',
       });
       setIsLoading(false);
       return false;
@@ -472,7 +474,27 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      const next = pathname || '/';
+      router.replace(`/login?redirect=${encodeURIComponent(next)}`);
+      return;
+    }
+
+    if (requiredRole === 'admin' && !isAdmin) {
+      router.replace('/app');
+      return;
+    }
+
+    if (isAdmin && (pathname || '').startsWith('/app')) {
+      router.replace('/admin');
+    }
+  }, [isLoading, isAuthenticated, isAdmin, requiredRole, pathname, router]);
 
   if (isLoading) {
     return (
@@ -486,15 +508,15 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    return null;
   }
 
   if (requiredRole === 'admin' && !isAdmin) {
-    return <Navigate to="/app" replace />;
+    return null;
   }
 
-  if (isAdmin && location.pathname.startsWith('/app')) {
-    return <Navigate to="/admin" replace />;
+  if (isAdmin && (pathname || '').startsWith('/app')) {
+    return null;
   }
 
   return <>{children}</>;

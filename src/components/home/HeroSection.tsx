@@ -3,7 +3,7 @@
  * Layout impactante para portal de notícias - Totalmente Responsivo
  */
 
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Clock, TrendingUp, ArrowRight, Flame, ChevronRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { CONTENT_CONFIG } from '@/config/content';
@@ -35,7 +35,7 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
         
         {/* Artigo Principal - Ocupa 8 colunas em desktop */}
         <article className="lg:col-span-8 group relative">
-          <Link to={ROUTES.noticia(mainArticle.slug)} className="block relative">
+          <Link href={ROUTES.noticia(mainArticle.slug)} className="block relative">
             {/* Container da Imagem com Overlay */}
             <figure className="relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-[16/9] overflow-hidden rounded-lg sm:rounded-xl">
               <img
@@ -115,7 +115,7 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
               </span>
             </div>
             <Link 
-              to={ROUTES.noticia(mainArticle.slug)}
+              href={ROUTES.noticia(mainArticle.slug)}
               className="inline-flex items-center gap-1 sm:gap-2 text-[#c40000] font-semibold text-sm sm:text-base hover:gap-2 sm:hover:gap-3 transition-all"
             >
               <span className="hidden sm:inline">Ler artigo completo</span>
@@ -141,7 +141,7 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
 
               return (
                 <article key={article.slug} className="group relative">
-                  <Link to={ROUTES.noticia(article.slug)} className="flex gap-2 sm:gap-4">
+                  <Link href={ROUTES.noticia(article.slug)} className="flex gap-2 sm:gap-4">
                     {/* Número do ranking */}
                     <span className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-[#f5f5f5] text-[#6b6b6b] font-bold text-xs sm:text-sm rounded group-hover:bg-[#c40000] group-hover:text-white transition-colors">
                       {String(index + 1).padStart(2, '0')}
@@ -189,7 +189,7 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
               Receba as principais notícias do dia
             </p>
             <Link 
-              to="/app"
+              href="/app"
               className="inline-flex items-center gap-1 text-xs font-semibold text-[#c40000] hover:gap-2 transition-all"
             >
               Assinar newsletter <ChevronRight className="w-3 h-3" />

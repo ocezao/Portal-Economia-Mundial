@@ -20,16 +20,16 @@ Crie o arquivo `.env` na raiz do projeto:
 
 ```bash
 # Supabase (OBRIGATÓRIO)
-VITE_SUPABASE_URL="https://seu-projeto.supabase.co"
-VITE_SUPABASE_ANON_KEY="sua-anon-key"
+NEXT_PUBLIC_SUPABASE_URL="https://seu-projeto.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="sua-anon-key"
 
 # APIs de Mercado (opcional)
-VITE_FINNHUB_API_KEY="sua-chave"
-VITE_FINNHUB_ENABLED="true"
-VITE_FINNHUB_FREE_PLAN="true"
+NEXT_PUBLIC_FINNHUB_API_KEY="sua-chave"
+NEXT_PUBLIC_FINNHUB_ENABLED="true"
+NEXT_PUBLIC_FINNHUB_FREE_PLAN="true"
 
 # Site
-VITE_SITE_URL="https://seu-dominio.com"
+NEXT_PUBLIC_SITE_URL="https://seu-dominio.com"
 ```
 
 **Para o Collector** (arquivo `.env` na pasta `collector/`):

@@ -130,7 +130,7 @@ export const storage = {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       // Silently fail in production
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         // eslint-disable-next-line no-console
         console.error('Error saving to localStorage:', error);
       }

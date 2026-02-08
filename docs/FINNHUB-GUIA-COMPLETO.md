@@ -33,10 +33,10 @@ No arquivo `.env` na raiz:
 
 ```env
 # Finnhub API
-VITE_FINNHUB_ENABLED=true
-VITE_FINNHUB_FREE_PLAN=true
-VITE_FINNHUB_API_KEY=sua_chave_aqui
-VITE_FINNHUB_API_URL=https://finnhub.io/api/v1
+NEXT_PUBLIC_FINNHUB_ENABLED=true
+NEXT_PUBLIC_FINNHUB_FREE_PLAN=true
+NEXT_PUBLIC_FINNHUB_API_KEY=sua_chave_aqui
+NEXT_PUBLIC_FINNHUB_API_URL=https://finnhub.io/api/v1
 ```
 
 ### 1.3 Compatibilidade Free Plan (ETFs Proxy)
@@ -57,7 +57,7 @@ Alguns endpoints podem estar limitados no plano gratuito. O sistema usa ETFs com
 - GLD → OURO
 - SLV → PRATA
 
-Para desativar o modo free: `VITE_FINNHUB_FREE_PLAN=false`
+Para desativar o modo free: `NEXT_PUBLIC_FINNHUB_FREE_PLAN=false`
 
 ---
 
@@ -401,7 +401,7 @@ const [quote, news, peers] = await Promise.all([
 
 ### Erro: 403 Forbidden
 - Pode indicar limite do plano gratuito atingido
-- Verifique se `VITE_FINNHUB_FREE_PLAN=true` está configurado
+- Verifique se `NEXT_PUBLIC_FINNHUB_FREE_PLAN=true` está configurado
 - Aguarde 1 minuto para reset do rate limit
 
 ### Dados não atualizam

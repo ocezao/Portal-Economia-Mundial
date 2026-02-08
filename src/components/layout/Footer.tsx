@@ -1,9 +1,9 @@
-﻿/**
+/**
  * Footer Principal
  * Semântico: footer, nav, address
  */
 
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { APP_CONFIG } from '@/config/app';
 import { ROUTES, CATEGORIES } from '@/config/routes';
 import { Twitter, Facebook, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from 'lucide-react';
@@ -59,7 +59,7 @@ export function Footer() {
               {CATEGORIES.map(cat => (
                 <li key={cat.slug}>
                   <Link
-                    to={ROUTES.categoria(cat.slug)}
+                    href={ROUTES.categoria(cat.slug)}
                     className="text-sm text-[#9ca3af] hover:text-white transition-colors"
                   >
                     {cat.name}
@@ -76,32 +76,42 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link to={ROUTES.sobre} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.sobre} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Sobre Nós
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.login} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href="/editorial/" className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                  Editorial
+                </Link>
+              </li>
+              <li>
+                <Link href="/editorial/#equipe" className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                  Nossa Equipe
+                </Link>
+              </li>
+              <li>
+                <Link href={ROUTES.login} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Área do Assinante
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.termometroRisco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.termometroRisco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Termômetro de Risco
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.mapaTensoes} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.mapaTensoes} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Mapa de Tensões
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.faleConosco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.faleConosco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Fale Conosco
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.trabalheConosco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.trabalheConosco} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Trabalhe Conosco
                 </Link>
               </li>
@@ -115,17 +125,17 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link to={ROUTES.termos} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.termos} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Termos de Uso
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.privacidade} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.privacidade} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Política de Privacidade
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.cookies} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
+                <Link href={ROUTES.cookies} className="text-sm text-[#9ca3af] hover:text-white transition-colors">
                   Política de Cookies
                 </Link>
               </li>

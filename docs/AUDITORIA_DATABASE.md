@@ -18,8 +18,8 @@
 ### Variáveis de Ambiente
 | Variável | Status | Uso |
 |----------|--------|-----|
-| `VITE_SUPABASE_URL` | ✅ Configurado | URL do projeto |
-| `VITE_SUPABASE_ANON_KEY` | ✅ Configurado | Chave pública |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Configurado | URL do projeto |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Configurado | Chave pública |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ Configurado | Chave de serviço (backend) |
 
 ---
@@ -379,8 +379,8 @@ npm run build
 
 ### Variáveis de Ambiente Necessárias
 ```env
-VITE_SUPABASE_URL=https://aszrihpepmdwmggoqirw.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_URL=https://aszrihpepmdwmggoqirw.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 

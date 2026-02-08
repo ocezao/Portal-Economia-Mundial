@@ -4,6 +4,9 @@
  */
 
 import { APP_CONFIG } from './app';
+import { getSiteUrl } from '@/lib/siteUrl';
+
+const siteUrl = getSiteUrl();
 
 export const SEO_CONFIG = {
   default: {
@@ -20,7 +23,8 @@ export const SEO_CONFIG = {
     type: 'website',
     siteName: APP_CONFIG.brand.name,
     locale: 'pt_BR',
-    image: '/og-image.webp',
+    // Keep this pointing to a real, existing asset in `public/`.
+    image: '/images/news/brasil-economia.webp',
     imageWidth: 1200,
     imageHeight: 630,
     twitterCard: 'summary_large_image',
@@ -33,8 +37,8 @@ export const SEO_CONFIG = {
       '@type': 'NewsMediaOrganization',
       name: APP_CONFIG.brand.name,
       alternateName: APP_CONFIG.brand.short,
-      url: APP_CONFIG.urls.base,
-      logo: `${APP_CONFIG.urls.base}${APP_CONFIG.brand.logo}`,
+      url: siteUrl,
+      logo: new URL(APP_CONFIG.brand.logo, siteUrl).toString(),
       sameAs: [
         `https://twitter.com/${APP_CONFIG.contact.social.twitter.replace('@', '')}`,
         `https://facebook.com/${APP_CONFIG.contact.social.facebook}`,
@@ -54,10 +58,10 @@ export const SEO_CONFIG = {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       name: APP_CONFIG.brand.name,
-      url: APP_CONFIG.urls.base,
+      url: siteUrl,
       potentialAction: {
         '@type': 'SearchAction',
-        target: `${APP_CONFIG.urls.base}/busca?q={search_term_string}`,
+        target: `${siteUrl}/busca/?q={search_term_string}`,
         'query-input': 'required name=search_term_string',
       },
     },
@@ -73,43 +77,60 @@ export const generateArticleJsonLd = (
   publishedAt: string;
   updatedAt: string;
   author: string;
+  authorSlug?: string;
   category: string;
   tags: string[];
   },
   options?: {
     isAccessibleForFree?: boolean;
     paywallSelector?: string;
+    reviewedBy?: {
+      name: string;
+      slug: string;
+    };
+    speakable?: boolean;
+    citation?: Array<{ name: string; url?: string }>;
   }
 ) => {
+  const imageUrl = article.coverImage
+    ? new URL(article.coverImage, siteUrl).toString()
+    : new URL(SEO_CONFIG.og.image, siteUrl).toString();
+
+  const articleUrl = new URL(`/noticias/${article.slug}/`, siteUrl).toString();
+
   const jsonLd: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.excerpt,
-    image: `${APP_CONFIG.urls.base}${article.coverImage}`,
+    image: imageUrl,
     datePublished: article.publishedAt,
     dateModified: article.updatedAt,
     author: {
       '@type': 'Person',
       name: article.author,
+      ...(article.authorSlug && {
+        url: `${siteUrl}/autor/${article.authorSlug}/`,
+      }),
     },
     publisher: {
       '@type': 'Organization',
       name: APP_CONFIG.brand.name,
       logo: {
         '@type': 'ImageObject',
-        url: `${APP_CONFIG.urls.base}${APP_CONFIG.brand.logo}`,
+        url: new URL(APP_CONFIG.brand.logo, siteUrl).toString(),
       },
     },
     articleSection: article.category,
     keywords: article.tags.join(', '),
-    url: `${APP_CONFIG.urls.base}/noticias/${article.slug}`,
+    url: articleUrl,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${APP_CONFIG.urls.base}/noticias/${article.slug}`,
+      '@id': articleUrl,
     },
   };
 
+  // Paywall / Acesso
   if (typeof options?.isAccessibleForFree === 'boolean') {
     jsonLd.isAccessibleForFree = options.isAccessibleForFree;
 
@@ -122,12 +143,54 @@ export const generateArticleJsonLd = (
     }
   }
 
+  // ReviewedBy (E-E-A-T signal)
+  if (options?.reviewedBy) {
+    jsonLd.reviewedBy = {
+      '@type': 'Person',
+      name: options.reviewedBy.name,
+      url: `${siteUrl}/autor/${options.reviewedBy.slug}/`,
+      jobTitle: 'Editor de Fato',
+      worksFor: {
+        '@type': 'NewsMediaOrganization',
+        name: APP_CONFIG.brand.name,
+      },
+    };
+  }
+
+  // Speakable (para Google Assistant)
+  if (options?.speakable !== false) {
+    jsonLd.speakable = {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['.article-headline', '.article-summary'],
+    };
+  }
+
+  // Citações/Fontes
+  if (options?.citation && options.citation.length > 0) {
+    jsonLd.citation = options.citation.map(source => ({
+      '@type': 'CreativeWork',
+      name: source.name,
+      ...(source.url && { url: source.url }),
+    }));
+  }
+
   return jsonLd;
 };
 
 export const generateBreadcrumbJsonLd = (items: { name: string; url: string }[]) => ({
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
+  itemListElement: items.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: item.url,
+  })),
+});
+
+export const generateItemListJsonLd = (items: Array<{ name: string; url: string }>) => ({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
   itemListElement: items.map((item, index) => ({
     '@type': 'ListItem',
     position: index + 1,

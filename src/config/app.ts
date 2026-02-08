@@ -9,7 +9,8 @@ export const APP_CONFIG = {
     short: 'PEM',
     tagline: 'Notícias que movem o mundo',
     founded: 2024,
-    logo: '/logo.webp',
+    // Keep this pointing to a real, existing asset in `public/`.
+    logo: '/favicon.ico',
     favicon: '/favicon.ico',
   },
   

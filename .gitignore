@@ -4,6 +4,11 @@ node_modules/
 # build output
 dist/
 
+# next build output
+.next/
+out/
+.vercel/
+
 # env files
 .env
 .env.*
@@ -11,3 +16,11 @@ dist/
 
 # logs
 *.log
+
+# misc
+.DS_Store
+
+# Uploads processados
+public/uploads/
+*.webp
+

@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { 
   Thermometer, 
   TrendingUp, 
@@ -249,7 +249,7 @@ export function RiskThermometer() {
         <header className="flex items-center gap-2 mb-4">
           <Thermometer className="w-5 h-5 text-[#c40000]" />
           <h2 className="text-lg font-bold text-[#111111]">
-            <Link to={ROUTES.termometroRisco} className="hover:underline">
+            <Link href={ROUTES.termometroRisco} className="hover:underline">
               Termômetro de Risco
             </Link>
           </h2>

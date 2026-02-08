@@ -9,20 +9,57 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 ## [Unreleased]
 
 ### Added
-- Finnhub free plan mode with ETF proxy symbols for indices and commodities.
-- New info pages: `/termometro-de-risco` and `/mapa-de-tensoes`, plus footer links.
-- Home briefing now shows live Finnhub highlights when available.
-- Risk thermometer and tension map can render live data when available (fallback to mock data).
-- New pages and forms: `/fale-conosco` and `/trabalhe-conosco` with database storage.
+- **MCP Server v1.1.0** - Servidor Model Context Protocol completo para integração com Codex CLI:
+  - **17 ferramentas** organizadas em 3 categorias:
+    - **Analytics (6)**: `get_analytics_events`, `get_article_stats`, `get_top_articles`, `get_user_sessions`, `get_dashboard_metrics`, `get_traffic_sources`
+    - **Gerenciamento de Conteúdo (7)**: `create_article` (completo), `update_article` (completo), `delete_article`, `search_articles`, `list_articles`, `get_article_by_slug`, `publish_article`
+    - **Dados de Mercado (4)**: `get_market_quote`, `get_market_news`, `get_earnings_calendar`, `get_stock_recommendations`
+  - **Campos completos de artigo**:
+    - Conteúdo: título, resumo, conteúdo (PT/EN)
+    - SEO: meta description (160 chars), keywords
+    - Categorização: categoria + tags (com relações many-to-many)
+    - Mídia: imagem de capa
+    - Configurações: featured, breaking, status, agendamento
+    - Métricas: views, likes, shares iniciais
+  - Acesso completo a tracking/analytics via Supabase Service Role
+  - CRUD de artigos via comandos de linguagem natural
+  - Integração Finnhub para cotações e calendário de earnings
+  - Documentação completa em `docs/20-mcp-server.md`
+  - Guia de instalação em `mcp-server/INSTALL.md`
+  - Script de setup automático `mcp-server/setup.sh`
+- **E-E-A-T Signals** - Sinais de autoridade e credibilidade para SEO:
+  - Páginas de autores individuais (`/autor/[slug]`) com schema.org Person
+  - Página Editorial (`/editorial`) com policies (ethics, masthead, corrections)
+  - Badges de verificação (FactCheckBadge component)
+  - Schema ReviewedBy nos artigos
+  - 4 autores configurados com formação, prêmios e expertise
+- **Cookie Banner LGPD** - Sistema de consentimento granular:
+  - 3 categorias: Necessários, Analytics, Publicidade
+  - Integração com AdSense (só carrega ads com consentimento)
+  - Salva preferências em cookie seguro
+- **Otimizações de Performance**:
+  - Preconnect e DNS Prefetch para domínios externos
+  - Script AdSense com lazy loading
+- Tabelas de analytics: `analytics_events` e `analytics_sessions` com RLS policies
+- Migração SQL para analytics em `supabase/migrations/`
+
+### SEO (Portal-Grade)
+- Canonical/OG/Twitter padronizados por rota (evita canonical errado herdado do root).
+- `noindex` aplicado em rotas internas e rotas finas via `layout.tsx`/`generateMetadata`.
+- `robots.ts` com higiene para bloquear rotas internas e reduzir crawl de tracking params (`utm_`, `gclid`, `fbclid`, etc).
+- JSON-LD com coerência melhor (URLs/imagens absolutas; `ItemList` alinhado ao schema).
 
 ### Changed
 - Login now auto-redirects authenticated users to `/admin` (admin) or `/app` (user).
 - Economic calendar fetch is disabled on Finnhub free plan to avoid 403 errors.
 - Finnhub client now coalesces in-flight requests and temporarily blocks rate-limited endpoints.
+- `generateArticleJsonLd` atualizado com suporte a `reviewedBy`, `speakable`, `citation`
 
 ### Fixed
 - Supabase Edge Function `admin-users` now supports CORS preflight (requires redeploy).
 - Footer labels/accents were corrected.
+- Eslint errors em novos componentes corrigidos
+- Remocao de `<title>` solto em paginas client (admin) para evitar head inconsistente no App Router.
 
 ---
 

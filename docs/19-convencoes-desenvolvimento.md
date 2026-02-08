@@ -14,7 +14,7 @@ A porta **5173 é obrigatória** para o servidor de desenvolvimento do frontend.
 # Comando correto
 npm run dev
 
-# O Vite deve iniciar em:
+# O Next.js deve iniciar em:
 # ➜  Local:   http://localhost:5173/
 ```
 
@@ -22,7 +22,7 @@ npm run dev
 
 | Serviço | Porta | Obrigatória? | Quando Usar |
 |---------|-------|--------------|-------------|
-| **Frontend (Vite)** | **5173** | ✅ SIM | Sempre para desenvolvimento local |
+| **Frontend (Next.js)** | **5173** | ✅ SIM | Sempre para desenvolvimento local |
 | Analytics Collector | 3000 | ❌ Não | Apenas se desenvolvendo feature de analytics |
 | Metabase | 3001 | ❌ Não | Apenas se usando dashboard de analytics |
 | PostgreSQL | 5432 | ❌ Não | Apenas se usando analytics local |
@@ -65,12 +65,7 @@ npm run dev -- --port 5174  # PROIBIDO sem autorização
 | Comando | Porta | Quando Usar |
 |---------|-------|-------------|
 | `npm run dev` | **5173** | Desenvolvimento local (obrigatório) |
-| `npm run preview` | 4173 | Preview do build de produção (aceitável) |
-
-⚠️ O comando `vite preview` usa a porta 4173 por padrão. Isso é **aceitável** porque:
-- É um propósito diferente (preview vs desenvolvimento)
-- Não conflita com o servidor de dev
-- É temporário (só para testar o build)
+| `npm start` | **5173** | Servidor de produção local (após `npm run build`) |
 
 ### 1.5 Quando Perguntar ao Usuário
 
@@ -280,7 +275,8 @@ kill -9 <PID>
 ```bash
 # Limpar cache
 rm -rf node_modules
-rm -rf dist
+rm -rf .next
+rm -rf out
 npm install
 npm run build
 ```
@@ -291,29 +287,6 @@ npm run build
 # Reiniciar TS server no VS Code
 Ctrl + Shift + P > "TypeScript: Restart TS Server"
 ```
-
-### 9.4 Erro: "Dynamic require of ... is not supported" no Vite
-
-**Erro:**
-```
-failed to load config from vite.config.ts
-Error: Dynamic require of "file:///.../kimi-plugin-inspect-react/dist/inspectAttr.mjs" is not supported
-```
-
-**Causa:** Plugin `kimi-plugin-inspect-react` usa `require()` para importar módulo ESM, que não é compatível com Vite 7 + ES modules.
-
-**Solução:** Remover o plugin do `vite.config.ts`:
-```typescript
-// ❌ REMOVIDO - Causa erro de compatibilidade ESM
-// ...(process.env.NODE_ENV === 'development' ? [require('kimi-plugin-inspect-react').inspectAttr()] : []),
-
-// ✅ CONFIGURAÇÃO ATUAL - Funciona corretamente
-plugins: [react()]
-```
-
-**Data da correção:** 2026-02-05
-
----
 
 ## 10. Recursos
 

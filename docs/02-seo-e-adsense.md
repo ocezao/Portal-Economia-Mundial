@@ -5,7 +5,7 @@
 ### On-Page SEO
 
 #### Meta Tags Dinâmicas
-Cada página possui meta tags únicas:
+Cada página pública deve definir `canonical`, OpenGraph e Twitter via `metadata`/`generateMetadata` (Next.js App Router). Rotas internas e rotas finas devem usar `noindex`.
 
 ```tsx
 // Home
@@ -17,6 +17,11 @@ title: "{article.title} - Portal Econômico Mundial"
 description: {article.excerpt}
 keywords: {article.tags.join(', ')}
 ```
+
+Boas práticas aplicadas no projeto:
+- Canonical por rota (evita duplicação). Ex: paginação usa `?page=` no canonical apenas quando `page > 1`.
+- Busca (`/busca`) é `noindex` (página fina de resultados internos), mas mantém OG/Twitter para previews consistentes.
+- Rotas internas (admin/app/auth/perfil/etc) são `noindex` via layouts de rota.
 
 #### Open Graph
 - `og:title`: Título da página
@@ -37,7 +42,7 @@ keywords: {article.tags.join(', ')}
   "@context": "https://schema.org",
   "@type": "NewsMediaOrganization",
   "name": "Portal Econômico Mundial",
-  "url": "https://portaleconomicomundial.com",
+  "url": "https://seudominio.com",
   "logo": "...",
   "sameAs": ["..."]
 }
@@ -55,6 +60,10 @@ keywords: {article.tags.join(', ')}
   "publisher": { "..." }
 }
 ```
+
+Observação de coerência:
+- Em JSON-LD, URLs e imagens devem ser absolutas (o projeto agora normaliza isso em `src/config/seo.ts`).
+- Listagens usam `BreadcrumbList` + `ItemList` (com `item` em `ListItem`) para ficar alinhado ao schema.
 
 ### Otimizações Técnicas
 
@@ -151,18 +160,13 @@ export function AdUnit({ slot, format }: AdUnitProps) {
 ## Sitemap e Robots
 
 ### Sitemap.xml
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://portaleconomicomundial.com/</loc>
-    <lastmod>2024-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <!-- Artigos gerados dinamicamente -->
-</urlset>
-```
+O projeto usa sitemap "portal-grade" com **sitemap index** e partições:
+- Index: `/sitemap.xml` (`src/app/sitemap.xml/route.ts`)
+- Child sitemaps:
+  - `/sitemaps/static.xml` (`src/app/sitemaps/static.xml/route.ts`)
+  - `/sitemaps/categories.xml` (`src/app/sitemaps/categories.xml/route.ts`)
+  - `/sitemaps/authors.xml` (`src/app/sitemaps/authors.xml/route.ts`)
+  - `/sitemaps/news/[page]` (`src/app/sitemaps/news/[page]/route.ts`) (inclui image entries quando houver capa)
 
 ### Robots.txt
 ```
@@ -171,6 +175,10 @@ Allow: /
 
 Sitemap: https://portaleconomicomundial.com/sitemap.xml
 ```
+
+Implementação real:
+- `robots` em Next App Router: `src/app/robots.ts`
+- Bloqueia rotas internas e reduz crawl de parâmetros de tracking (`utm_`, `gclid`, `fbclid`, etc).
 
 ## Métricas de Acompanhamento
 
@@ -200,3 +208,4 @@ Sitemap: https://portaleconomicomundial.com/sitemap.xml
 - [ ] Sitemap.xml
 - [ ] Robots.txt
 - [ ] JSON-LD
+- [ ] `NEXT_PUBLIC_SITE_URL` definido em produção (canonical/sitemap/host corretos)

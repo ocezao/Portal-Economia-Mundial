@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { logger } from './logger';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -18,7 +18,7 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 function createDisabledSupabaseClient() {
   const makeError = (op: string) =>
     new Error(
-      `Supabase not configured (${op}). Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.`,
+      `Supabase not configured (${op}). Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.`,
     );
 
   const disabledResult = (op: string) => ({ data: null, error: makeError(op) });
@@ -93,15 +93,16 @@ function createDisabledSupabaseClient() {
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
       auth: {
-        persistSession: true,
-        autoRefreshToken: true,
+        // On the server, there is no localStorage. Supabase-js detects this, but
+        // we also disable session persistence/refresh for safety.
+        persistSession: typeof window !== 'undefined',
+        autoRefreshToken: typeof window !== 'undefined',
       },
     })
   : (createDisabledSupabaseClient() as ReturnType<typeof createClient>);
 
 if (!isSupabaseConfigured) {
   logger.warn(
-    'Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env to enable Auth and DB features.',
+    'Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env to enable Auth and DB features.',
   );
 }
-

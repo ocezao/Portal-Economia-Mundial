@@ -38,10 +38,10 @@ export function useAppSettings() {
 
         if (error) {
           // Erro silenciado em produção
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error('Erro ao carregar app_settings:', error);
-        }
+          if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.error('Erro ao carregar app_settings:', error);
+          }
           return;
         }
 
@@ -68,7 +68,7 @@ export function useAppSettings() {
         if (isMounted) setSettings(next);
       } catch (error) {
         // Erro silenciado em produção
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV !== 'production') {
           // eslint-disable-next-line no-console
           console.error('Erro ao carregar configurações:', error);
         }

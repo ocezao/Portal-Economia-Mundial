@@ -182,8 +182,8 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -254,9 +254,9 @@ jobs:
       - name: Build for staging
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          VITE_SITE_URL: ${{ env.STAGING_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.STAGING_URL }}
 
       - name: Deploy to Hostinger (Staging)
         uses: SamKirkland/FTP-Deploy-Action@4.3.5
@@ -367,10 +367,10 @@ jobs:
       - name: Build for production
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
-          VITE_SITE_URL: ${{ env.PRODUCTION_URL }}
-          VITE_GTM_ID: ${{ secrets.PROD_GTM_ID }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.PRODUCTION_URL }}
+          NEXT_PUBLIC_GTM_ID: ${{ secrets.PROD_GTM_ID }}
 
       - name: Create .htaccess
         run: |
@@ -529,9 +529,9 @@ jobs:
 
 ```yaml
 # Development (local .env)
-VITE_SUPABASE_URL=https://dev-project.supabase.co
-VITE_SUPABASE_ANON_KEY=dev-anon-key
-VITE_SITE_URL=http://localhost:5173
+NEXT_PUBLIC_SUPABASE_URL=https://dev-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=dev-anon-key
+NEXT_PUBLIC_SITE_URL=http://localhost:5173
 
 # Staging (GitHub Secrets)
 STAGING_SUPABASE_URL=https://staging-project.supabase.co
@@ -578,7 +578,7 @@ PROD_GTM_ID=GTM-XXXXXX
 const API_KEY = "sk-1234567890"
 
 # ✅ Faça isso:
-const API_KEY = import.meta.env.VITE_API_KEY
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY
 ```
 
 ### 4.3 Rotação de Secrets

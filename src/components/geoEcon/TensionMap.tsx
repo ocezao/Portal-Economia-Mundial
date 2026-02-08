@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { AlertTriangle, MapPin, Clock, Info, TrendingUp, TrendingDown, Minus, Globe, Users, Scale } from 'lucide-react';
 import { tensionPoints, tensionLevelConfig } from '@/config/geoecon';
 import { useGeopoliticalNews } from '@/hooks/economics';
@@ -127,7 +127,7 @@ export function TensionMap() {
         <header className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-5 h-5 text-[#c40000]" />
           <h2 className="text-lg font-bold text-[#111111]">
-            <Link to={ROUTES.mapaTensoes} className="hover:underline">
+            <Link href={ROUTES.mapaTensoes} className="hover:underline">
               Mapa de Tensões
             </Link>
           </h2>

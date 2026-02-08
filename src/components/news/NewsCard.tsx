@@ -3,7 +3,9 @@
  * Exibe preview de artigo
  */
 
-import { Link } from 'react-router-dom';
+'use client';
+
+import Link from 'next/link';
 import { Clock, Bookmark, Gem } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { CONTENT_CONFIG } from '@/config/content';
@@ -45,7 +47,7 @@ export function NewsCard({
   if (variant === 'featured') {
     return (
       <article className="group relative">
-        <Link to={ROUTES.noticia(article.slug)} className="block">
+        <Link href={ROUTES.noticia(article.slug)} className="block">
           <figure className="relative aspect-[16/9] overflow-hidden rounded-lg mb-4">
             <img
               src={article.coverImage}
@@ -97,7 +99,7 @@ export function NewsCard({
   if (variant === 'compact') {
     return (
       <article className="group">
-        <Link to={ROUTES.noticia(article.slug)} className="flex gap-4">
+        <Link href={ROUTES.noticia(article.slug)} className="flex gap-4">
           <figure className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md relative">
             <img
               src={article.coverImage}
@@ -136,7 +138,7 @@ export function NewsCard({
   // Default
   return (
     <article className={`group bg-white border rounded-lg overflow-hidden card-hover ${isSponsored ? 'border-amber-200 shadow-md' : 'border-[#e5e5e5]'}`}>
-      <Link to={ROUTES.noticia(article.slug)} className="block">
+      <Link href={ROUTES.noticia(article.slug)} className="block">
         <figure className="relative aspect-[16/9] overflow-hidden">
           <img
             src={article.coverImage}

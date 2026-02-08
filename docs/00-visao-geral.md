@@ -16,28 +16,30 @@ O **Portal Econômico Mundial (PEM)** é um portal de notícias profissional esp
 
 | Camada | Tecnologia |
 |--------|------------|
-| **Frontend** | React + TypeScript + Vite |
+| **Frontend** | Next.js (App Router) + React + TypeScript |
 | **Estilização** | Tailwind CSS + shadcn/ui |
-| **Roteamento** | React Router DOM |
+| **Roteamento** | Next.js App Router (file-based) |
 | **Estado** | React Hooks + LocalStorage |
 | **Backend** | Supabase (Auth + Postgres + Edge Functions) |
 | **Analytics** | PostgreSQL + Fastify + Metabase |
-| **Build** | Vite (export estático) |
+| **Build** | Next.js (`next build`) |
 
 ### Estrutura de Pastas
 
 ```
-/src                    # Frontend React
-  /components
-    /layout             # Header, Footer, Ticker
-    /news               # Cards, ArticleContent
-    /interactive        # SurveyForm
-    /ui                 # shadcn components
-  /config               # Configurações globais
-  /hooks                # Custom hooks
-  /pages                # Páginas da aplicação
-  /services             # Mock data + APIs
-  /types                # TypeScript types
+/src                    # Aplicação Next.js
+  /app                  # App Router (páginas)
+    /(auth)             # Rotas de autenticação
+    /(site)             # Rotas do site
+    layout.tsx          # Root layout
+    providers.tsx       # Providers globais (Theme/Auth/Toaster)
+  /components            # Componentes React (UI/Layout/etc)
+  /config                # Configurações globais
+  /contexts              # React Contexts (Auth, etc)
+  /hooks                 # Custom hooks
+  /lib                   # Utilitários
+  /services              # Serviços e integrações
+  /types                 # TypeScript types
 
 /collector              # Analytics Backend (Node.js + Fastify)
   /src

@@ -6,6 +6,7 @@
 export const ROUTES = {
   // Públicas
   home: '/',
+  busca: '/busca',
   categoria: (slug: string) => `/categoria/${slug}`,
   noticia: (slug: string) => `/noticias/${slug}`,
   sobre: '/sobre',

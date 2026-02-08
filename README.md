@@ -4,26 +4,32 @@ Portal de notícias profissional especializado em geopolítica, economia global 
 
 ## 🚀 Tecnologias
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Framework**: Next.js 14+ (App Router)
+- **Frontend**: React 19 + TypeScript
 - **Estilização**: Tailwind CSS + shadcn/ui
-- **Roteamento**: React Router DOM
+- **Roteamento**: Next.js App Router (File-based)
 - **Estado**: React Hooks + LocalStorage/SessionStorage
 - **Backend**: Supabase (Postgres + Auth + Edge Functions)
 - **Ícones**: Lucide React
+
+> **Nota:** Migração concluída para Next.js App Router (Vite/React Router removidos). Veja [MIGRATION_LOG.md](./MIGRATION_LOG.md) para histórico.
 
 ## 📁 Estrutura
 
 ```
 /src
+  /app           # Next.js App Router (páginas)
+    /(auth)      # Grupo de rotas de autenticação
+    /(site)      # Grupo de rotas do site
   /components    # Componentes React
   /config        # Configurações globais
   /contexts      # React Contexts (Auth, etc)
   /hooks         # Custom hooks
   /lib           # Utilitários (logger, supabase)
-  /pages         # Páginas
   /services      # Serviços de API
   /types         # TypeScript types
 /collector       # Analytics collector (Node.js)
+/mcp-server      # Servidor MCP (Model Context Protocol)
 /supabase        # Edge Functions
 /sdk             # SDK de analytics
 /docs            # Documentação completa
@@ -35,37 +41,27 @@ Portal de notícias profissional especializado em geopolítica, economia global 
 # Instalar dependências
 npm install
 
-# Servidor de desenvolvimento (porta 5173)
+# Servidor de desenvolvimento Next.js (porta 5173)
 npm run dev
 
 # Build de produção
 npm run build
 
+# Iniciar servidor de produção
+npm start
+
 # Lint
 npm run lint
 ```
-
-### ⚠️ Nota sobre o Plugin kimi-plugin-inspect-react
-
-**Atualização (2026-02-05):** O plugin `kimi-plugin-inspect-react` foi removido do `vite.config.ts` devido a incompatibilidade com Vite 7 + ES modules. O plugin causava o erro:
-```
-Error: Dynamic require of "...kimi-plugin-inspect-react..." is not supported
-```
-
-A remoção não afeta a funcionalidade do projeto. Veja `docs/19-convencoes-desenvolvimento.md` para mais detalhes.
 
 ### 📍 Padrão de Portas
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| **Frontend** | **5173** | Porta obrigatória para desenvolvimento local |
-| Analytics Collector | 3000 | Apenas se usando sistema de analytics |
-| Metabase | 3001 | Dashboard de analytics (se habilitado) |
+| **Frontend (Next.js)** | **5173** | Porta padrão do projeto |
+| Analytics Collector | 3001 | Apenas se usando sistema de analytics |
+| Metabase | 3002 | Dashboard de analytics (se habilitado) |
 | PostgreSQL | 5432 | Banco de analytics (se habilitado) |
-
-⚠️ **IMPORTANTE**: A porta **5173 é obrigatória** para o frontend. 
-- Se a porta estiver ocupada, encerre o processo anterior antes de iniciar
-- **NUNCA** use outra porta sem permissão explícita do usuário
 
 ## 🔒 Segurança
 
@@ -83,11 +79,11 @@ Veja o **[Relatório de Auditoria de Segurança](./docs/AUDITORIA_SEGURANCA.md)*
 
 **Frontend (.env):**
 ```bash
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-anon-key
-VITE_FINNHUB_API_KEY=sua-chave-finnhub
-VITE_FINNHUB_ENABLED=true
-VITE_SITE_URL=https://seu-dominio.com
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
+NEXT_PUBLIC_FINNHUB_API_KEY=sua-chave-finnhub
+NEXT_PUBLIC_FINNHUB_ENABLED=true
+NEXT_PUBLIC_SITE_URL=https://seu-dominio.com
 ```
 
 **Collector (.env):**
@@ -103,12 +99,32 @@ POSTGRES_PASSWORD=<SENHA_FORTE_OBRIGATORIA>
 
 ## 📦 Deploy
 
-### Build estático
+### Build Next.js
 ```bash
 npm run build
 ```
 
-Saída em `/dist` - pronto para upload no Hostinger ou outro serviço de hospedagem.
+Saída em `/.next` - otimizado para deploy em servidores Node.js ou Vercel.
+
+### Deploy em Servidores Tradicionais (Hostinger, etc)
+Para hospedagens compartilhadas sem Node.js, use a exportação estática:
+
+1. Configure `next.config.js`:
+```javascript
+const nextConfig = {
+  output: 'export',
+  distDir: 'dist',
+}
+```
+
+2. Execute o build:
+```bash
+npm run build
+```
+
+3. Faça upload da pasta `/dist` gerada.
+
+> **Nota:** Com exportação estática, algumas funcionalidades dinâmicas (como API routes) podem não funcionar.
 
 ### Configurações de Segurança no Servidor
 
@@ -137,6 +153,40 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 - ✅ Design responsivo
 - ✅ Semântica HTML
 - ✅ Analytics first-party (LGPD-compliant)
+- ✅ **MCP Server** - Integração com Codex CLI para controle via IA
+
+## 🤖 MCP Server (Model Context Protocol)
+
+O portal possui um **servidor MCP completo** para integração com assistentes de IA como o Codex CLI.
+
+### Funcionalidades do MCP
+
+| Categoria | Ferramentas |
+|-----------|-------------|
+| **Analytics** | Leitura completa de tracking, estatísticas de artigos, sessões de usuários |
+| **Conteúdo** | Criar, editar, publicar e excluir artigos via comandos de linguagem natural |
+| **Mercado** | Cotações em tempo real, notícias Finnhub, calendário de earnings |
+
+### Instalação Rápida
+
+```bash
+cd mcp-server
+./setup.sh
+```
+
+### Configuração no Codex
+
+```toml
+[[servers]]
+name = "pem"
+type = "stdio"
+command = "node"
+args = ["/caminho/para/mcp-server/dist/index.js"]
+```
+
+📚 **[Documentação Completa do MCP](./docs/20-mcp-server.md)**
+
+---
 
 ## 📈 Integração Finnhub API
 

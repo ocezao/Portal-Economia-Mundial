@@ -62,6 +62,12 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 | 18 | [Tradução Automática](./18-traducao-automatica.md) | Removido do app (mantido apenas para referência) |
 | 20 | [Contato e Carreiras](./CONTACT_FORMS_SETUP.md) | Setup dos formulários e tabelas (Supabase) |
 
+### 🤖 Integração com IA (MCP)
+
+| # | Documento | Descrição |
+|---|-----------|-----------|
+| 20 | [MCP Server](./20-mcp-server.md) | Servidor Model Context Protocol para integração com Codex CLI |
+
 ### Contribuição
 
 | Arquivo | Descrição |
@@ -102,6 +108,7 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 3. [10-data-model-postgres.md](./10-data-model-postgres.md)
 4. [16-api-rest.md](./16-api-rest.md)
 5. [17-cicd-pipeline.md](./17-cicd-pipeline.md)
+6. [20-mcp-server.md](./20-mcp-server.md) - Integração com IA
 
 ### Product Owner/Manager
 1. [00-visao-geral.md](./00-visao-geral.md)
@@ -117,6 +124,7 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 ## 🆕 Novidades
 
 ### Fev/2026
+- ✅ **[20-mcp-server.md](./20-mcp-server.md)** - Servidor MCP para integração com Codex CLI
 - ✅ **FINNHUB-GUIA-COMPLETO.md** - Documentação consolidada da Finnhub API
 - ✅ **AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md** - Auditoria de arquivos
 - ✅ **RELATORIO_CODIGO_MORTO.md** - Relatório de código morto
@@ -137,4 +145,4 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 
 ---
 
-**Última atualização:** 05/02/2026
+**Última atualização:** 07/02/2026

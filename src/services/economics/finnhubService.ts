@@ -6,9 +6,11 @@ import { logger } from '@/lib/logger';
 
 // ==================== CONFIGURAÇÃO ====================
 
-const API_KEY = import.meta.env.VITE_FINNHUB_API_KEY || '';
-const FINNHUB_ENABLED = import.meta.env.VITE_FINNHUB_ENABLED !== 'false' && API_KEY.length > 0;
-const FINNHUB_FREE_PLAN = import.meta.env.VITE_FINNHUB_FREE_PLAN === 'true';
+// Prefer server-only key when available (jobs/snapshots should not rely on NEXT_PUBLIC).
+const API_KEY = process.env.FINNHUB_API_KEY || process.env.NEXT_PUBLIC_FINNHUB_API_KEY || '';
+const FINNHUB_ENABLED =
+  process.env.NEXT_PUBLIC_FINNHUB_ENABLED !== 'false' && API_KEY.length > 0;
+const FINNHUB_FREE_PLAN = process.env.NEXT_PUBLIC_FINNHUB_FREE_PLAN === 'true';
 const BASE_URL = 'https://finnhub.io/api/v1';
 const WS_URL = 'wss://ws.finnhub.io?token=';
 
@@ -276,7 +278,9 @@ function getBlockKey(endpoint: string, params?: Record<string, string>): string 
 
 async function fetchFinnhub<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
   if (!FINNHUB_ENABLED) {
-    throw new Error('Finnhub desabilitado: defina VITE_FINNHUB_ENABLED=true e configure a chave.');
+    throw new Error(
+      'Finnhub desabilitado: defina NEXT_PUBLIC_FINNHUB_ENABLED=true e configure NEXT_PUBLIC_FINNHUB_API_KEY.',
+    );
   }
 
   const blockKey = getBlockKey(endpoint, params);

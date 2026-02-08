@@ -8,26 +8,21 @@
 
 ## Build para Produção
 
-### 1. Configurar vite.config.ts
+### 1. Configurar Next.js para exportação estática
 
-```typescript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+Para hospedagens compartilhadas (sem Node.js), use a exportação estática do Next.js.
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-  },
-  base: '/', // Ajuste se necessário
-});
+Em `next.config.js`, garanta que exista:
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+
+export default nextConfig;
 ```
 
 ### 2. Executar Build
@@ -43,12 +38,10 @@ npm run build
 ### 3. Verificar Saída
 
 ```
-dist/
+out/
 ├── index.html
-├── assets/
-│   ├── index-[hash].js
-│   ├── index-[hash].css
-│   └── ...
+├── _next/
+│   └── static/...
 └── images/
     └── ...
 ```
@@ -61,7 +54,7 @@ dist/
 2. Navegue até **Arquivos** → **Gerenciador de Arquivos**
 3. Acesse a pasta `public_html`
 4. **Exclua** o conteúdo anterior (se houver)
-5. **Upload** dos arquivos da pasta `dist/`
+5. **Upload** dos arquivos da pasta `out/`
 
 ### Opção 2: FTP
 
@@ -73,7 +66,7 @@ Senha: sua_senha_ftp
 Porta: 21
 ```
 
-Upload da pasta `dist/` para `public_html/`
+Upload da pasta `out/` para `public_html/`
 
 ### Opção 3: Git (se disponível)
 
@@ -160,13 +153,15 @@ curl -o /dev/null -w "%{time_total}" https://seudominio.com
 
 ### 404 em rotas
 
-Verificar se `.htaccess` está configurado para SPA routing.
+Se estiver usando `output: 'export'`, confirme:
+- `trailingSlash: true` (URLs com `/`)
+- rotas dinâmicas possuem geração estática quando aplicável
 
 ### Assets não carregam
 
-Verificar `base` no `vite.config.ts`:
-- Domínio raiz: `base: '/'`
-- Subdiretório: `base: '/subdiretorio/'`
+Verificar `basePath`/`assetPrefix` no `next.config.js`:
+- Domínio raiz: não definir `basePath`
+- Subdiretório: `basePath: '/subdiretorio'` e `assetPrefix: '/subdiretorio'`
 
 ### Cache antigo
 
@@ -202,7 +197,7 @@ jobs:
           server: ftp.seudominio.com
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          local-dir: ./dist/
+          local-dir: ./out/
           server-dir: ./public_html/
 ```
 

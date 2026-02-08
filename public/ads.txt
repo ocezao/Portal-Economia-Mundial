@@ -1,0 +1,5 @@
+# ads.txt
+# Cole aqui a(s) linha(s) oficial(is) do seu Google AdSense (vinda(s) do painel do AdSense).
+# Exemplo (NAO use este exemplo em producao):
+# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+

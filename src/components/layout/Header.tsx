@@ -3,8 +3,11 @@
  * Menu editorial distribuído igualmente
  */
 
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Search, User, UserCircle } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,10 +34,19 @@ const MENU_ITEMS = [
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated, user } = useAuth();
-  const location = useLocation();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
+
+  useEffect(() => {
+    // Evita `useSearchParams()` no layout (SSG exige Suspense). Leitura client-side.
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setSearchQuery(params.get('q') ?? '');
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-[200] bg-white/95 backdrop-blur border-b border-[#e6e1d8]">
@@ -45,7 +57,7 @@ export function Header() {
           
           {/* Logo - próximo do canto esquerdo */}
           <Link
-            to={ROUTES.home}
+            href={ROUTES.home}
             className="flex-shrink-0 flex items-end gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c40000] focus-visible:ring-offset-2 tap-feedback"
             aria-label={`${APP_CONFIG.brand.name} - Página inicial`}
           >
@@ -62,7 +74,7 @@ export function Header() {
                 return (
                   <li key={item.path}>
                     <Link
-                      to={item.path}
+                      href={item.path}
                       className={`flex items-center px-2 py-2 text-[15px] font-normal border-b-2 transition-all duration-200 tap-feedback whitespace-nowrap ${
                         active
                           ? 'text-[#c40000] border-[#c40000]'
@@ -103,13 +115,13 @@ export function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
-                      <Link to="/admin" className="cursor-pointer">
+                      <Link href="/admin" className="cursor-pointer">
                         Dashboard Admin
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/app" className="cursor-pointer">
+                      <Link href="/app" className="cursor-pointer">
                         Área do Usuário
                       </Link>
                     </DropdownMenuItem>
@@ -117,7 +129,7 @@ export function Header() {
                 </DropdownMenu>
               ) : (
                 <Link
-                  to={ROUTES.app.root}
+                  href={ROUTES.app.root}
                   className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#e6e1d8] hover:border-[#111111] hover:bg-[#f6f3ef] transition-colors tap-feedback"
                   aria-label="Área do usuário"
                 >
@@ -131,29 +143,28 @@ export function Header() {
               <>
                 {/* User icon: only on extra-small screens (mobile). */}
                 <Link
-                  to={ROUTES.login}
-                  className="sm:hidden"
+                  href={ROUTES.login}
+                  className="sm:hidden p-2.5 rounded-full border border-[#e6e1d8] hover:border-[#111111] hover:bg-[#f6f3ef] transition-colors tap-feedback"
                   aria-label="Entrar"
                 >
-                  <button className="p-2.5 rounded-full border border-[#e6e1d8] hover:border-[#111111] hover:bg-[#f6f3ef] transition-colors tap-feedback">
-                    <UserCircle className="w-5 h-5 text-[#111111]" />
-                  </button>
+                  <UserCircle className="w-5 h-5 text-[#111111]" />
                 </Link>
 
-                <Link to={ROUTES.login} className="hidden sm:block">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white rounded-full"
-                  >
-                    Entrar
-                  </Button>
-                </Link>
-                <Link to="/cadastro" className="hidden md:block">
-                  <Button size="sm" className="bg-[#c40000] hover:bg-[#a00000] text-white rounded-full">
-                    Cadastrar
-                  </Button>
-                </Link>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="hidden sm:inline-flex border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white rounded-full"
+                >
+                  <Link href={ROUTES.login}>Entrar</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="hidden md:inline-flex bg-[#c40000] hover:bg-[#a00000] text-white rounded-full"
+                >
+                  <Link href="/cadastro">Cadastrar</Link>
+                </Button>
               </>
             )}
 
@@ -174,10 +185,20 @@ export function Header() {
       {/* Barra de Busca */}
       {isSearchOpen && (
         <section className="border-t border-[#e6e1d8] bg-[#f6f3ef] px-4 py-4">
-          <form className="max-w-[1280px] mx-auto flex gap-2" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="max-w-[1280px] mx-auto flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = searchQuery.trim();
+              router.push(q ? `${ROUTES.busca}?q=${encodeURIComponent(q)}` : ROUTES.busca);
+              setIsSearchOpen(false);
+            }}
+          >
             <input
               type="search"
               placeholder="Buscar notícias..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 min-h-[48px] px-4 py-2 border border-[#e6e1d8] rounded-full text-base focus:outline-none focus:ring-2 focus:ring-[#c40000] focus:border-transparent"
               aria-label="Campo de busca"
             />
@@ -204,7 +225,7 @@ export function Header() {
             {MENU_ITEMS.map((item) => (
               <li key={item.path}>
                 <Link
-                  to={item.path}
+                  href={item.path}
                   onClick={() => setIsMenuOpen(false)}
                   aria-current={isActive(item.path) ? 'page' : undefined}
                   className={`block py-3.5 px-3 rounded-xl text-lg font-normal tap-feedback ${
@@ -223,7 +244,7 @@ export function Header() {
                 <li className="border-t border-[#e6e1d8] my-2" />
                 <li>
                   <Link
-                    to={ROUTES.login}
+                    href={ROUTES.login}
                     onClick={() => setIsMenuOpen(false)}
                     className="block py-3.5 px-3 rounded-xl text-base font-normal text-[#111111] hover:bg-[#f6f3ef] tap-feedback"
                   >
@@ -232,7 +253,7 @@ export function Header() {
                 </li>
                 <li>
                   <Link
-                    to="/cadastro"
+                    href="/cadastro"
                     onClick={() => setIsMenuOpen(false)}
                     className="block py-3.5 px-3 rounded-xl text-base font-normal text-[#c40000] hover:bg-[#fff5f5] tap-feedback"
                   >

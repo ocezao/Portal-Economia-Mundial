@@ -258,8 +258,8 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 
 ```bash
 # Frontend (.env)
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
 
 # Collector (.env)
 POSTGRES_HOST=db.seu-projeto.supabase.co
