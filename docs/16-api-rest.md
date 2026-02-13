@@ -1,8 +1,8 @@
-# Documentação da API REST - Portal Econômico Mundial
+# Documentação da API REST - Cenario Internacional
 
 ## Visão Geral
 
-Esta documentação descreve todos os endpoints da API REST do Portal Econômico Mundial, incluindo especificações OpenAPI, exemplos de uso e guias de integração.
+Esta documentação descreve todos os endpoints da API REST do Cenario Internacional, incluindo especificações OpenAPI, exemplos de uso e guias de integração.
 
 ---
 
@@ -12,9 +12,9 @@ Esta documentação descreve todos os endpoints da API REST do Portal Econômico
 # openapi.yaml
 openapi: 3.0.3
 info:
-  title: Portal Econômico Mundial API
+  title: Cenario Internacional API
   description: |
-    API REST para o Portal Econômico Mundial.
+    API REST para o Cenario Internacional.
     
     ## Autenticação
     A API utiliza JWT Bearer tokens para autenticação.
@@ -432,8 +432,8 @@ paths:
 
   /admin/analytics/generate:
     post:
-      summary: Gerar notícia com IA (Admin)
-      description: Gera uma notícia usando GNews + OpenRouter
+      summary: Buscar notícias (Admin)
+      description: Busca notícias usando GNews API (Funcionalidade de geração de IA removida)
       tags:
         - Admin
       requestBody:
@@ -1015,7 +1015,7 @@ curl -X GET "https://api.portaleconomicomundial.com/v1/articles?page=1&limit=20&
     }
   ],
   "seo": {
-    "title": "Guerra Comercial 2024 | Portal Econômico Mundial",
+    "title": "Guerra Comercial 2024 | Cenario Internacional",
     "description": "Análise completa dos impactos...",
     "keywords": "guerra comercial, tarifas, economia"
   }
@@ -1263,9 +1263,9 @@ npm install @pem/api-client
 ```
 
 ```typescript
-import { PEMClient } from '@pem/api-client';
+import { CINClient } from '@pem/api-client';
 
-const client = new PEMClient({
+const client = new CINClient({
   baseURL: 'https://api.portaleconomicomundial.com/v1',
   apiKey: 'sua-api-key'
 });

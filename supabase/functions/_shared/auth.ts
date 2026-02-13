@@ -6,6 +6,24 @@
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+// Logger seguro para edge functions
+const logger = {
+  error: (...args: unknown[]): void => {
+    const isDev = Deno.env.get("DENO_ENV") === "development";
+    if (isDev) {
+      console.error(...args);
+    } else {
+      // Em produção, sanitizar para não expor dados sensíveis
+      const sanitized = args.map(arg => {
+        if (arg instanceof Error) return arg.message;
+        if (typeof arg === "object" && arg !== null) return "[Object]";
+        return arg;
+      });
+      console.error("[Error]", ...sanitized);
+    }
+  }
+};
+
 // Configuração do cliente admin (service role)
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -82,7 +100,7 @@ export async function requireAdmin(req: Request): Promise<
     .maybeSingle();
 
   if (error) {
-    console.error("Erro ao verificar perfil:", error);
+    logger.error("Erro ao verificar perfil:", error);
     return { ok: false, status: 500, message: "Erro interno ao verificar permissões" };
   }
 
@@ -122,7 +140,7 @@ export function errorResponse(error: unknown, status = 500): Response {
   }
   
   // Log do erro real para debugging (apenas no servidor)
-  console.error("[Edge Function Error]", error);
+  logger.error("[Edge Function Error]", error);
   
   return jsonResponse({ error: message }, status);
 }

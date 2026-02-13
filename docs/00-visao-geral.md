@@ -1,8 +1,8 @@
-# Portal Econômico Mundial - Visão Geral
+# Cenario Internacional - Visão Geral
 
 ## Sobre o Projeto
 
-O **Portal Econômico Mundial (PEM)** é um portal de notícias profissional especializado em:
+O **Cenario Internacional (CIN)** é um portal de notícias profissional especializado em:
 
 - **Geopolítica**: Análises de relações internacionais, conflitos e diplomacia
 - **Economia**: Mercados financeiros, política monetária e indicadores econômicos
@@ -54,7 +54,7 @@ O **Portal Econômico Mundial (PEM)** é um portal de notícias profissional esp
   /README.md            # Documentação do SDK
 
 /supabase
-  /functions            # Edge Functions (admin-users, ai-news)
+  /functions            # Edge Functions (admin-users) - ai-news removido
 
 /scripts                # Utilitários
   /verify.sh            # Script de validação do sistema
@@ -91,11 +91,10 @@ O **Portal Econômico Mundial (PEM)** é um portal de notícias profissional esp
 - Perfil e papel no banco
 - Admin gerencia usuários
 
-### 5. IA para Criação de Notícias
+### 5. Busca de Notícias (GNews)
 - Busca das notícias das últimas 48h (GNews)
-- Geração de texto (OpenRouter)
-- Botão "Gerar Notícia" no admin
-- Você escolhe tema e perguntas antes de gerar
+- Integração direta com API de notícias
+- (Funcionalidade de geração de IA removida)
 
 ### 6. Analytics First-Party (Novo)
 - Sistema 100% first-party, sem Google Analytics

@@ -1,6 +1,6 @@
-# Portal Econômico Mundial (PEM)
+# Cenario Internacional (CIN)
 
-Portal de notícias profissional especializado em geopolítica, economia global e tecnologia.
+Portal de notícias profissional especializado em geopolítica, economia internacional e tecnologia.
 
 ## 🚀 Tecnologias
 
@@ -174,7 +174,7 @@ Funcionalidades em desenvolvimento para igualar Infomoney, Valor, Estadão:
 
 ## 🤖 MCP Server (Model Context Protocol)
 
-O portal possui um **servidor MCP completo** para integração com assistentes de IA como o Codex CLI.
+O portal possui um **servidor MCP completo** para integração com assistentes de IA.
 
 ### Funcionalidades do MCP
 
@@ -195,7 +195,7 @@ cd mcp-server
 
 ```toml
 [[servers]]
-name = "pem"
+name = "cin"
 type = "stdio"
 command = "node"
 args = ["/caminho/para/mcp-server/dist/index.js"]
@@ -293,12 +293,13 @@ Permite ao painel admin:
 
 ## 🤖 Geração de Notícias (IA)
 
-Edge Function: `supabase/functions/ai-news/index.ts`
+Edge Function: `supabase/functions/ai-news/index.ts` ⚠️ REMOVIDO
+
+> **Nota**: A funcionalidade de geração de notícias com IA foi removida.
+> Use a API GNews diretamente para busca de notícias.
 
 Variáveis de ambiente necessárias:
 - `GNEWS_API_KEY`
-- `OPENROUTER_API_KEY`
-- `OPENROUTER_TEXT_MODEL`
 
 ## 🖼️ Imagens em WebP
 
@@ -359,7 +360,7 @@ O projeto está preparado para integração com backend real:
 
 ## 📄 Licença
 
-© 2024 Portal Econômico Mundial. Todos os direitos reservados.
+© 2024 Cenario Internacional. Todos os direitos reservados.
 
 ---
 

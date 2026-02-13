@@ -1,4 +1,5 @@
 # Relatório de Correções de Banco de Dados
+## Cenario Internacional
 **Data:** 08/02/2026  
 **DBA Responsável:** Especialista PostgreSQL/Supabase  
 **Nota Estimada Após Correções:** 9.2/10
@@ -89,8 +90,8 @@ CREATE INDEX idx_analytics_events_type_time
 
 ---
 
-### ✅ 5. CORS em ai-news Edge Function
-**Arquivo:** `supabase/functions/ai-news/index.ts`
+### ✅ 5. CORS em ai-news Edge Function (REMOVIDO)
+**Arquivo:** ~~`supabase/functions/ai-news/index.ts`~~ - **REMOVIDO**
 
 **Problema:** Headers CORS inconsistentes faltando.
 
@@ -116,7 +117,7 @@ CREATE INDEX idx_analytics_events_type_time
 **Refatoradas:**
 - `admin-authors/index.ts` - Agora usa módulo compartilhado
 - `admin-users/index.ts` - Agora usa módulo compartilhado
-- `ai-news/index.ts` - Agora usa módulo compartilhado
+- ~~`ai-news/index.ts`~~ - **REMOVIDO** - Funcionalidade descontinuada
 
 **Benefício:** Eliminação de código duplicado, manutenibilidade +50%.
 
@@ -182,7 +183,7 @@ export function errorResponse(error: unknown, status = 500): Response {
 - `src/services/comments/types.ts` - Adicionado updateComment
 
 ### Edge Functions (refatoradas)
-- `supabase/functions/ai-news/index.ts` - CORS + módulo compartilhado
+- ~~`supabase/functions/ai-news/index.ts`~~ - **REMOVIDO**
 - `supabase/functions/admin-authors/index.ts` - Módulo compartilhado
 - `supabase/functions/admin-users/index.ts` - Módulo compartilhado
 

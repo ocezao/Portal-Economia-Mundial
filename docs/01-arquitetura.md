@@ -1,8 +1,8 @@
-# Arquitetura do Portal Econômico Mundial
+# Arquitetura do Cenario Internacional
 
 ## Visão Geral da Arquitetura
 
-O PEM possui arquitetura modular dividida em três grandes camadas:
+O CIN possui arquitetura modular dividida em três grandes camadas:
 
 1. **Frontend** - Next.js (App Router) com dados do Supabase
 2. **Backend** - Supabase (Auth + Postgres + Edge Functions)
@@ -54,6 +54,15 @@ O PEM possui arquitetura modular dividida em três grandes camadas:
 - Abstração do LocalStorage
 - Tipagem forte
 - Métodos específicos por entidade
+
+**Security** (`/src/lib/security.ts`)
+- `escapeHtml`: Prevenção de XSS
+- `sanitizeFilename`: Sanitização de nomes de arquivo
+- `escapeLikePattern`: Escaping de wildcards SQL para queries LIKE seguras
+- `isValidEmail`: Validação de formato de email
+- `sanitizeText`: Sanitização básica de texto
+
+> 📖 Ver detalhes em [Guia de Segurança para Desenvolvedores](./GUIA_SEGURANCA_DESENVOLVEDORES.md)
 
 ---
 
@@ -135,12 +144,10 @@ Responsável por:
 
 Arquivo: `supabase/functions/admin-users/index.ts`
 
-### 2) ai-news
-Responsável por:
-- Buscar notícias das últimas 48h (GNews)
-- Gerar conteúdo via OpenRouter
-
-Arquivo: `supabase/functions/ai-news/index.ts`
+### 2) ai-news (REMOVIDO)
+⚠️ **REMOVIDO**: Esta Edge Function foi descontinuada.
+- A funcionalidade de geração de conteúdo via OpenRouter foi removida
+- Para busca de notícias, usar a API GNews diretamente
 
 ---
 
