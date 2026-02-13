@@ -1,19 +1,17 @@
-/**
- * Health check route
- */
-
 import { FastifyInstance } from 'fastify';
-import { pool } from '../db/index';
+import { checkSupabaseHealth } from '../supabase';
 
 export async function healthRoutes(server: FastifyInstance) {
   server.get('/health', async () => {
     try {
-      // Check database connectivity
-      await pool.query('SELECT 1');
-      return { status: 'ok', database: 'connected' };
+      const connected = await checkSupabaseHealth();
+      if (!connected) {
+        return { status: 'error', database: 'supabase_disconnected' };
+      }
+      return { status: 'ok', database: 'supabase_connected' };
     } catch (err) {
-      server.log.error('Health check failed:', err);
-      return { status: 'error', database: 'disconnected' };
+      server.log.error({ err }, 'Falha no health check');
+      return { status: 'error', database: 'supabase_disconnected' };
     }
   });
 }

@@ -146,7 +146,7 @@ Arquivo: `supabase/functions/admin-users/index.ts`
 
 ### 2) ai-news (REMOVIDO)
 ⚠️ **REMOVIDO**: Esta Edge Function foi descontinuada.
-- A funcionalidade de geração de conteúdo via OpenRouter foi removida
+- A funcionalidade de geração de conteúdo via provedor de IA foi removida
 - Para busca de notícias, usar a API GNews diretamente
 
 ---

@@ -1,9 +1,5 @@
-/**
- * Event collection endpoint
- */
-
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { batchInsert } from '../db/insert';
+import { insertCollectorEvents } from '../supabase';
 
 interface CollectBody {
   v: string;
@@ -20,7 +16,6 @@ interface CollectBody {
 export async function collectRoutes(server: FastifyInstance) {
   server.post('/collect', async (request: FastifyRequest<{ Body: CollectBody[] }>, reply) => {
     const events = request.body;
-    const clientIP = request.ip;
 
     // Validate input
     if (!Array.isArray(events) || events.length === 0) {
@@ -37,16 +32,27 @@ export async function collectRoutes(server: FastifyInstance) {
     }
 
     try {
-      const result = await batchInsert(events, clientIP);
-      
-      server.log.info(
-        `Inserted ${result.inserted} events, ${result.duplicates} duplicates ignored`
-      );
+      const rows = events.map((event) => ({
+        event_type: event.event,
+        session_id: event.session_id || null,
+        user_id: event.user_id || null,
+        url_path: event.url,
+        properties: {
+          v: event.v,
+          anonymous: event.anonymous,
+          timestamp: event.timestamp,
+          referrer: event.referrer || null,
+          ...event.properties,
+        },
+      }));
+
+      const inserted = await insertCollectorEvents(rows);
+      server.log.info(`Eventos recebidos e gravados no Supabase: ${inserted}`);
 
       // Return 204 No Content on success
       return reply.status(204).send();
     } catch (err) {
-      server.log.error('Failed to insert events:', err);
+      server.log.error({ err }, 'Falha ao inserir eventos');
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });

@@ -13,6 +13,12 @@
     "moduleResolution": "node",
     "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/server.ts",
+    "src/logger.ts",
+    "src/supabase.ts",
+    "src/routes/**/*.ts",
+    "src/plugins/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", "tests"]
 }

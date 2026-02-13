@@ -23,7 +23,7 @@ import { CONTENT_CONFIG } from '@/config/content';
 import type { EarningsEvent, MarketNews } from '@/services/economics/finnhubService';
 import { publicStorage } from '@/config/storage';
 
-const ADSENSE_SLOT_HOME_INLINE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_INLINE;
+const ADSENSE_SLOT_HOME_INLINE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;
 
 // Heavy widgets: lazy-load to keep initial JS small.
 const TensionMap = dynamic(

@@ -1,81 +1,102 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal-web
     environment:
-      POSTGRES_DB: cin_analytics
-      POSTGRES_USER: analytics
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_123}
-    volumes:
-      - cin_cin_postgres_data:/var/lib/postgresql/data
-      - ./collector/src/db/migrations:/docker-entrypoint-initdb.d
-      - ./scripts:/scripts
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_UPLOAD_BUCKET=${SUPABASE_UPLOAD_BUCKET}
+      - GNEWS_API_KEY=${GNEWS_API_KEY}
+      - NEXT_PUBLIC_FINNHUB_API_KEY=${NEXT_PUBLIC_FINNHUB_API_KEY}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - NEXT_PUBLIC_ONESIGNAL_APP_ID=${NEXT_PUBLIC_ONESIGNAL_APP_ID}
+      - ONESIGNAL_REST_API_KEY=${ONESIGNAL_REST_API_KEY}
+      - NEXT_PUBLIC_ADSENSE_CLIENT_ID=${NEXT_PUBLIC_ADSENSE_CLIENT_ID}
+      - NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE=${NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
     ports:
-      - "5432:5432"
+      - '3000:3000'
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U analytics -d pem_analytics"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  init-partitions:
-    image: postgres:15-alpine
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal-api
     environment:
-      POSTGRES_DB: pem_analytics
-      POSTGRES_USER: analytics
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_123}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      PGHOST: postgres
-      PGPORT: 5432
-    volumes:
-      - ./scripts:/scripts
-    working_dir: /scripts
-    command: >
-      sh -c "
-        echo 'Aguardando PostgreSQL...' &&
-        sleep 2 &&
-        echo 'Criando partições...' &&
-        ./partition-manager.sh 3 &&
-        echo 'Partições criadas com sucesso!'
-      "
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: "no"
+      - NODE_ENV=production
+      - PORT=4000
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_UPLOAD_BUCKET=${SUPABASE_UPLOAD_BUCKET}
+      - GNEWS_API_KEY=${GNEWS_API_KEY}
+      - NEXT_PUBLIC_FINNHUB_API_KEY=${NEXT_PUBLIC_FINNHUB_API_KEY}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - NEXT_PUBLIC_ONESIGNAL_APP_ID=${NEXT_PUBLIC_ONESIGNAL_APP_ID}
+      - ONESIGNAL_REST_API_KEY=${ONESIGNAL_REST_API_KEY}
+      - NEXT_PUBLIC_ADSENSE_CLIENT_ID=${NEXT_PUBLIC_ADSENSE_CLIENT_ID}
+      - NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE=${NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+    ports:
+      - '4000:4000'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:4000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   collector:
-    build: ./collector
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+    container_name: portal-collector
     environment:
-      - PORT=3000
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=pem_analytics
-      - POSTGRES_USER=analytics
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_password_123}
+      - NODE_ENV=production
+      - PORT=4010
+      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
       - LOG_LEVEL=info
     ports:
-      - "3000:3000"
-    depends_on:
-      init-partitions:
-        condition: service_completed_successfully
-    volumes:
-      - ./scripts:/scripts
+      - '4010:4010'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:4010/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   metabase:
     image: metabase/metabase:latest
-    ports:
-      - "3001:3000"
+    container_name: portal-metabase
     environment:
-      MB_DB_TYPE: postgres
-      MB_DB_DBNAME: pem_analytics
-      MB_DB_PORT: 5432
-      MB_DB_USER: analytics
-      MB_DB_PASS: ${POSTGRES_PASSWORD:-dev_password_123}
-      MB_DB_HOST: postgres
-    depends_on:
-      - postgres
-
-volumes:
-  postgres_data:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=${MB_DB_DBNAME}
+      - MB_DB_PORT=${MB_DB_PORT}
+      - MB_DB_USER=${MB_DB_USER}
+      - MB_DB_PASS=${MB_DB_PASS}
+      - MB_DB_HOST=${MB_DB_HOST}
+    ports:
+      - '3001:3000'
+    restart: unless-stopped

@@ -52,7 +52,7 @@ Skill especializada em analisar e documentar a infraestrutura completa do Portal
 | Supabase | Auth + Dados principais | Manter externo |
 | Finnhub API | Cotações mercado | Manter externo |
 | GNews API | Notícias IA | Manter externo |
-| OpenRouter | Geração de conteúdo | Manter externo |
+| servi�o de IA | Geração de conteúdo | Manter externo |
 
 ## Variáveis de Ambiente Críticas
 

@@ -14,7 +14,7 @@ import { Footer } from './Footer';
 import { APP_CONFIG } from '@/config/app';
 import { AdUnit } from '@/components/ads/AdUnit';
 
-const ADSENSE_SLOT_LAYOUT_FOOTER = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LAYOUT_FOOTER;
+const ADSENSE_SLOT_LAYOUT_FOOTER = process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

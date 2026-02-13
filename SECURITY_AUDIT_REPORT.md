@@ -56,7 +56,7 @@
 |---|------|---------|-----------|------------------|
 | 1.8 | FINNHUB_API_KEY | `.env:22` | Exposta como NEXT_PUBLIC_ | [Rota #1.6](#rota-16-api-keys-frontend) |
 | 1.9 | GNEWS_API_KEY | `.env:26` | API key exposta | [Rota #1.7](#rota-17-backend-only-secrets) |
-| ~~1.10~~ | ~~OPENROUTER_API_KEY~~ | ~~REMOVIDO~~ | ~~API key exposta~~ | ~~Funcionalidade removida~~ |
+| ~~1.10~~ | ~~CHAVE_IA_REMOVIDA~~ | ~~REMOVIDO~~ | ~~API key exposta~~ | ~~Funcionalidade removida~~ |
 | 1.11 | SUPABASE_ANON_KEY | `.env:2` | Versionada (pública por design) | [Rota #1.8](#rota-18-gitignore) |
 
 ---
@@ -300,7 +300,7 @@ export async function GET(request: Request) {
 ```bash
 # 1. Renomear variáveis (remover NEXT_PUBLIC_)
 GNEWS_API_KEY="..."
-# OPENROUTER_API_KEY REMOVIDO - funcionalidade descontinuada
+# CHAVE_IA_REMOVIDA REMOVIDO - funcionalidade descontinuada
 
 # 2. Mover lógica para API routes ou Edge Functions
 ```

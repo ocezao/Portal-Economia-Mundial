@@ -2,7 +2,7 @@
  * ⚠️ CLIENTE PARA GERAÇÃO DE NOTÍCIA - FUNCIONALIDADE REMOVIDA
  * 
  * A Edge Function `ai-news` foi removida do projeto.
- * A funcionalidade de geração de notícias com IA via OpenRouter foi descontinuada.
+ * A funcionalidade de geração de notícias com IA foi descontinuada.
  * 
  * Para busca de notícias, use diretamente a API GNews.
  * 
