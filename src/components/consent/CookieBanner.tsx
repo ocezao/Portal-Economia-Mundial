@@ -6,9 +6,10 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { memo, useState, useEffect, useCallback } from 'react';
 import { X, Shield, Cookie, Settings, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/logger';
 
 export interface ConsentType {
   necessary: boolean;
@@ -22,9 +23,9 @@ interface ConsentConfig {
   timestamp: number;
   bannerVersion: string;
   bannerShown: boolean;
-};
+}
 
-const CONSENT_COOKIE_NAME = '__pem_consent';
+const CONSENT_COOKIE_NAME = '__cin_consent';
 const COOKIE_DAYS_GRANTED = 180;
 const COOKIE_DAYS_DENIED = 365;
 const BANNER_VERSION = '1.0';
@@ -70,7 +71,7 @@ export function useConsent() {
         try {
           w.adsbygoogle.push({});
         } catch (e: unknown) {
-          console.error('AdSense init error:', e);
+          logger.error('AdSense init error:', e);
         }
       }
     }
@@ -117,7 +118,7 @@ export function hasConsentFor(type: keyof ConsentType): boolean {
 }
 
 // Componente Principal
-export function CookieBanner() {
+export const CookieBanner = memo(function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState<ConsentType>({
@@ -138,7 +139,8 @@ export function CookieBanner() {
     }, 0);
   }, []);
 
-  const handleAcceptAll = () => {
+  // useCallback para handlers
+  const handleAcceptAll = useCallback(() => {
     const allGranted: ConsentType = {
       necessary: true,
       analytics: true,
@@ -148,9 +150,9 @@ export function CookieBanner() {
     setPreferences(allGranted);
     setShowBanner(false);
     setShowPreferences(false);
-  };
+  }, []);
 
-  const handleRejectNonEssential = () => {
+  const handleRejectNonEssential = useCallback(() => {
     const onlyNecessary: ConsentType = {
       necessary: true,
       analytics: false,
@@ -160,18 +162,26 @@ export function CookieBanner() {
     setPreferences(onlyNecessary);
     setShowBanner(false);
     setShowPreferences(false);
-  };
+  }, []);
 
-  const handleSavePreferences = () => {
+  const handleSavePreferences = useCallback(() => {
     saveConsentToCookie(preferences);
     setShowBanner(false);
     setShowPreferences(false);
-  };
+  }, [preferences]);
 
-  const togglePreference = (key: keyof ConsentType) => {
+  const togglePreference = useCallback((key: keyof ConsentType) => {
     if (key === 'necessary') return; // Não pode desabilitar necessários
     setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+  }, []);
+
+  const handleShowPreferences = useCallback(() => {
+    setShowPreferences(true);
+  }, []);
+
+  const handleClosePreferences = useCallback(() => {
+    setShowPreferences(false);
+  }, []);
 
   if (!showBanner) return null;
 
@@ -181,7 +191,7 @@ export function CookieBanner() {
       {showPreferences && (
         <div
           className="fixed inset-0 bg-black/50 z-[998]"
-          onClick={() => setShowPreferences(false)}
+          onClick={handleClosePreferences}
           aria-hidden="true"
         />
       )}
@@ -189,7 +199,7 @@ export function CookieBanner() {
       {/* Banner Principal */}
       <div
         role="dialog"
-        aria-label="Configurações de cookies e privacidade"
+        aria-label="Preferencias de privacidade"
         className={`fixed z-[999] transition-all duration-300 ${
           showPreferences
             ? 'bottom-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg'
@@ -212,23 +222,22 @@ export function CookieBanner() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-[#111111] mb-1">
-                      Valorizamos sua privacidade
+                      Cookies e privacidade
                     </h3>
                     <p className="text-sm text-[#6b6b6b] leading-relaxed">
-                      Usamos cookies para melhorar sua experiência, analisar
-                      tráfego e exibir anúncios relevantes. Consulte nossa{' '}
+                      Usamos cookies para melhorar sua experiencia e exibir anuncios.{' '}
                       <a
                         href="/privacidade/"
                         className="text-[#c40000] hover:underline font-medium"
                       >
-                        Política de Privacidade
+                        Politica de privacidade
                       </a>{' '}
                       e{' '}
                       <a
                         href="/cookies/"
                         className="text-[#c40000] hover:underline font-medium"
                       >
-                        Política de Cookies
+                        Politica de cookies
                       </a>
                       .
                     </p>
@@ -240,7 +249,7 @@ export function CookieBanner() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowPreferences(true)}
+                    onClick={handleShowPreferences}
                     className="flex-1 lg:flex-none"
                   >
                     <Settings className="w-4 h-4 mr-2" />
@@ -252,7 +261,7 @@ export function CookieBanner() {
                     onClick={handleRejectNonEssential}
                     className="flex-1 lg:flex-none"
                   >
-                    Recusar
+                    Rejeitar
                   </Button>
                   <Button
                     size="sm"
@@ -260,7 +269,7 @@ export function CookieBanner() {
                     className="flex-1 lg:flex-none bg-[#c40000] hover:bg-[#a00000]"
                   >
                     <Check className="w-4 h-4 mr-2" />
-                    Aceitar Todos
+                    Aceitar tudo
                   </Button>
                 </div>
 
@@ -268,7 +277,7 @@ export function CookieBanner() {
                 <button
                   onClick={handleRejectNonEssential}
                   className="absolute top-2 right-2 p-1 rounded-full hover:bg-[#f5f5f5] transition-colors lg:hidden"
-                  aria-label="Fechar e recusar cookies"
+                  aria-label="Fechar"
                 >
                   <X className="w-5 h-5 text-[#6b6b6b]" />
                 </button>
@@ -285,15 +294,15 @@ export function CookieBanner() {
                   </div>
                   <div>
                     <h3 className="font-bold text-[#111111]">
-                      Preferências de Cookies
+                      Preferencias de privacidade
                     </h3>
                     <p className="text-sm text-[#6b6b6b]">
-                      Gerencie suas preferências de privacidade
+                      Escolha quais cookies voce permite.
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowPreferences(false)}
+                  onClick={handleClosePreferences}
                   className="p-1 rounded-full hover:bg-[#f5f5f5] transition-colors"
                   aria-label="Fechar"
                 >
@@ -308,7 +317,7 @@ export function CookieBanner() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[#111111]">
-                        Necessários
+                        Necessarios
                       </span>
                       <span className="px-2 py-0.5 bg-[#22c55e]/10 text-[#22c55e] text-xs font-medium rounded-full">
                         Sempre ativo
@@ -319,8 +328,7 @@ export function CookieBanner() {
                     </div>
                   </div>
                   <p className="text-sm text-[#6b6b6b]">
-                    Essenciais para o funcionamento do site. Incluem
-                    autenticação, segurança e preferências básicas.
+                    Esses cookies sao essenciais para o funcionamento do site.
                   </p>
                 </div>
 
@@ -335,7 +343,7 @@ export function CookieBanner() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-[#111111]">
-                      Analytics (Análise)
+                      Analiticos
                     </span>
                     <div
                       className={`w-11 h-6 rounded-full relative transition-colors ${
@@ -350,8 +358,7 @@ export function CookieBanner() {
                     </div>
                   </div>
                   <p className="text-sm text-[#6b6b6b]">
-                    Nos ajudam a entender como você usa o site, quais páginas
-                    visita e por quanto tempo. Usamos dados anonimizados.
+                    Ajudam a entender como o site e usado para melhorar a experiencia.
                   </p>
                 </div>
 
@@ -366,7 +373,7 @@ export function CookieBanner() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-[#111111]">
-                      Publicidade (AdSense)
+                      Publicidade
                     </span>
                     <div
                       className={`w-11 h-6 rounded-full relative transition-colors ${
@@ -383,8 +390,7 @@ export function CookieBanner() {
                     </div>
                   </div>
                   <p className="text-sm text-[#6b6b6b]">
-                    Permitem exibir anúncios relevantes. Usamos o Google AdSense
-                    e seguimos as políticas de privacidade do Google.
+                    Permitem personalizar anuncios e medir performance.
                   </p>
                 </div>
               </div>
@@ -396,20 +402,20 @@ export function CookieBanner() {
                   onClick={handleRejectNonEssential}
                   className="flex-1"
                 >
-                  Recusar Tudo
+                  Rejeitar
                 </Button>
                 <Button
                   onClick={handleAcceptAll}
                   variant="outline"
                   className="flex-1 border-[#c40000] text-[#c40000] hover:bg-[#c40000] hover:text-white"
                 >
-                  Aceitar Tudo
+                  Aceitar tudo
                 </Button>
                 <Button
                   onClick={handleSavePreferences}
                   className="flex-1 bg-[#c40000] hover:bg-[#a00000]"
                 >
-                  Salvar Preferências
+                  Salvar
                 </Button>
               </div>
             </div>
@@ -418,7 +424,8 @@ export function CookieBanner() {
       </div>
     </>
   );
-}
+});
+CookieBanner.displayName = 'CookieBanner';
 
 // Função auxiliar para salvar no cookie
 function saveConsentToCookie(consent: ConsentType) {
@@ -447,14 +454,14 @@ function saveConsentToCookie(consent: ConsentType) {
       try {
         w.adsbygoogle.push({});
       } catch (e: unknown) {
-        console.error('AdSense initialization error:', e);
+        logger.error('AdSense initialization error:', e);
       }
     }
   }
 }
 
 // Botão flutuante para reabrir preferências (opcional)
-export function ConsentFloatingButton() {
+export const ConsentFloatingButton = memo(function ConsentFloatingButton() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -464,11 +471,11 @@ export function ConsentFloatingButton() {
     });
   }, []);
 
-  const handleReopen = () => {
+  const handleReopen = useCallback(() => {
     // Limpar cookie para mostrar banner novamente
     document.cookie = `${CONSENT_COOKIE_NAME}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
     window.location.reload();
-  };
+  }, []);
 
   if (!isVisible) return null;
 
@@ -476,10 +483,11 @@ export function ConsentFloatingButton() {
     <button
       onClick={handleReopen}
       className="fixed bottom-4 left-4 z-[997] p-3 bg-white rounded-full shadow-lg border border-[#e5e5e5] hover:shadow-xl transition-shadow"
-      aria-label="Alterar preferências de cookies"
-      title="Preferências de privacidade"
+      aria-label="Alterar preferencias de privacidade"
+      title="Preferencias de privacidade"
     >
       <Cookie className="w-5 h-5 text-[#6b6b6b]" />
     </button>
   );
-}
+});
+ConsentFloatingButton.displayName = 'ConsentFloatingButton';

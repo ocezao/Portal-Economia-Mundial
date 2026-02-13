@@ -1,4 +1,4 @@
-# Preparacao Para Escalar No Hostinger VPS KVM 1 (Sem VPS/Dominio Agora)
+# Preparacao Para Escalar No Hostinger VPS KVM 1 - Cenario Internacional
 
 Voce escolheu a opcao: **preparar para escalar no KVM 1**.
 

@@ -26,7 +26,7 @@ export const DynamicSurveyForm = dynamic(
 
 // Admin Dashboard (muito pesado)
 export const DynamicAdminDashboard = dynamic(
-  () => import('@/app/(site)/admin/page').then((mod) => mod.default),
+  () => import('@/app/admin/page').then((mod) => mod.default),
   {
     loading: () => (
       <div className="p-6 space-y-4">

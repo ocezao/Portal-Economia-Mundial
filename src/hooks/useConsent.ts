@@ -19,7 +19,7 @@ type ConsentConfig = {
   bannerShown: boolean;
 };
 
-const CONSENT_COOKIE_NAME = '__pem_consent';
+const CONSENT_COOKIE_NAME = '__cin_consent';
 
 // Função para ler o cookie de consentimento
 export function getConsentCookie(): ConsentConfig | null {

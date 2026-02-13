@@ -5,6 +5,7 @@
 
 'use client';
 
+import { memo, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, Bookmark, Gem } from 'lucide-react';
@@ -25,7 +26,7 @@ interface SponsoredBadgeProps {
 }
 
 // Badge de Publicação Patrocinada - movido para fora do componente NewsCard
-function SponsoredBadge({ isSponsored }: SponsoredBadgeProps) {
+const SponsoredBadge = memo(function SponsoredBadge({ isSponsored }: SponsoredBadgeProps) {
   if (!isSponsored) return null;
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
@@ -33,28 +34,44 @@ function SponsoredBadge({ isSponsored }: SponsoredBadgeProps) {
       Patrocinado
     </span>
   );
-}
+});
+SponsoredBadge.displayName = 'SponsoredBadge';
 
-export function NewsCard({ 
+export const NewsCard = memo(function NewsCard({ 
   article, 
   variant = 'default',
   showBookmark = false,
   onBookmark,
   isBookmarked = false,
 }: NewsCardProps) {
-  const category = CONTENT_CONFIG.categories[article.category];
-  const publishedDate = new Date(article.publishedAt).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
 
-  // Verifica se é publicação patrocinada
-  const isSponsored = article.tags?.includes('Publicação Patrocinada');
+  // useMemo para cálculos derivados
+  const category = useMemo(() => 
+    CONTENT_CONFIG.categories[article.category],
+  [article.category]);
+
+  const publishedDate = useMemo(() => 
+    new Date(article.publishedAt).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }),
+  [article.publishedAt]);
+
+  // useMemo para verificar se é publicação patrocinada
+  const isSponsored = useMemo(() => 
+    article.tags?.includes('Publicação Patrocinada') ?? false,
+  [article.tags]);
+
+  // useCallback para handlers
+  const handleBookmark = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    onBookmark?.(article.slug);
+  }, [onBookmark, article.slug]);
 
   if (variant === 'featured') {
     return (
-      <article className="group relative">
+      <article className="group relative" data-testid="news-card" data-variant="featured">
         <Link href={ROUTES.noticia(article.slug)} className="block">
           <figure className="relative aspect-[16/9] overflow-hidden rounded-lg mb-4">
             <Image
@@ -72,7 +89,7 @@ export function NewsCard({
             )}
             {isSponsored && (
               <span className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-900 text-xs font-bold uppercase tracking-wider rounded-full shadow-md">
-                💎 Patrocinado
+                Patrocinado
               </span>
             )}
           </figure>
@@ -97,7 +114,7 @@ export function NewsCard({
               <time dateTime={article.publishedAt}>{publishedDate}</time>
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                {article.readingTime} min
+                {article.readingTime} min de leitura
               </span>
             </footer>
           </header>
@@ -108,7 +125,7 @@ export function NewsCard({
 
   if (variant === 'compact') {
     return (
-      <article className="group">
+      <article className="group" data-testid="news-card" data-variant="compact">
         <Link href={ROUTES.noticia(article.slug)} className="flex gap-4">
           <figure className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md relative">
             <Image
@@ -119,7 +136,7 @@ export function NewsCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
             {isSponsored && (
-              <span className="absolute top-1 right-1 w-5 h-5 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full flex items-center justify-center shadow-sm" title="Publicação Patrocinada">
+              <span className="absolute top-1 right-1 w-5 h-5 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full flex items-center justify-center shadow-sm" title="Patrocinado">
                 <Gem className="w-3 h-3 text-amber-900" />
               </span>
             )}
@@ -148,7 +165,7 @@ export function NewsCard({
 
   // Default
   return (
-    <article className={`group bg-white border rounded-lg overflow-hidden card-hover ${isSponsored ? 'border-amber-200 shadow-md' : 'border-[#e5e5e5]'}`}>
+    <article className={`group bg-white border rounded-lg overflow-hidden card-hover ${isSponsored ? 'border-amber-200 shadow-md' : 'border-[#e5e5e5]'}`} data-testid="news-card" data-variant="default">
       <Link href={ROUTES.noticia(article.slug)} className="block">
         <figure className="relative aspect-[16/9] overflow-hidden">
           <Image
@@ -165,7 +182,7 @@ export function NewsCard({
           )}
           {isSponsored && (
             <span className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase rounded-full shadow-md">
-              💎 Patrocinado
+              Patrocinado
             </span>
           )}
         </figure>
@@ -192,15 +209,12 @@ export function NewsCard({
               <time dateTime={article.publishedAt}>{publishedDate}</time>
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {article.readingTime} min
+                {article.readingTime} min de leitura
               </span>
             </section>
             {showBookmark && (
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onBookmark?.(article.slug);
-                }}
+                onClick={handleBookmark}
                 className={`p-1.5 rounded-full transition-colors ${
                   isBookmarked 
                     ? 'bg-[#c40000] text-white' 
@@ -216,4 +230,5 @@ export function NewsCard({
       </Link>
     </article>
   );
-}
+});
+NewsCard.displayName = 'NewsCard';

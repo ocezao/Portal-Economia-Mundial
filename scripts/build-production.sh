@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 
 # Variáveis
 START_TIME=$(date +%s)
-PROJECT_NAME="Portal Econômico Mundial"
+PROJECT_NAME="Cenario Internacional"
 
 # Funções de log
 log_info() {

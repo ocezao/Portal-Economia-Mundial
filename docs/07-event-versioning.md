@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este documento define a estratégia oficial de versionamento de eventos do sistema de analytics first-party do Portal Econômico Mundial. O objetivo é garantir **evolução contínua sem quebra de compatibilidade**, permitindo que o sistema cresça sem perder dados históricos.
+Este documento define a estratégia oficial de versionamento de eventos do sistema de analytics first-party do Cenario Internacional. O objetivo é garantir **evolução contínua sem quebra de compatibilidade**, permitindo que o sistema cresça sem perder dados históricos.
 
 ---
 
@@ -712,5 +712,5 @@ GROUP BY DATE(timestamp);
 
 **Data de criação:** 2024-01-16  
 **Versão:** 1.0  
-**Autor:** Arquitetura de Dados PEM  
+**Autor:** Arquitetura de Dados CIN  
 **Status:** Documento ativo

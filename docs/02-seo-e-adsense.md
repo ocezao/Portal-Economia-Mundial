@@ -9,11 +9,11 @@ Cada página pública deve definir `canonical`, OpenGraph e Twitter via `metadat
 
 ```tsx
 // Home
-title: "Portal Econômico Mundial - Notícias que movem o mundo"
+title: "Cenario Internacional - Notícias que movem o mundo"
 description: "Portal de notícias especializado em geopolítica, economia global e tecnologia..."
 
 // Artigo
-title: "{article.title} - Portal Econômico Mundial"
+title: "{article.title} - Cenario Internacional"
 description: {article.excerpt}
 keywords: {article.tags.join(', ')}
 ```
@@ -41,7 +41,7 @@ Boas práticas aplicadas no projeto:
 {
   "@context": "https://schema.org",
   "@type": "NewsMediaOrganization",
-  "name": "Portal Econômico Mundial",
+  "name": "Cenario Internacional",
   "url": "https://seudominio.com",
   "logo": "...",
   "sameAs": ["..."]
@@ -87,7 +87,7 @@ Para igualar grandes portais (Infomoney, Estadão), adicione:
   },
   "publisher": {
     "@type": "NewsMediaOrganization",
-    "name": "Portal Econômico Mundial",
+    "name": "Cenario Internacional",
     "logo": "https://seusite.com/logo.webp"
   },
   "articleSection": "Economia",

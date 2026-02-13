@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useConsent } from '@/hooks/useConsent';
+import { logger } from '@/lib/logger';
 
 export type AdFormat = 'auto' | 'rectangle' | 'leaderboard' | 'skyscraper' | 'billboard';
 
@@ -129,7 +130,7 @@ export function AdUnit({ slot, format, className = '', lazy = true }: AdUnitProp
         setIsLoaded(true);
         setHasError(false);
       } catch (e: unknown) {
-        console.error('AdSense error:', e);
+        logger.error('AdSense error:', e);
         setHasError(true);
       }
     };

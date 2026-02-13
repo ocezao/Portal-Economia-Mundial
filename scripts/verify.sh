@@ -1,10 +1,10 @@
 #!/bin/bash
 set -uo pipefail
 
-# Script de verificação objetiva do sistema PEM Analytics
+# Script de verificação objetiva do sistema CIN Analytics
 # Acumula falhas e reporta no final (não faz fail-fast prematuro)
 
-echo "=== SCRIPT DE VERIFICAÇÃO PEM ANALYTICS ==="
+echo "=== SCRIPT DE VERIFICAÇÃO CIN ANALYTICS ==="
 echo ""
 
 # Cores para output

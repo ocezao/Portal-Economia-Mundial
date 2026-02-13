@@ -1,8 +1,8 @@
-# Processamento de Imagens - PEM
+# Processamento de Imagens - CIN
 
 ## 🎯 Visão Geral
 
-O Portal Econômico Mundial agora possui processamento completo de imagens com:
+O Cenario Internacional agora possui processamento completo de imagens com:
 
 - ✅ **Conversão automática para WebP** (melhor compressão)
 - ✅ **Remoção de metadados EXIF** (privacidade)
@@ -60,7 +60,7 @@ node scripts/process-image.mjs upload.jpg --sanitize
 node scripts/process-image.mjs foto.jpg --width 800 --height 600
 
 # Com watermark
-node scripts/process-image.mjs foto.jpg --watermark "Portal Econômico Mundial"
+node scripts/process-image.mjs foto.jpg --watermark "Cenario Internacional"
 
 # Comparar compressão
 node scripts/process-image.mjs foto.jpg --compare
@@ -174,7 +174,7 @@ const processed = await processImage(buffer, {
   metadata: {
     title: 'Nome da notícia',
     author: 'Nome do autor',
-    copyright: '© 2025 PEM'
+    copyright: '© 2025 CIN'
   }
 });
 ```

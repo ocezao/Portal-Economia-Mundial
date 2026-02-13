@@ -1,0 +1,290 @@
+{
+  "auth_issues": [
+    {
+      "severity": "CRITICAL",
+      "category": "AUTHENTICATION",
+      "component": "Env/Config",
+      "file": ".env",
+      "description": "Chaves sensíveis do Supabase expostas em arquivo .env local",
+      "vulnerability": "SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET e SUPABASE_DB_PASSWORD estão em texto plano no arquivo .env. A service role key tem acesso TOTAL ao banco de dados sem restrições RLS.",
+      "impact": "Se o arquivo .env for comprometido ou commitado acidentalmente, um atacante terá acesso completo ao banco de dados, podendo ler, modificar ou excluir qualquer dado.",
+      "remediation": "1) Adicionar .env ao .gitignore (já presente). 2) Usar variáveis de ambiente no servidor de deploy em vez de arquivo local. 3) Rotacionar as chaves imediatamente se houver risco de exposição. 4) Considerar uso de secret managers (AWS Secrets Manager, Azure Key Vault)."
+    },
+    {
+      "severity": "HIGH",
+      "category": "AUTHENTICATION",
+      "component": "PasswordPolicy",
+      "file": "src/app/[locale]/(auth)/cadastro/page.tsx, src/app/[locale]/admin/AdminDashboardClient.tsx",
+      "description": "Política de senha muito fraca - apenas 6 caracteres mínimos",
+      "vulnerability": "Validação de senha verifica apenas comprimento >= 6, sem requisitos de complexidade (maiúsculas, minúsculas, números, símbolos).",
+      "impact": "Senhas fracas como '123456', 'abcdef', 'senha123' são aceitas, facilitando ataques de força bruta e dicionário.",
+      "remediation": "Implementar validação de complexidade: mínimo 8-12 caracteres, pelo menos 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial. Usar bibliotecas como zxcvbn para verificar força da senha."
+    },
+    {
+      "severity": "HIGH",
+      "category": "AUTHENTICATION",
+      "component": "RateLimiting",
+      "file": "src/contexts/AuthContext.tsx",
+      "description": "Ausência de rate limiting no endpoint de login",
+      "vulnerability": "O hook de autenticação chama supabase.auth.signInWithPassword diretamente sem nenhum mecanismo de rate limiting por IP ou por conta.",
+      "impact": "Vulnerável a ataques de força bruta automatizados. Um atacante pode tentar milhares de combinações de email/senha sem restrições.",
+      "remediation": "1) Implementar rate limiting no nível de API (middleware ou API route) - máximo 5 tentativas por IP a cada 15 minutos. 2) Adicionar delay progressivo entre tentativas. 3) Considerar implementar CAPTCHA após 3 falhas."
+    },
+    {
+      "severity": "HIGH",
+      "category": "AUTHORIZATION",
+      "component": "AdminAPI",
+      "file": "src/app/api/admin-users/route.ts",
+      "description": "API administrativa exposta sem rate limiting específico",
+      "vulnerability": "O endpoint /api/admin-users não possui rate limiting específico para proteção contra enumeração de usuários ou brute force no token.",
+      "impact": "Atacantes podem fazer reconhecimento da base de usuários admins ou tentar fuzzing de tokens JWT.",
+      "remediation": "Adicionar rate limiting específico para endpoints administrativos (máximo 10 requisições por minuto por IP)."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "AUTHENTICATION",
+      "component": "MFA/2FA",
+      "file": "src/types/user.ts",
+      "description": "MFA/2FA não implementado apesar de campo existir no tipo",
+      "vulnerability": "O campo 'twoFactorEnabled' existe na interface User, mas não há implementação real de autenticação de dois fatores em nenhum fluxo de login.",
+      "impact": "Contas de administradores e usuários não têm camada adicional de proteção. Comprometimento de credenciais permite acesso total imediato.",
+      "remediation": "Implementar 2FA usando TOTP (Time-based One-Time Password) via Supabase Auth ou integração com apps autenticadores (Google Authenticator, Authy)."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SESSION",
+      "component": "CSRF",
+      "file": "src/app/api/**/route.ts",
+      "description": "Ausência de proteção CSRF em API routes",
+      "vulnerability": "As API routes (admin-users, upload, telemetry) não implementam validação de tokens CSRF para requisições state-changing.",
+      "impact": "Possível execução de ações não autorizadas se um usuário autenticado visitar um site malicioso (ataques CSRF).",
+      "remediation": "1) Implementar Double Submit Cookie pattern para CSRF protection. 2) Ou usar SameSite=Strict nos cookies de sessão. 3) Validar header Origin/Referer em requisições sensíveis."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "AUTHENTICATION",
+      "component": "AccountLockout",
+      "file": "src/contexts/AuthContext.tsx",
+      "description": "Não há mecanismo de bloqueio de conta após tentativas falhas",
+      "vulnerability": "Após múltiplas tentativas de login falhas, a conta não é bloqueada temporariamente.",
+      "impact": "Ataques de força bruta contra contas específicas são facilitados. Contas de admin podem ser alvo de ataques direcionados.",
+      "remediation": "Implementar bloqueio temporário de conta após 5 tentativas falhas (15 minutos de cooldown). Notificar usuário por email sobre tentativas suspeitas."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SESSION",
+      "component": "SessionTimeout",
+      "file": "src/contexts/AuthContext.tsx",
+      "description": "Ausência de timeout de sessão por inatividade",
+      "vulnerability": "A sessão permanece ativa indefinidamente enquanto o browser estiver aberto. Não há invalidação por inatividade.",
+      "impact": "Sessões em computadores compartilhados ou públicos permanecem ativas se o usuário não fizer logout explícito.",
+      "remediation": "Implementar timeout de inatividade: logout automático após 30 minutos de inatividade no painel admin, 2 horas para usuários comuns."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "AUTHORIZATION",
+      "component": "RoleValidation",
+      "file": "src/contexts/AuthContext.tsx",
+      "description": "Validação de permissões simplificada demais",
+      "vulnerability": "O método checkPermission verifica apenas se o usuário é admin, não implementa hierarquia de permissões completa (admin, editor, author, user).",
+      "impact": "O sistema prevê roles de 'editor' e 'author' nos tipos, mas na prática só existe distinção binária admin/user. Isso pode levar a acesso indevido se roles intermediários forem implementados no futuro.",
+      "remediation": "Implementar sistema de permissões granular: criar matriz de permissões por role (canCreate, canEdit, canDelete, canManageUsers) em vez de verificação binária."
+    },
+    {
+      "severity": "LOW",
+      "category": "SESSION",
+      "component": "TokenStorage",
+      "file": "src/lib/supabaseClient.ts",
+      "description": "Token JWT armazenado em localStorage por padrão",
+      "vulnerability": "O cliente Supabase persiste sessão em localStorage por padrão (persistSession: typeof window !== 'undefined').",
+      "impact": "Tokens em localStorage são acessíveis via XSS. Embora o site tenha proteções CSP, qualquer vulnerabilidade XSS futura poderia roubar tokens.",
+      "remediation": "Considerar usar cookies httpOnly com SameSite=Strict para armazenar tokens de sessão, ou implementar refresh token rotation mais agressivo."
+    },
+    {
+      "severity": "LOW",
+      "category": "AUTHENTICATION",
+      "component": "PasswordReset",
+      "file": "src/app/[locale]/(auth)/login/page.tsx",
+      "description": "Fluxo de recuperação de senha não implementado",
+      "vulnerability": "O botão 'Esqueci minha senha' apenas mostra um toast informativo sem funcionalidade real.",
+      "impact": "Usuários não conseguem recuperar acesso se esquecerem a senha, podendo levar a abandono da plataforma ou contatos excessivos ao suporte.",
+      "remediation": "Implementar fluxo completo de reset de senha usando supabase.auth.resetPasswordForEmail com envio de email de recuperação."
+    },
+    {
+      "severity": "LOW",
+      "category": "AUTHORIZATION",
+      "component": "RLS",
+      "file": "supabase/migrations/20260207143000_create_app_errors.sql",
+      "description": "Tabela app_errors permite INSERT sem autenticação",
+      "vulnerability": "A política RLS da tabela app_errors permite INSERT por anyone (anon), sem verificação de autenticidade da origem.",
+      "impact": "Possível poluição da tabela de erros com dados falsos ou spam, embora haja rate limiting na API route.",
+      "remediation": "Considerar adicionar verificação de origem (CORS) ou autenticação mínima para inserção de erros em produção."
+    }
+  ],
+  "rls_analysis": {
+    "tables_with_rls": [
+      {
+        "table": "public.profiles",
+        "policies": [
+          "profile self read (authenticated SELECT own profile)",
+          "profile self update (authenticated UPDATE own profile)",
+          "admin read all profiles (authenticated SELECT com is_admin())",
+          "admin update all profiles (authenticated UPDATE com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.news_articles",
+        "policies": [
+          "allow public read (anon/authenticated SELECT published=true)",
+          "allow admin manage news (authenticated ALL com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.comments",
+        "policies": [
+          "allow public read comments (anon/authenticated SELECT status=active)",
+          "allow admin read comments (authenticated SELECT com is_admin())",
+          "allow authenticated insert comments (authenticated INSERT com user_id=auth.uid())",
+          "allow owner update comments (authenticated UPDATE com user_id=auth.uid())",
+          "allow owner delete comments (authenticated DELETE com user_id=auth.uid())",
+          "allow admin update/delete comments (authenticated UPDATE/DELETE com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.bookmarks",
+        "policies": [
+          "allow owner read/insert/delete (authenticated com user_id=auth.uid())",
+          "allow admin read (authenticated com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.reading_history",
+        "policies": [
+          "allow owner read/insert/update/delete (authenticated com user_id=auth.uid())",
+          "allow admin read (authenticated com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.reading_progress",
+        "policies": [
+          "allow owner read/insert/update/delete (authenticated com user_id=auth.uid())",
+          "allow admin read (authenticated com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.post_actions",
+        "policies": [
+          "allow owner read/insert/delete (authenticated com user_id=auth.uid())",
+          "allow admin read (authenticated com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.job_applications",
+        "policies": [
+          "allow anon insert (anon/authenticated INSERT)",
+          "allow admin read (authenticated SELECT com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.contact_messages",
+        "policies": [
+          "allow anon insert contact messages (anon/authenticated INSERT)",
+          "allow admin read contact messages (authenticated SELECT com is_admin())"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.leads",
+        "policies": [
+          "allow anon insert (anon/authenticated INSERT com true)"
+        ],
+        "status": "WARNING - No read policy defined (intentional for privacy)"
+      },
+      {
+        "table": "public.app_errors",
+        "policies": [
+          "App errors are insertable by anyone (INSERT com true)"
+        ],
+        "status": "WARNING - Anonymous inserts allowed"
+      },
+      {
+        "table": "public.authors",
+        "policies": [
+          "Service role full access",
+          "Public read active authors (anon/authenticated SELECT is_active=true)",
+          "Admins manage authors (authenticated ALL com profiles.role=admin)"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.news_slug_redirects",
+        "policies": [
+          "public can read redirects (SELECT com true)",
+          "admin can manage redirects (ALL com auth.jwt()->app_metadata->role = admin)"
+        ],
+        "status": "OK"
+      },
+      {
+        "table": "public.external_snapshots",
+        "policies": [
+          "External snapshots are readable by anyone (SELECT com true)"
+        ],
+        "status": "OK - Data is non-sensitive cache"
+      }
+    ],
+    "tables_without_rls": [
+      {
+        "table": "storage.objects (resumes bucket)",
+        "risk": "MEDIUM",
+        "recommendation": "Verificar se políticas de storage estão adequadas para uploads de currículos"
+      }
+    ],
+    "policy_issues": [
+      {
+        "table": "public.profiles",
+        "issue": "Função is_admin() não verifica se o usuário está ativo (status = 'active') consistentemente",
+        "severity": "MEDIUM",
+        "details": "A função is_admin() verifica status='active', mas a criação de usuário não define status explicitamente (default 'active'). Se um admin for desativado, a revogação pode demorar devido a caching."
+      },
+      {
+        "table": "public.comments",
+        "issue": "Policy 'Authenticated users can create comments' permite impersonação",
+        "severity": "MEDIUM", 
+        "details": "A migração 202502080002_add_comments_rls_policies.sql permite INSERT com qualquer user_id desde que auth.uid() IS NOT NULL, não verificando se user_id corresponde ao auth.uid()."
+      },
+      {
+        "table": "public.leads",
+        "issue": "Política permite INSERT sem qualquer validação",
+        "severity": "LOW",
+        "details": "with check (true) permite inserção de qualquer dado. Embora seja intencional para captura de leads, falta validação de formato de email ou rate limiting no nível de banco."
+      }
+    ]
+  },
+  "summary": {
+    "critical": 1,
+    "high": 3,
+    "medium": 5,
+    "low": 3,
+    "total": 12
+  },
+  "recommendations_priority": [
+    "1. [CRITICAL] Remover/revogar as chaves do .env expostas e migrar para secret manager",
+    "2. [HIGH] Implementar política de senha forte (mínimo 8-12 chars, complexidade)",
+    "3. [HIGH] Adicionar rate limiting no login (max 5 tentativas/15min por IP)",
+    "4. [HIGH] Adicionar rate limiting nas APIs administrativas",
+    "5. [MEDIUM] Implementar 2FA/MFA para contas administrativas",
+    "6. [MEDIUM] Adicionar proteção CSRF nas API routes",
+    "7. [MEDIUM] Implementar bloqueio de conta após tentativas falhas",
+    "8. [MEDIUM] Implementar timeout de sessão por inatividade",
+    "9. [MEDIUM] Corrigir policy de comments para verificar user_id = auth.uid()",
+    "10. [LOW] Implementar fluxo completo de recuperação de senha"
+  ]
+}

@@ -13,7 +13,7 @@ const SEARCH_ENGINES = ['google.com', 'bing.com', 'yahoo.com', 'duckduckgo.com',
 export class UTMTracker {
   private sdk: AnalyticsSDK;
   private utmData: UTMData;
-  private sessionStorageKey = '__pem_attribution';
+  private sessionStorageKey = '__cin_attribution';
 
   constructor(sdk: AnalyticsSDK) {
     this.sdk = sdk;

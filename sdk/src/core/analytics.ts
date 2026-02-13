@@ -1,11 +1,12 @@
 /**
- * Core do SDK Analytics - Portal Econômico Mundial
+ * Core do SDK Analytics - Cenario Internacional
  * Responsável por inicialização, fila de eventos, consentimento e comunicação com collector
  */
 
 import type { AnalyticsEvent, SDKConfig, ConsentState, QueueItem } from '../types';
 import { generateUUID, getDeviceInfo, getBrowserInfo } from '../utils/device';
 import { SessionManager } from '../utils/session';
+import { sdkLogger } from './logger';
 
 const DEFAULT_CONFIG: SDKConfig = {
   collectorUrl: '',
@@ -14,8 +15,8 @@ const DEFAULT_CONFIG: SDKConfig = {
   sessionTimeoutMinutes: 30,
   heartbeatIntervalSeconds: 30,
   offlineQueueMaxSize: 100,
-  offlineStorageKey: 'pem_analytics_queue',
-  consentCookieName: '__pem_consent',
+  offlineStorageKey: 'cin_analytics_queue',
+  consentCookieName: '__cin_consent',
   consentCookieDays: {
     granted: 180,
     denied: 365
@@ -263,9 +264,7 @@ export class AnalyticsSDK {
   // ========== Métodos privados ==========
 
   private log(message: string): void {
-    if (this.debug) {
-      console.log(`[PEM Analytics] ${message}`);
-    }
+    sdkLogger.debug(this.debug, `[CIN Analytics] ${message}`);
   }
 
   private ensureIdentifiers(): void {

@@ -1,4 +1,4 @@
-# 📊 Análise de Mercado: AdSense no Brasil - Portal Econômico Mundial
+# 📊 Análise de Mercado: AdSense no Brasil - Cenario Internacional
 
 ## 📋 Resumo Executivo
 

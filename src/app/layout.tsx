@@ -4,12 +4,13 @@ import '../index.css';
 
 import { Providers } from './providers';
 import { AdSenseScript } from '@/components/ads/AdSenseScript';
-import { CookieBanner } from '@/components/consent/CookieBanner';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { APP_CONFIG } from '@/config/app';
 import { SEO_CONFIG } from '@/config/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { getSiteUrl } from '@/lib/siteUrl';
+import { Layout } from '@/components/layout/Layout';
+import { CookieBanner } from '@/components/consent/CookieBanner';
 
 const siteUrl = getSiteUrl();
 
@@ -64,7 +65,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt" suppressHydrationWarning>
       <head>
         {/* Preconnect para domínios externos - melhora LCP */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -110,7 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <ServiceWorkerRegistration />
           <AdSenseScript />
-          {children}
+          <Layout>{children}</Layout>
           <CookieBanner />
         </Providers>
       </body>

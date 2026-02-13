@@ -1,8 +1,8 @@
-# Documentação de CI/CD - Portal Econômico Mundial
+# Documentação de CI/CD - Cenario Internacional
 
 ## Visão Geral
 
-Este documento descreve o pipeline completo de Integração Contínua (CI) e Deploy Contínuo (CD) do Portal Econômico Mundial, incluindo configuração de workflows, ambientes e procedimentos operacionais.
+Este documento descreve o pipeline completo de Integração Contínua (CI) e Deploy Contínuo (CD) do Cenario Internacional, incluindo configuração de workflows, ambientes e procedimentos operacionais.
 
 ---
 

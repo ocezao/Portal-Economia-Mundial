@@ -1,4 +1,4 @@
-# 📚 Índice de Documentação - Portal Econômico Mundial
+# 📚 Índice de Documentação - Cenario Internacional
 
 Guia rápido de navegação para toda a documentação do projeto.
 

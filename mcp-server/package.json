@@ -1,7 +1,7 @@
 {
-  "name": "pem-mcp-server",
+  "name": "cin-mcp-server",
   "version": "1.0.0",
-  "description": "Servidor MCP para Portal Econômico Mundial - Analytics e Gerenciamento de Conteúdo",
+  "description": "Servidor MCP para Cenario Internacional - Analytics e Gerenciamento de Conteúdo",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

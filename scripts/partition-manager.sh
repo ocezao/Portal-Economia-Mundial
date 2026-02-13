@@ -6,13 +6,13 @@ set -euo pipefail
 # Cria UNIQUE INDEX(event_id) em cada partição para deduplicação
 
 # Usar variáveis de ambiente ou defaults
-DB_NAME="${POSTGRES_DB:-pem_analytics}"
+DB_NAME="${POSTGRES_DB:-cin_analytics}"
 DB_USER="${POSTGRES_USER:-analytics}"
 DB_HOST="${POSTGRES_HOST:-postgres}"
 DB_PORT="${POSTGRES_PORT:-5432}"
 MONTHS_AHEAD="${1:-3}"
 
-echo "=== Gerenciador de Partições PEM Analytics ==="
+echo "=== Gerenciador de Partições CIN Analytics ==="
 echo "Database: ${DB_NAME}"
 echo "Host: ${DB_HOST}:${DB_PORT}"
 echo "Criando partições para: mês atual + ${MONTHS_AHEAD} meses futuros"

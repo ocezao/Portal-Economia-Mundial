@@ -9,6 +9,7 @@ import { collectRoutes } from './routes/collect';
 import { rateLimitPlugin } from './plugins/rate-limit';
 import { dedupePlugin } from './plugins/dedupe';
 import { checkCurrentPartition } from './db/partition-check';
+import { collectorLogger } from './logger';
 
 const server = Fastify({
   logger: {
@@ -46,7 +47,7 @@ async function start() {
     server.log.info(`Collector rodando na porta ${port}`);
     
   } catch (err) {
-    console.error('Falha ao iniciar collector:', err);
+    collectorLogger.error('Falha ao iniciar collector:', err);
     process.exit(1);
   }
 }

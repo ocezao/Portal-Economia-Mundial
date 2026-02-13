@@ -39,8 +39,8 @@ export function useSurvey(): UseSurveyReturn {
   }, []);
 
   const resetSurvey = useCallback(() => {
-    storage.remove('pem_survey_completed');
-    storage.remove('pem_survey_data');
+    storage.remove('cin_survey_completed');
+    storage.remove('cin_survey_data');
     setIsCompleted(false);
     setSurveyData(null);
   }, []);

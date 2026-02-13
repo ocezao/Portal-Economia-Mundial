@@ -4,11 +4,11 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: pem_analytics
+      POSTGRES_DB: cin_analytics
       POSTGRES_USER: analytics
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_123}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - cin_cin_postgres_data:/var/lib/postgresql/data
       - ./collector/src/db/migrations:/docker-entrypoint-initdb.d
       - ./scripts:/scripts
     ports:

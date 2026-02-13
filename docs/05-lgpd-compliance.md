@@ -705,7 +705,7 @@ como nossos leitores interagem com o conteúdo.
 - Você pode recusar o analytics a qualquer momento
 - Seus dados são mantidos por até 25 meses
 - Você pode solicitar exportação ou deleção total dos dados
-- Para exercer seus direitos, envie e-mail para: privacidade@pem.com
+- Para exercer seus direitos, envie e-mail para: privacidade@cenariointernacional.com.br
 ```
 
 ---

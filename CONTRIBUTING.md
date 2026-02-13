@@ -1,6 +1,6 @@
-# Guia de Contribuição - Portal Econômico Mundial
+# Guia de Contribuição - Cenario Internacional
 
-Obrigado por seu interesse em contribuir com o Portal Econômico Mundial! Este documento fornece diretrizes e processos para contribuir com o projeto.
+Obrigado por seu interesse em contribuir com o Cenario Internacional! Este documento fornece diretrizes e processos para contribuir com o projeto.
 
 ---
 
@@ -36,7 +36,7 @@ Obrigado por seu interesse em contribuir com o Portal Econômico Mundial! Este d
 ### Reportar Problemas
 
 Se você presenciar ou for vítima de comportamento inaceitável, entre em contato:
-- Email: conduct@portaleconomicomundial.com
+- Email: conduct@cenariointernacional.com.br
 - Issues privadas no GitHub
 
 ---
@@ -95,7 +95,7 @@ git clone https://github.com/SEU_USUARIO/pem-portal.git
 cd pem-portal
 
 # 3. Adicione upstream
-git remote add upstream https://github.com/original/pem-portal.git
+git remote add upstream https://github.com/original/cenario-internacional.git
 
 # 4. Instale dependências
 npm install

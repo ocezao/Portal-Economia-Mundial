@@ -3,20 +3,7 @@
  */
 
 import { pool } from './index';
-
-// Logger seguro para o collector
-const logger = {
-  info: (msg: string) => console.log(msg),
-  warn: (msg: string) => console.warn(msg),
-  error: (msg: string, err?: unknown) => {
-    // Em produção, enviar para serviço de monitoring
-    if (process.env.NODE_ENV === 'production' && err) {
-      console.error(msg, '[Error details sanitized]');
-    } else {
-      console.error(msg, err);
-    }
-  }
-};
+import { collectorLogger as logger } from '../logger';
 
 /**
  * Verifica se partição do mês atual existe e tem índice único

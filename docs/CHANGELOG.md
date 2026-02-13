@@ -1,4 +1,4 @@
-# Changelog - Portal Econômico Mundial
+# Changelog - Cenario Internacional
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
@@ -54,12 +54,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - Economic calendar fetch is disabled on Finnhub free plan to avoid 403 errors.
 - Finnhub client now coalesces in-flight requests and temporarily blocks rate-limited endpoints.
 - `generateArticleJsonLd` atualizado com suporte a `reviewedBy`, `speakable`, `citation`
+- Playwright E2E now runs against a production server (`npm run build && npm run start`) on `http://127.0.0.1:3000` for stability; locale is forced to `pt-BR` for deterministic assertions.
 
 ### Fixed
 - Supabase Edge Function `admin-users` now supports CORS preflight (requires redeploy).
 - Footer labels/accents were corrected.
 - Eslint errors em novos componentes corrigidos
 - Remocao de `<title>` solto em paginas client (admin) para evitar head inconsistente no App Router.
+- Fixed a production crash in `MarketTicker` caused by calling React hooks after a conditional return.
+- E2E smoke tests now validate `/rss.xml` and `/sitemap.xml` via `page.request.get()` (Firefox navigation could treat XML as download).
+- E2E determinism: external market widgets/services are disabled during tests via `NEXT_PUBLIC_ENABLE_MARKET_TICKER=false` and `NEXT_PUBLIC_FINNHUB_ENABLED=false` (see `playwright.config.ts`).
 
 ---
 

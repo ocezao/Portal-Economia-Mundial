@@ -212,7 +212,7 @@ export class AntiFraudTracker {
       ctx.fillStyle = '#f60';
       ctx.fillRect(0, 0, 200, 50);
       ctx.fillStyle = '#069';
-      ctx.fillText('PEM Analytics 🔒', 10, 15);
+      ctx.fillText('CIN Analytics 🔒', 10, 15);
       
       const dataUrl = canvas.toDataURL();
       return hashString(dataUrl).substring(0, 16);

@@ -6,6 +6,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 export function ServiceWorkerRegistration() {
   const [isSupported] = useState(() => {
@@ -21,8 +22,7 @@ export function ServiceWorkerRegistration() {
 
     // Registrar apenas em produção
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.log('[PWA] Service Worker registration skipped in development');
+      logger.log('[PWA] Service Worker registration skipped in development');
       return;
     }
 
@@ -32,8 +32,7 @@ export function ServiceWorkerRegistration() {
           scope: '/',
         });
 
-        // eslint-disable-next-line no-console
-        console.log('[PWA] Service Worker registered:', registration.scope);
+        logger.log('[PWA] Service Worker registered:', registration.scope);
 
         // Monitorar atualizações
         registration.addEventListener('updatefound', () => {
@@ -43,8 +42,7 @@ export function ServiceWorkerRegistration() {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // Nova versão disponível
-              // eslint-disable-next-line no-console
-              console.log('[PWA] New version available');
+              logger.log('[PWA] New version available');
               
               // Poderia mostrar um toast aqui para atualizar
               if (confirm('Nova versão disponível. Deseja atualizar?')) {
@@ -63,7 +61,7 @@ export function ServiceWorkerRegistration() {
         });
 
       } catch (error) {
-        console.error('[PWA] Service Worker registration failed:', error);
+        logger.error('[PWA] Service Worker registration failed:', error);
       }
     };
 

@@ -29,4 +29,9 @@ public/uploads/
 *.tsbuildinfo
 supabase/.temp/
 
+# Chaves secretas
 .env
+
+# Scripts env
+.env.scripts
+.env.scripts.*

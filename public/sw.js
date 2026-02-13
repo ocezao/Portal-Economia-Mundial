@@ -1,5 +1,5 @@
 /**
- * Service Worker para PWA - Portal de Economia e Mercados
+ * Service Worker para PWA - Cenario Internacional
  * 
  * Features:
  * - Cache de assets estáticos
@@ -8,10 +8,10 @@
  * - Offline fallback
  */
 
-const CACHE_NAME = 'pem-v1';
-const STATIC_CACHE = 'pem-static-v1';
-const IMAGE_CACHE = 'pem-images-v1';
-const API_CACHE = 'pem-api-v1';
+const CACHE_NAME = 'cin-v1';
+const STATIC_CACHE = 'cin-static-v1';
+const IMAGE_CACHE = 'cin-images-v1';
+const API_CACHE = 'cin-api-v1';
 
 // Assets críticos para cache inicial
 const STATIC_ASSETS = [
@@ -39,7 +39,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames
           .filter((name) => {
-            return name.startsWith('pem-') && 
+            return name.startsWith('cin-') && 
                    name !== STATIC_CACHE && 
                    name !== IMAGE_CACHE &&
                    name !== API_CACHE;

@@ -41,13 +41,13 @@ export const AUTHORS: Record<string, Author> = {
     shortName: 'Ana Silva',
     title: 'Editora Chefe',
     bio: 'Jornalista com 15 anos de experiência em cobertura econômica internacional. Especialista em mercados emergentes e geopolítica.',
-    longBio: `Ana Carolina Silva é Editora Chefe do Portal Econômico Mundial desde 2019. Com mais de 15 anos de experiência em jornalismo econômico, Ana liderou coberturas de eventos globais como a crise financeira de 2008, a pandemia de COVID-19 e as transições políticas em mercados emergentes.
+    longBio: `Ana Carolina Silva é Editora Chefe do Cenario Internacional desde 2019. Com mais de 15 anos de experiência em jornalismo econômico, Ana liderou coberturas de eventos globais como a crise financeira de 2008, a pandemia de COVID-19 e as transições políticas em mercados emergentes.
 
-Formada em Jornalismo pela USP e com MBA em Economia Internacional pela FGV, Ana construiu uma carreira marcada pela precisão analítica e rigor na checagem de fatos. Antes de integrar o PEM, trabalhou como correspondente internacional para importantes veículos brasileiros, com passagens por Londres, Nova York e Singapura.
+Formada em Jornalismo pela USP e com MBA em Economia Internacional pela FGV, Ana construiu uma carreira marcada pela precisão analítica e rigor na checagem de fatos. Antes de integrar o CIN, trabalhou como correspondente internacional para importantes veículos brasileiros, com passagens por Londres, Nova York e Singapura.
 
 Sua abordagem jornalística prioriza o contexto histórico e as implicações de longo prazo dos eventos econômicos, sempre com base em dados verificáveis e fontes oficiais.`,
     photo: '/images/authors/ana-silva.webp',
-    email: 'ana.silva@portaleconomicomundial.com',
+    email: 'ana.silva@cenariointernacional.com.br',
     social: {
       twitter: 'anacsilva_jorn',
       linkedin: 'anacarolinasilva',
@@ -87,13 +87,13 @@ Sua abordagem jornalística prioriza o contexto histórico e as implicações de
     shortName: 'Carlos Mendes',
     title: 'Analista de Mercados Sênior',
     bio: 'Economista e especialista em análise técnica de mercados financeiros. Focado em commodities e criptomoedas.',
-    longBio: `Carlos Eduardo Mendes é Analista de Mercados Sênior no Portal Econômico Mundial desde 2020. Economista formado pela PUC-Rio com especialização em Finanças Quantitativas, Carlos desenvolveu modelos preditivos para análise de tendências de mercado que são referência no portal.
+    longBio: `Carlos Eduardo Mendes é Analista de Mercados Sênior no Cenario Internacional desde 2020. Economista formado pela PUC-Rio com especialização em Finanças Quantitativas, Carlos desenvolveu modelos preditivos para análise de tendências de mercado que são referência no portal.
 
 Sua expertise em análise técnica e fundamentalista o tornou uma voz autorizada no acompanhamento de commodities, especialmente petróleo, minério de ferro e agrícolas. Nos últimos anos, ampliou seu foco para incluir o ecossistema de criptomoedas e ativos digitais, sempre com uma abordagem cautelosa e baseada em dados.
 
-Antes de se juntar ao PEM, Carlos trabalhou em mesas de operações de grandes instituições financeiras brasileiras, experiência que lhe proporcionou compreensão prática dos mecanismos de mercado.`,
+Antes de se juntar ao CIN, Carlos trabalhou em mesas de operações de grandes instituições financeiras brasileiras, experiência que lhe proporcionou compreensão prática dos mecanismos de mercado.`,
     photo: '/images/authors/carlos-mendes.webp',
-    email: 'carlos.mendes@portaleconomicomundial.com',
+    email: 'carlos.mendes@cenariointernacional.com.br',
     social: {
       twitter: 'cmendes_econ',
       linkedin: 'carloseduardomendes',
@@ -129,13 +129,13 @@ Antes de se juntar ao PEM, Carlos trabalhou em mesas de operações de grandes i
     shortName: 'Maria Oliveira',
     title: 'Correspondente Internacional',
     bio: 'Baseada em Bruxelas, cobre União Europeia, relações transatlânticas e política europeia.',
-    longBio: `Maria Fernanda Oliveira é Correspondente Internacional do Portal Econômico Mundial em Bruxelas desde 2021. Jornalista especializada em assuntos europeus, Maria oferece cobertura em primeira mão das decisões do Parlamento Europeu, Comissão Europeia e Conselho Europeu que impactam o comércio global.
+    longBio: `Maria Fernanda Oliveira é Correspondente Internacional do Cenario Internacional em Bruxelas desde 2021. Jornalista especializada em assuntos europeus, Maria oferece cobertura em primeira mão das decisões do Parlamento Europeu, Comissão Europeia e Conselho Europeu que impactam o comércio global.
 
 Formada em Relações Internacionais pela UnB e com mestrado em Estudos Europeus pela Université libre de Bruxelles, Maria combina conhecimento acadêmico sólido com uma rede de contatos extensa no centro decisório europeu.
 
 Sua cobertura privilegia as implicações das políticas europeias para o Brasil e América Latina, especialmente em áreas como acordos comerciais, regulação digital e políticas climáticas.`,
     photo: '/images/authors/maria-oliveira.webp',
-    email: 'maria.oliveira@portaleconomicomundial.com',
+    email: 'maria.oliveira@cenariointernacional.com.br',
     social: {
       twitter: 'mfoliveira_brux',
       linkedin: 'mariafernandaoliveira',
@@ -171,13 +171,13 @@ Sua cobertura privilegia as implicações das políticas europeias para o Brasil
     shortName: 'Roberto Santos',
     title: 'Editor de Fato',
     bio: 'Responsável pela checagem de fatos e verificação de informações. Garante a precisão e credibilidade de todas as publicações.',
-    longBio: `Roberto Santos atua como Editor de Fato (Fact-Checker) do Portal Econômico Mundial desde 2020. Jornalista com formação em Ciência Política, Roberto é responsável pela verificação rigorosa de todas as informações publicadas no portal.
+    longBio: `Roberto Santos atua como Editor de Fato (Fact-Checker) do Cenario Internacional desde 2020. Jornalista com formação em Ciência Política, Roberto é responsável pela verificação rigorosa de todas as informações publicadas no portal.
 
-Especialista em checagem de fatos e combate à desinformação, Roberto desenvolveu protocolos internos de verificação que incluem análise de fontes primárias, cruzamento de dados oficiais e consulta a especialistas. Sua atuação garante que o PEM mantenha os mais altos padrões de precisão factual.
+Especialista em checagem de fatos e combate à desinformação, Roberto desenvolveu protocolos internos de verificação que incluem análise de fontes primárias, cruzamento de dados oficiais e consulta a especialistas. Sua atuação garante que o CIN mantenha os mais altos padrões de precisão factual.
 
 Roberto é membro da International Fact-Checking Network (IFCN) e participa ativamente de iniciativas globais de combate à desinformação econômica e financeira.`,
     photo: '/images/authors/roberto-santos.webp',
-    email: 'roberto.santos@portaleconomicomundial.com',
+    email: 'roberto.santos@cenariointernacional.com.br',
     social: {
       twitter: 'rsantos_check',
       linkedin: 'robertosantos',

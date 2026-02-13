@@ -1,8 +1,8 @@
-# Design System - Portal Econômico Mundial
+# Design System - Cenario Internacional
 
 ## Filosofia de Design
 
-O design do PEM segue princípios de **jornalismo digital sério**:
+O design do CIN segue princípios de **jornalismo digital sério**:
 
 - Clareza e legibilidade
 - Hierarquia visual forte

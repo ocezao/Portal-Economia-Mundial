@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { APP_CONFIG } from '@/config/app';
+import { logger } from '@/lib/logger';
 
 export type ReadingLimitScope = 'anon' | 'all';
 
@@ -37,11 +38,7 @@ export function useAppSettings() {
           .select('key, value');
 
         if (error) {
-          // Erro silenciado em produção
-          if (process.env.NODE_ENV !== 'production') {
-            // eslint-disable-next-line no-console
-            console.error('Erro ao carregar app_settings:', error);
-          }
+          logger.error('Erro ao carregar app_settings:', error);
           return;
         }
 
@@ -67,11 +64,7 @@ export function useAppSettings() {
 
         if (isMounted) setSettings(next);
       } catch (error) {
-        // Erro silenciado em produção
-        if (process.env.NODE_ENV !== 'production') {
-          // eslint-disable-next-line no-console
-          console.error('Erro ao carregar configurações:', error);
-        }
+        logger.error('Erro ao carregar configurações:', error);
       } finally {
         if (isMounted) setIsLoading(false);
       }

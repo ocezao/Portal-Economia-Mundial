@@ -6,6 +6,7 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { toWebpUrl } from '@/lib/image';
 import { logger } from '@/lib/logger';
+import { escapeLikePattern } from '@/lib/security';
 import type { NewsArticle } from '@/types';
 
 // ==================== TIPOS ====================
@@ -103,6 +104,34 @@ function isSearchResultRow(value: unknown): value is SearchResultRow {
 
 // ==================== HELPERS ====================
 
+const WARN_INTERVAL_MS = 60_000;
+const QUERY_CACHE_TTL_MS = 15_000;
+
+const queryCache = new Map<string, { expiresAt: number; promise: Promise<unknown> }>();
+
+function withQueryCache<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
+  const now = Date.now();
+  const cached = queryCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.promise as Promise<T>;
+  }
+  const promise = fn();
+  queryCache.set(key, { expiresAt: now + ttlMs, promise });
+  return promise;
+}
+
+function summarizeError(err: unknown): unknown {
+  if (err instanceof Error) return err.message;
+  if (!isRecord(err)) return err;
+  const message = typeof err.message === 'string' ? err.message : undefined;
+  const code = typeof err.code === 'string' ? err.code : undefined;
+  const status = typeof err.status === 'number' ? err.status : undefined;
+  if (!message) return err;
+
+  const short = message.length > 300 ? `${message.slice(0, 300)}...` : message;
+  return { status, code, message: short };
+}
+
 const ARTICLE_SELECT = `
   id,
   slug,
@@ -190,7 +219,7 @@ const mapArticleRow = (row: unknown): NewsArticle => {
     content: row.content ?? '',
     contentEn: row.content_en ?? undefined,
     category: categorySlug as NewsArticle['category'],
-    author: row.author_name ?? 'Redação PEM',
+    author: row.author_name ?? 'Redação CIN',
     authorId: row.author_id ?? '',
     publishedAt: row.published_at ?? row.created_at ?? new Date().toISOString(),
     updatedAt: row.updated_at ?? row.created_at ?? new Date().toISOString(),
@@ -235,7 +264,7 @@ export async function getAllArticles(options?: { includeDrafts?: boolean }): Pro
 
   const { data, error } = await query;
   if (error) {
-    logger.warn('[newsManager] getAllArticles failed:', error);
+    logger.warnRateLimit('newsManager.getAllArticles', WARN_INTERVAL_MS, '[newsManager] getAllArticles failed:', summarizeError(error));
     return [];
   }
   
@@ -283,7 +312,7 @@ export async function getArticlesByCategory(category: string): Promise<NewsArtic
     .limit(60);
 
   if (error) {
-    logger.warn('[newsManager] getArticlesByCategory failed:', error);
+    logger.warnRateLimit('newsManager.getArticlesByCategory', WARN_INTERVAL_MS, '[newsManager] getArticlesByCategory failed:', summarizeError(error));
     return [];
   }
 
@@ -294,59 +323,80 @@ export async function getArticlesByCategory(category: string): Promise<NewsArtic
 export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'published')
-    .eq('is_featured', true)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(limit);
+  return withQueryCache(`newsManager:getFeaturedArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select(ARTICLE_SELECT)
+      .eq('status', 'published')
+      .eq('is_featured', true)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(limit);
 
-  if (error) {
-    logger.warn('[newsManager] getFeaturedArticles failed:', error);
-    return [];
-  }
-  
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+    if (error) {
+      logger.warnRateLimit(
+        'newsManager.getFeaturedArticles',
+        WARN_INTERVAL_MS,
+        '[newsManager] getFeaturedArticles failed:',
+        summarizeError(error),
+      );
+      return [];
+    }
+
+    if (!isArray(data)) return [];
+    return data.map(mapArticleRow);
+  });
 }
 
 export async function getBreakingNews(): Promise<NewsArticle[]> {
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'published')
-    .eq('is_breaking', true)
-    .order('published_at', { ascending: false, nullsFirst: false });
+  return withQueryCache('newsManager:getBreakingNews', QUERY_CACHE_TTL_MS, async () => {
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select(ARTICLE_SELECT)
+      .eq('status', 'published')
+      .eq('is_breaking', true)
+      .order('published_at', { ascending: false, nullsFirst: false });
 
-  if (error) {
-    logger.warn('[newsManager] getBreakingNews failed:', error);
-    return [];
-  }
-  
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+    if (error) {
+      logger.warnRateLimit(
+        'newsManager.getBreakingNews',
+        WARN_INTERVAL_MS,
+        '[newsManager] getBreakingNews failed:',
+        summarizeError(error),
+      );
+      return [];
+    }
+
+    if (!isArray(data)) return [];
+    return data.map(mapArticleRow);
+  });
 }
 
 export async function getLatestArticles(limit = 10): Promise<NewsArticle[]> {
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'published')
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(limit);
+  return withQueryCache(`newsManager:getLatestArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select(ARTICLE_SELECT)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(limit);
 
-  if (error) {
-    logger.warn('[newsManager] getLatestArticles failed:', error);
-    return [];
-  }
-  
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+    if (error) {
+      logger.warnRateLimit(
+        'newsManager.getLatestArticles',
+        WARN_INTERVAL_MS,
+        '[newsManager] getLatestArticles failed:',
+        summarizeError(error),
+      );
+      return [];
+    }
+
+    if (!isArray(data)) return [];
+    return data.map(mapArticleRow);
+  });
 }
 
 export async function getRelatedArticles(
@@ -363,20 +413,27 @@ export async function getRelatedArticles(
 export async function getTrendingArticles(limit = 5): Promise<NewsArticle[]> {
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'published')
-    .order('views', { ascending: false })
-    .limit(limit);
+  return withQueryCache(`newsManager:getTrendingArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select(ARTICLE_SELECT)
+      .eq('status', 'published')
+      .order('views', { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    logger.warn('[newsManager] getTrendingArticles failed:', error);
-    return [];
-  }
-  
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+    if (error) {
+      logger.warnRateLimit(
+        'newsManager.getTrendingArticles',
+        WARN_INTERVAL_MS,
+        '[newsManager] getTrendingArticles failed:',
+        summarizeError(error),
+      );
+      return [];
+    }
+
+    if (!isArray(data)) return [];
+    return data.map(mapArticleRow);
+  });
 }
 
 export async function searchArticles(query: string): Promise<NewsArticle[]> {
@@ -404,7 +461,7 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
         .eq('status', 'published');
 
       if (error) {
-        logger.warn('[newsManager] searchArticles fetch-by-ids failed:', error);
+        logger.warnRateLimit('newsManager.searchArticles.fetchByIds', WARN_INTERVAL_MS, '[newsManager] searchArticles fetch-by-ids failed:', summarizeError(error));
         return [];
       }
 
@@ -414,10 +471,11 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
       return orderedIds.map((id: string) => byId.get(id)).filter((a): a is NewsArticle => a !== undefined);
     }
   } catch (err) {
-    logger.warn('[newsManager] searchArticles rpc failed:', err);
+    logger.warnRateLimit('newsManager.searchArticles.rpc', WARN_INTERVAL_MS, '[newsManager] searchArticles rpc failed:', summarizeError(err));
   }
 
-  const like = `%${q}%`;
+  const safeQuery = escapeLikePattern(q);
+  const like = `%${safeQuery}%`;
   const { data, error } = await supabase
     .from('news_articles')
     .select(ARTICLE_SELECT)
@@ -427,7 +485,7 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
     .limit(30);
 
   if (error) {
-    logger.warn('[newsManager] searchArticles ilike failed:', error);
+    logger.warnRateLimit('newsManager.searchArticles.ilike', WARN_INTERVAL_MS, '[newsManager] searchArticles ilike failed:', summarizeError(error));
     return [];
   }
 
@@ -443,7 +501,7 @@ export async function getArticlesByAuthor(authorSlug: string, limit = 6): Promis
     .from('news_articles')
     .select(ARTICLE_SELECT)
     .eq('status', 'published')
-    .or(`author_id.eq.${authorSlug},author_name.ilike.%${authorSlug.replace('-', '%')}%`)
+    .or(`author_id.eq.${authorSlug},author_name.ilike.%${escapeLikePattern(authorSlug.replace('-', '%'))}%`)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(limit);
 
@@ -582,7 +640,7 @@ export async function updateArticle(
           { onConflict: 'from_slug' },
         );
     } catch (err) {
-      logger.warn('[newsManager] redirect upsert failed:', err);
+        logger.warnRateLimit('newsManager.redirect.upsert', WARN_INTERVAL_MS, '[newsManager] redirect upsert failed:', summarizeError(err));
     }
   }
 
@@ -868,7 +926,7 @@ export async function getArticlesPaginated(
 
   const { data, error, count } = await query.range(from, to) as { data: unknown; error: Error | null; count: number | null };
   if (error) {
-    logger.warn('[newsManager] getArticlesPaginated failed:', error);
+    logger.warnRateLimit('newsManager.getArticlesPaginated', WARN_INTERVAL_MS, '[newsManager] getArticlesPaginated failed:', summarizeError(error));
     return { items: [], total: 0, page: safePage, perPage: safePerPage, totalPages: 0 };
   }
 

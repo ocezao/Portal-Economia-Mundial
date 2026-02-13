@@ -1,6 +1,6 @@
-# 🤖 MCP Server - Portal Econômico Mundial
+# 🤖 MCP Server - Cenario Internacional
 
-Servidor MCP (Model Context Protocol) completo para integração com Codex CLI e outros clientes MCP.
+Servidor MCP (Model Context Protocol) completo para integração com Kimi CLI, Codex CLI e outros clientes MCP.
 
 ---
 
@@ -69,12 +69,12 @@ Edite `~/.codex/config.toml`:
 
 ```toml
 [[servers]]
-name = "pem"
+name = "cin"
 type = "stdio"
 command = "ssh"
 args = [
   "usuario@seu-servidor.com",
-  "cd /var/www/pem/mcp-server && node dist/index.js"
+  "cd /var/www/cin/mcp-server && node dist/index.js"
 ]
 ```
 

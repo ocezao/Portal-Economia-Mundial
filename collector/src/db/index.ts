@@ -1,8 +1,9 @@
-/**
+﻿/**
  * Database connection pool
  */
 
 import { Pool, PoolConfig } from 'pg';
+import { collectorLogger } from '../logger';
 
 const password = process.env.POSTGRES_PASSWORD;
 
@@ -16,7 +17,7 @@ if (!password) {
 const config: PoolConfig = {
   host: process.env.POSTGRES_HOST || 'localhost',
   port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  database: process.env.POSTGRES_DB || 'pem_analytics',
+  database: process.env.POSTGRES_DB || 'cin_analytics',
   user: process.env.POSTGRES_USER || 'analytics',
   password,
   max: 20,
@@ -28,6 +29,6 @@ export const pool = new Pool(config);
 
 // Log connection errors
 pool.on('error', (err) => {
-  // eslint-disable-next-line no-console
-  console.error('Unexpected database error:', err);
+  collectorLogger.error('Unexpected database error:', err);
 });
+

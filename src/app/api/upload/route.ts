@@ -15,6 +15,7 @@ import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { escapeHtml, sanitizeFilename } from '@/lib/security';
 
 export const runtime = 'nodejs';
 
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
           <text x="50%" y="90%" font-family="Arial" 
                 font-size="${Math.max(20, w / 40)}" 
                 fill="rgba(255,255,255,0.5)" text-anchor="middle">
-            Portal Econômico Mundial
+            Cenario Internacional
           </text>
         </svg>
       `;
@@ -220,7 +221,7 @@ export async function POST(request: NextRequest) {
       file: {
         filename,
         url: publicUrl,
-        originalName: file.name,
+        originalName: escapeHtml(sanitizeFilename(file.name)),
         originalSize: `${(originalSize / 1024).toFixed(2)} KB`,
         processedSize: `${(processedSize / 1024).toFixed(2)} KB`,
         reduction: `${reduction}%`,

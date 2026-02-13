@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Servidor MCP - Portal Econômico Mundial
+ * Servidor MCP - Cenario Internacional
  * 
  * Funcionalidades:
  * - Analytics/Tracking (leitura completa)
@@ -23,6 +23,29 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { readFileSync } from "fs";
 
+// Logger seguro para MCP server
+const logger = {
+  error: (...args: unknown[]): void => {
+    // Em produção, sanitizar para não expor dados sensíveis
+    if (process.env.NODE_ENV === 'production') {
+      const sanitized = args.map(arg => {
+        if (arg instanceof Error) return arg.message;
+        if (typeof arg === 'object' && arg !== null) return '[Object]';
+        return arg;
+      });
+      // eslint-disable-next-line no-console
+      console.error('[Error]', ...sanitized);
+    } else {
+      // eslint-disable-next-line no-console
+      console.error(...args);
+    }
+  },
+  info: (...args: unknown[]): void => {
+    // eslint-disable-next-line no-console
+    console.error(...args); // MCP usa stderr para logs
+  }
+};
+
 // Carrega variáveis de ambiente
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,7 +65,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || "";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error("❌ Erro: Variáveis do Supabase não configuradas");
+  logger.error("❌ Erro: Variáveis do Supabase não configuradas");
   process.exit(1);
 }
 
@@ -995,7 +1018,7 @@ async function handleGetStockRecommendations(args: GetStockRecommendationsArgs) 
 
 const server = new Server(
   {
-    name: "pem-news-server",
+    name: "cin-news-server",
     version: "1.1.0",
   },
   {
@@ -1117,10 +1140,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("✅ Servidor MCP PEM v1.1.0 iniciado via stdio");
+  logger.info("✅ Servidor MCP CIN v1.1.0 iniciado via stdio");
 }
 
 main().catch((error) => {
-  console.error("❌ Erro fatal:", error);
+  logger.error("❌ Erro fatal:", error);
   process.exit(1);
 });

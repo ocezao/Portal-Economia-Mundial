@@ -1,4 +1,4 @@
-# Collector API - PEM Analytics
+# Collector API - CIN Analytics
 
 API de coleta de eventos de analytics first-party, construída com Fastify e PostgreSQL.
 
@@ -63,7 +63,7 @@ npm start
 # Obrigatórias
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=pem_analytics
+POSTGRES_DB=cin_analytics
 POSTGRES_USER=analytics
 POSTGRES_PASSWORD=senha_segura
 
@@ -146,13 +146,13 @@ Se alguma verificação falhar, o processo encerra com `exit 1)`.
 
 ```bash
 # Build
-docker build -t pem-collector .
+docker build -t cin-collector .
 
 # Run
 docker run -p 3000:3000 \
   -e POSTGRES_HOST=postgres \
   -e POSTGRES_PASSWORD=secret \
-  pem-collector
+  cin-collector
 ```
 
 ---

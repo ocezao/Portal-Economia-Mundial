@@ -1258,5 +1258,5 @@ function canonicalizeUrl(url) {
 
 **Data de criação:** 2024-01-17  
 **Versão:** 1.0.0  
-**Autor:** Engenharia de Dados PEM  
+**Autor:** Engenharia de Dados CIN  
 **Status:** Especificação ativa

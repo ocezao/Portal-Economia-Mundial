@@ -47,10 +47,10 @@ export default function RegisterPage() {
     const success = await register({ name, email, password });
     
     if (success) {
-      toast.success('Cadastro realizado com sucesso!');
+      toast.success('Sucesso');
       router.push('/app');
     } else {
-      toast.error('E-mail já cadastrado ou erro no registro');
+      toast.error('Erro');
     }
     
     setIsLoading(false);
@@ -61,14 +61,14 @@ export default function RegisterPage() {
       <article className="w-full max-w-md">
         {/* Header */}
         <header className="text-center mb-8">
-          <h1 className="text-3xl font-black text-[#111111] mb-2">PEM</h1>
+          <h1 className="text-3xl font-black text-[#111111] mb-2">CIN</h1>
           <p className="text-[#6b6b6b]">Crie sua conta</p>
         </header>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <fieldset>
-            <Label htmlFor="name">Nome completo</Label>
+            <Label htmlFor="name">Nome</Label>
             <section className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
               <Input
@@ -84,7 +84,7 @@ export default function RegisterPage() {
           </fieldset>
 
           <fieldset>
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">Email</Label>
             <section className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b6b6b]" />
               <Input
@@ -117,6 +117,7 @@ export default function RegisterPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6b6b6b] hover:text-[#111111]"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -144,14 +145,14 @@ export default function RegisterPage() {
             className="w-full bg-[#c40000] hover:bg-[#a00000]"
             disabled={isLoading}
           >
-            {isLoading ? 'Criando conta...' : 'Criar conta'}
+            {isLoading ? 'Carregando...' : 'Cadastrar'}
           </Button>
         </form>
 
         {/* Links */}
         <footer className="mt-6 text-center text-sm text-[#6b6b6b]">
           <p>
-            Já tem conta?{' '}
+            Ja tem conta?{' '}
             <Link href={ROUTES.login} className="text-[#c40000] hover:underline">
               Entrar
             </Link>

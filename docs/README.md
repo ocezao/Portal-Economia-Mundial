@@ -1,6 +1,6 @@
-# Documentação do Portal Econômico Mundial
+# Documentação do Cenario Internacional
 
-Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
+Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 ---
 
@@ -75,6 +75,12 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Guia de contribuição com o projeto |
 | [19-convencoes-desenvolvimento.md](./19-convencoes-desenvolvimento.md) | Convenções e padrões de desenvolvimento |
 
+### Admin e Operacao
+
+| Documento | Descrição |
+|----------|-----------|
+| [23-seed-admin-test-user.md](./23-seed-admin-test-user.md) | Criar/garantir usuário admin de teste no Supabase (sem vazar secrets) |
+
 ### Changelogs
 
 | Arquivo | Descrição |
@@ -86,6 +92,8 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 | Arquivo | Descrição |
 |---------|-----------|
 | [AUDITORIA_SEGURANCA.md](./AUDITORIA_SEGURANCA.md) | Relatório de auditoria de segurança |
+| [CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md) | Correções de segurança aplicadas (10/02/2026) |
+| [GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md) | Guia de boas práticas de segurança |
 | [AUDITORIA_DATABASE.md](./AUDITORIA_DATABASE.md) | Auditoria do banco de dados |
 | [AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md](./AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md) | Auditoria de código morto |
 | [RELATORIO_CODIGO_MORTO.md](./RELATORIO_CODIGO_MORTO.md) | Relatório de código morto |
@@ -109,6 +117,7 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 4. [16-api-rest.md](./16-api-rest.md)
 5. [17-cicd-pipeline.md](./17-cicd-pipeline.md)
 6. [20-mcp-server.md](./20-mcp-server.md) - Integração com IA
+7. [GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md) - Boas práticas de segurança
 
 ### Product Owner/Manager
 1. [00-visao-geral.md](./00-visao-geral.md)
@@ -124,6 +133,9 @@ Bem-vindo à documentação central do Portal Econômico Mundial (PEM).
 ## 🆕 Novidades
 
 ### Fev/2026
+- ✅ **[GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md)** - Guia completo de segurança
+- ✅ **[CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md)** - Correções críticas aplicadas
+- ✅ **[SECURITY_FIX_PLAN.md](../SECURITY_FIX_PLAN.md)** - Plano de correções de segurança
 - ✅ **[20-mcp-server.md](./20-mcp-server.md)** - Servidor MCP para integração com Codex CLI
 - ✅ **FINNHUB-GUIA-COMPLETO.md** - Documentação consolidada da Finnhub API
 - ✅ **SEO Portal-Grade** - Canonical/OG/Twitter + noindex + robots hygiene + JSON-LD coerente

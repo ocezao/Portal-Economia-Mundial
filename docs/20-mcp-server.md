@@ -1,12 +1,12 @@
 # 🤖 MCP Server - Model Context Protocol
 
-Servidor MCP completo para integração com Codex CLI, permitindo controle total do Portal Econômico Mundial via interface de linguagem natural.
+Servidor MCP completo para integração com Codex CLI, permitindo controle total do Cenario Internacional via interface de linguagem natural.
 
 ---
 
 ## 📋 Visão Geral
 
-O **MCP Server PEM** é uma implementação do [Model Context Protocol](https://modelcontextprotocol.io/) que expõe as funcionalidades do portal para assistentes de IA como o Codex. Com ele, você pode:
+O **MCP Server CIN** é uma implementação do [Model Context Protocol](https://modelcontextprotocol.io/) que expõe as funcionalidades do portal para assistentes de IA como o Codex. Com ele, você pode:
 
 - 📊 **Acessar Analytics**: Ler todos os dados de tracking e métricas
 - 📝 **Gerenciar Conteúdo**: Criar, editar, publicar e excluir artigos com **todos os campos**
@@ -698,4 +698,4 @@ npm run build       # Recompila
 
 **Versão:** 1.1.0  
 **Última atualização:** 07/02/2026  
-**Mantenedor:** Portal Econômico Mundial
+**Mantenedor:** Cenario Internacional

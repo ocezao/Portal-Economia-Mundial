@@ -18,7 +18,7 @@ const args = process.argv.slice(2);
 
 function showHelp() {
   console.log(`
-🖼️  Processador de Imagens - PEM
+🖼️  Processador de Imagens - CIN
 
 Uso: node scripts/process-image.mjs <arquivo> [opções]
 

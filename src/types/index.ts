@@ -1,5 +1,5 @@
 /**
- * Tipos Globais do Portal Econômico Mundial
+ * Tipos Globais do Cenario Internacional
  */
 
 // ==================== NEWS ====================

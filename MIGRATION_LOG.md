@@ -12,7 +12,7 @@
 
 ## 🎯 Objetivo
 
-Migrar completamente a aplicação do Portal Econômico Mundial de Vite para Next.js, mantendo todas as funcionalidades existentes e aproveitando recursos do App Router (SSR, Server Components, etc).
+Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js, mantendo todas as funcionalidades existentes e aproveitando recursos do App Router (SSR, Server Components, etc).
 
 ---
 

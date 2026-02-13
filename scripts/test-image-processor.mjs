@@ -16,7 +16,7 @@ async function createTestImage() {
     <svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
       <rect width="1200" height="800" fill="#1a365d"/>
       <text x="50%" y="45%" font-family="Arial" font-size="48" fill="white" text-anchor="middle">
-        Portal Econômico Mundial
+        Cenario Internacional
       </text>
       <text x="50%" y="55%" font-family="Arial" font-size="24" fill="#94a3b8" text-anchor="middle">
         Imagem de Teste para Processamento

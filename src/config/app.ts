@@ -1,12 +1,12 @@
 /**
  * Configuração Global da Aplicação
- * Portal Econômico Mundial - PEM
+ * Cenario Internacional - CIN
  */
 
 export const APP_CONFIG = {
   brand: {
-    name: 'Portal Econômico Mundial',
-    short: 'PEM',
+    name: 'Cenario Internacional',
+    short: 'CIN',
     tagline: 'Notícias que movem o mundo',
     founded: 2024,
     // Keep this pointing to a real, existing asset in `public/`.
@@ -15,29 +15,30 @@ export const APP_CONFIG = {
   },
   
   contact: {
-    email: 'contato@portaleconomicomundial.com',
+    email: 'contato@cenariointernacional.com.br',
     phone: '+55 11 3000-0000',
     address: 'São Paulo, SP - Brasil',
     social: {
-      twitter: '@portalpem',
-      facebook: 'portaleconomicomundial',
-      instagram: '@portal.pem',
-      linkedin: 'portal-economico-mundial',
-      youtube: 'PortalEconomicoMundial',
+      twitter: '@cenariointernacional',
+      facebook: 'cenariointernacional',
+      instagram: '@cenario.internacional',
+      linkedin: 'cenario-internacional',
+      youtube: 'CenarioInternacional',
     },
   },
   
   urls: {
-    base: 'https://portaleconomicomundial.com',
-    api: 'https://api.portaleconomicomundial.com',
-    cdn: 'https://cdn.portaleconomicomundial.com',
+    base: 'https://cenariointernacional.com.br',
+    api: 'https://api.cenariointernacional.com.br',
+    cdn: 'https://cdn.cenariointernacional.com.br',
   },
   
   features: {
     readingLimit: 0.2, // 20% para não-logados
     maxFreeArticles: 3,
     enableTranslation: true,
-    enableMarketTicker: true,
+    // Allow disabling in E2E/preview environments to avoid flaky external dependencies.
+    enableMarketTicker: process.env.NEXT_PUBLIC_ENABLE_MARKET_TICKER !== 'false',
     enableNotifications: true,
     darkMode: false,
   },

@@ -1,5 +1,5 @@
 /**
- * SDK Analytics First-Party - Portal Econômico Mundial
+ * SDK Analytics First-Party - Cenario Internacional
  * 
  * Ponto de entrada principal do SDK. Exporta a API pública e
  * gerencia a inicialização automática com todos os trackers.
@@ -24,7 +24,7 @@ export const SDK_VERSION = '1.1.0';
 /**
  * Classe principal que estende o SDK base com trackers especializados
  */
-export class PEMAnalytics extends AnalyticsSDK {
+export class CINAnalytics extends AnalyticsSDK {
   private scrollTracker: ScrollTracker;
   private engagementTracker: EngagementTracker;
   private webVitalsTracker: WebVitalsTracker;
@@ -113,9 +113,9 @@ export class PEMAnalytics extends AnalyticsSDK {
     const consent = this.getConsentState();
     if (consent !== 'granted') {
       // Silently return - não logar em produção para evitar poluição do console
-      if (process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
-        console.log('[PEM Analytics] Article tracking requires consent');
+      // Em debug mode, o log seria visível via método this.log
+      if (this.debug) {
+        this.log('Article tracking requires consent');
       }
       return;
     }
@@ -246,7 +246,7 @@ export class PEMAnalytics extends AnalyticsSDK {
 export type { SDKConfig, ConsentState, AnalyticsEvent } from './types';
 
 // Singleton para inicialização automática via script tag
-let globalInstance: PEMAnalytics | null = null;
+let globalInstance: CINAnalytics | null = null;
 
 /**
  * Inicialização automática quando carregado via script tag
@@ -260,29 +260,27 @@ if (typeof window !== 'undefined') {
     const debug = script.getAttribute('data-debug') === 'true';
 
     if (collectorUrl) {
-      globalInstance = new PEMAnalytics({
+      globalInstance = new CINAnalytics({
         collectorUrl,
         siteId,
         debug
       });
 
       globalInstance.init().catch(() => {
-        // Erro silenciado em produção para não expor detalhes internos
-        if (process.env.NODE_ENV !== 'production') {
-          // eslint-disable-next-line no-console
-          console.error('[PEM Analytics] Falha ao inicializar');
-        }
+        // Erro silenciado para não expor detalhes internos
+        // O erro é capturado mas não logado diretamente
+        // Em debug mode, o erro seria visível nos logs internos do SDK
       });
 
       // Expor globalmente
-      (window as any).pemAnalytics = globalInstance;
+      (window as any).cinAnalytics = globalInstance;
     }
   }
 }
 
 // Exportar classe e singleton
-export { PEMAnalytics as AnalyticsSDK };
-export const getAnalytics = (): PEMAnalytics | null => globalInstance;
+export { CINAnalytics as AnalyticsSDK };
+export const getAnalytics = (): CINAnalytics | null => globalInstance;
 
 // Export default
-export default PEMAnalytics;
+export default CINAnalytics;

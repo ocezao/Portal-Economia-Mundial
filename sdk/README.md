@@ -1,4 +1,4 @@
-# SDK Analytics First-Party v1.1.0 - Portal Econômico Mundial
+# SDK Analytics First-Party v1.1.0 - Cenario Internacional
 
 SDK JavaScript leve para coleta de eventos de analytics first-party, com recursos avançados de tracking, totalmente compatível com LGPD.
 
@@ -60,8 +60,8 @@ SDK JavaScript leve para coleta de eventos de analytics first-party, com recurso
 ```html
 <script 
   src="/analytics/analytics.min.js" 
-  data-collector="https://collect.portaleconomicomundial.com"
-  data-site-id="pem-prod"
+  data-collector="https://collect.cenariointernacional.com.br"
+  data-site-id="cin-prod"
   async
 ></script>
 ```
@@ -69,15 +69,15 @@ SDK JavaScript leve para coleta de eventos de analytics first-party, com recurso
 ### Opção 2: NPM
 
 ```bash
-npm install @pem/analytics-sdk
+npm install @cin/analytics-sdk
 ```
 
 ```typescript
-import { PEMAnalytics } from '@pem/analytics-sdk';
+import { CINAnalytics } from '@cin/analytics-sdk';
 
-const analytics = new PEMAnalytics({
-  collectorUrl: 'https://collect.portaleconomicomundial.com',
-  siteId: 'pem-prod',
+const analytics = new CINAnalytics({
+  collectorUrl: 'https://collect.cenariointernacional.com.br',
+  siteId: 'cin-prod',
   debug: false
 });
 
@@ -234,4 +234,4 @@ interface SDKConfig {
 
 ## Licença
 
-MIT - Portal Econômico Mundial
+MIT - Cenario Internacional

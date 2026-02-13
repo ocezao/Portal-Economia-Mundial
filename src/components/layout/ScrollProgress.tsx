@@ -3,10 +3,19 @@
  * Exibe uma barra vermelha no topo da página indicando o progresso da leitura
  */
 
+'use client';
+
+import { useEffect, useState } from 'react';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
 
 export function ScrollProgress() {
+  // Avoid hydration mismatch by rendering nothing on the server/first paint.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const progress = useScrollProgress();
+
+  if (!mounted) return null;
 
   return (
     <div 

@@ -1,20 +1,20 @@
-# Exemplo de configuração do Codex CLI para o Portal Econômico Mundial
+# Exemplo de configuração do Codex CLI para o Cenario Internacional
 # Copie este conteúdo para ~/.codex/config.toml
 
-# Configuração do servidor MCP PEM
+# Configuração do servidor MCP CIN
 [[servers]]
-name = "pem"
+name = "cin"
 type = "stdio"
 command = "node"
 # Ajuste o caminho para onde está o mcp-server no seu servidor
-args = ["/var/www/pem/mcp-server/dist/index.js"]
+args = ["/var/www/cenario-internacional/mcp-server/dist/index.js"]
 
 # Variáveis de ambiente (opcional - pode usar .env no servidor)
 [servers.env]
 NEXT_PUBLIC_SUPABASE_URL = "https://seu-projeto.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY = "sua-chave-service-role"
 NEXT_PUBLIC_FINNHUB_API_KEY = "sua-chave-finnhub"
-NEXT_PUBLIC_SITE_URL = "https://seusite.com"
+NEXT_PUBLIC_SITE_URL = "https://cenariointernacional.com.br"
 
 # Configurações adicionais (opcional)
 [servers.timeout]

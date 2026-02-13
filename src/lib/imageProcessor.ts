@@ -207,7 +207,7 @@ export async function sanitizeImage(input: Buffer | string): Promise<Buffer> {
  */
 export async function addWatermark(
   input: Buffer | string,
-  watermarkText: string = 'Portal Econômico Mundial'
+  watermarkText: string = 'Cenario Internacional'
 ): Promise<Buffer> {
   const image = sharp(input);
   const metadata = await image.metadata();

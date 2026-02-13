@@ -1,7 +1,7 @@
 {
-  "name": "pem-analytics-collector",
+  "name": "cin-analytics-collector",
   "version": "1.0.0",
-  "description": "Analytics collector for PEM - First-party analytics",
+  "description": "Analytics collector for CIN - First-party analytics",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",

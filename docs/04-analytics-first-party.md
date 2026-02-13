@@ -1,4 +1,4 @@
-# Sistema de Analytics First-Party - PEM
+# Sistema de Analytics First-Party - CIN
 
 ## Visão Geral
 
@@ -196,9 +196,9 @@ npm install @pem/analytics-sdk
 ### Uso
 
 ```typescript
-import { PEMAnalytics } from '@pem/analytics-sdk';
+import { CINAnalytics } from '@pem/analytics-sdk';
 
-const analytics = new PEMAnalytics({
+const analytics = new CINAnalytics({
   collectorUrl: 'https://collect.portaleconomicomundial.com',
   debug: false
 });

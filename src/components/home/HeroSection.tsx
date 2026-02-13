@@ -3,6 +3,7 @@
  * Layout impactante para portal de notícias - Totalmente Responsivo
  */
 
+import { memo, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, TrendingUp, ArrowRight, Flame, ChevronRight } from 'lucide-react';
@@ -15,19 +16,110 @@ interface HeroSectionProps {
   secondaryArticles?: NewsArticle[];
 }
 
-export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSectionProps) {
-  const category = CONTENT_CONFIG.categories[mainArticle.category];
-  const publishedDate = new Date(mainArticle.publishedAt).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+// Componente para card de artigo secundário - memoizado
+interface SecondaryArticleCardProps {
+  article: NewsArticle;
+  index: number;
+}
 
-  // Formato curto para mobile
-  const publishedDateShort = new Date(mainArticle.publishedAt).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-  });
+const SecondaryArticleCard = memo(function SecondaryArticleCard({ 
+  article, 
+  index 
+}: SecondaryArticleCardProps) {
+  // useMemo para categoria
+  const cat = useMemo(() => 
+    CONTENT_CONFIG.categories[article.category],
+  [article.category]);
+
+  // useMemo para tempo relativo
+  const timeAgo = useMemo(() => 
+    getTimeAgo(article.publishedAt),
+  [article.publishedAt]);
+
+  return (
+    <article className="group relative">
+      <Link href={ROUTES.noticia(article.slug)} className="flex gap-2 sm:gap-4">
+        {/* Número do ranking */}
+        <span className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-[#f5f5f5] text-[#6b6b6b] font-bold text-xs sm:text-sm rounded group-hover:bg-[#c40000] group-hover:text-white transition-colors">
+          {String(index + 1).padStart(2, '0')}
+        </span>
+
+        <div className="flex-1 min-w-0">
+          {/* Categoria */}
+          <span 
+            className="text-xs font-bold uppercase tracking-wider"
+            style={{ color: cat.color }}
+          >
+            {cat.name}
+          </span>
+
+          {/* Título - ajustado para mobile */}
+          <h3 className="text-xs sm:text-sm font-bold text-[#111111] line-clamp-2 group-hover:text-[#c40000] transition-colors leading-snug">
+            {article.title}
+          </h3>
+
+          {/* Tempo */}
+          <time className="text-xs text-[#6b6b6b] mt-0.5 sm:mt-1 block">
+            {timeAgo}
+          </time>
+        </div>
+
+        {/* Thumbnail mini - mostrar em telas maiores que 400px */}
+        <figure className="hidden xs:block w-16 h-12 sm:w-20 sm:h-14 flex-shrink-0 overflow-hidden rounded relative">
+          <Image
+            src={article.coverImage}
+            alt=""
+            fill
+            sizes="80px"
+            className="object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        </figure>
+      </Link>
+    </article>
+  );
+});
+SecondaryArticleCard.displayName = 'SecondaryArticleCard';
+
+export const HeroSection = memo(function HeroSection({ 
+  mainArticle, 
+  secondaryArticles = [] 
+}: HeroSectionProps) {
+  // useMemo para categoria do artigo principal
+  const category = useMemo(() => 
+    CONTENT_CONFIG.categories[mainArticle.category],
+  [mainArticle.category]);
+
+  // useMemo para data de publicação formatada
+  const publishedDate = useMemo(() => 
+    new Date(mainArticle.publishedAt).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }),
+  [mainArticle.publishedAt]);
+
+  // useMemo para formato curto de data (mobile)
+  const publishedDateShort = useMemo(() => 
+    new Date(mainArticle.publishedAt).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+    }),
+  [mainArticle.publishedAt]);
+
+  // useMemo para views formatadas em mobile
+  const formattedViews = useMemo(() => 
+    formatViews(mainArticle.views),
+  [mainArticle.views]);
+
+  // useCallback para formatação de views (reutilizado no render)
+  const formatViewsCallback = useCallback((views: number): string => {
+    return formatViews(views);
+  }, []);
+
+  // useMemo para limitar artigos secundários
+  const limitedSecondaryArticles = useMemo(() => 
+    secondaryArticles.slice(0, 3),
+  [secondaryArticles]);
 
   return (
     <section className="mb-8 md:mb-12">
@@ -115,7 +207,7 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
               <span className="flex items-center gap-1 sm:gap-1.5">
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#c40000]" />
                 <span className="hidden sm:inline">{mainArticle.views.toLocaleString('pt-BR')} visualizações</span>
-                <span className="sm:hidden">{formatViews(mainArticle.views)}</span>
+                <span className="sm:hidden">{formattedViews}</span>
               </span>
             </div>
             <Link 
@@ -139,52 +231,13 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
 
           {/* Lista de secundários */}
           <div className="flex flex-col gap-3 sm:gap-4">
-            {secondaryArticles.slice(0, 3).map((article, index) => {
-              const cat = CONTENT_CONFIG.categories[article.category];
-              const timeAgo = getTimeAgo(article.publishedAt);
-
-              return (
-                <article key={article.slug} className="group relative">
-                  <Link href={ROUTES.noticia(article.slug)} className="flex gap-2 sm:gap-4">
-                    {/* Número do ranking */}
-                    <span className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-[#f5f5f5] text-[#6b6b6b] font-bold text-xs sm:text-sm rounded group-hover:bg-[#c40000] group-hover:text-white transition-colors">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Categoria */}
-                      <span 
-                        className="text-xs font-bold uppercase tracking-wider"
-                        style={{ color: cat.color }}
-                      >
-                        {cat.name}
-                      </span>
-
-                      {/* Título - ajustado para mobile */}
-                      <h3 className="text-xs sm:text-sm font-bold text-[#111111] line-clamp-2 group-hover:text-[#c40000] transition-colors leading-snug">
-                        {article.title}
-                      </h3>
-
-                      {/* Tempo */}
-                      <time className="text-xs text-[#6b6b6b] mt-0.5 sm:mt-1 block">
-                        {timeAgo}
-                      </time>
-                    </div>
-
-                    {/* Thumbnail mini - mostrar em telas maiores que 400px */}
-                    <figure className="hidden xs:block w-16 h-12 sm:w-20 sm:h-14 flex-shrink-0 overflow-hidden rounded relative">
-                      <Image
-                        src={article.coverImage}
-                        alt=""
-                        fill
-                        sizes="80px"
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                    </figure>
-                  </Link>
-                </article>
-              );
-            })}
+            {limitedSecondaryArticles.map((article, index) => (
+              <SecondaryArticleCard 
+                key={article.slug} 
+                article={article} 
+                index={index} 
+              />
+            ))}
           </div>
 
           {/* CTA Newsletter mini - responsivo */}
@@ -204,7 +257,8 @@ export function HeroSection({ mainArticle, secondaryArticles = [] }: HeroSection
       </div>
     </section>
   );
-}
+});
+HeroSection.displayName = 'HeroSection';
 
 // Helper para calcular tempo relativo
 function getTimeAgo(dateString: string): string {

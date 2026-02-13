@@ -1,9 +1,9 @@
 #!/bin/bash
-# Script de instalação do MCP Server PEM
+# Script de instalação do MCP Server CIN
 
 set -e
 
-echo "🚀 Instalando MCP Server - Portal Econômico Mundial"
+echo "🚀 Instalando MCP Server - Cenario Internacional"
 echo ""
 
 # Verifica Node.js
@@ -69,7 +69,7 @@ echo ""
 echo "1. Configure o Codex CLI em ~/.codex/config.toml:"
 echo ""
 echo '[[servers]]'
-echo 'name = "pem"'
+echo 'name = "cin"'
 echo 'type = "stdio"'
 echo 'command = "node"'
 echo "args = [\"$(pwd)/dist/index.js\"]"

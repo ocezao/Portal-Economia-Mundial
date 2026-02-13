@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { storage, STORAGE_KEYS } from '@/config/storage';
+import { storage, secureStorage, STORAGE_KEYS } from '@/config/storage';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -278,6 +278,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout
   const logout = useCallback(() => {
     setIsLoading(true);
+    // Limpa dados sensíveis do sessionStorage primeiro
+    secureStorage.clear();
+    
     if (!isSupabaseConfigured) {
       setUser(null);
       setSessionExpiresAt(null);

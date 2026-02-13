@@ -1,4 +1,4 @@
--- Initial schema for PEM Analytics
+-- Initial schema for CIN Analytics
 -- Creates partitioned events_raw table
 
 -- Enable required extensions

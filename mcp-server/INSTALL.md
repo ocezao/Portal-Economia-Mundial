@@ -1,4 +1,4 @@
-# 🚀 Guia de Instalação do MCP Server
+# 🚀 Guia de Instalação do MCP Server - Cenario Internacional
 
 Guia passo-a-passo para instalar e configurar o MCP Server no seu servidor.
 
@@ -55,7 +55,7 @@ npm start
 
 Você deve ver:
 ```
-✅ Servidor MCP PEM iniciado via stdio
+✅ Servidor MCP CIN iniciado via stdio
 ```
 
 Pressione `Ctrl+C` para parar.
@@ -76,7 +76,7 @@ Adicione:
 
 ```toml
 [[servers]]
-name = "pem"
+name = "cin"
 type = "stdio"
 command = "ssh"
 args = [

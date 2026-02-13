@@ -1,10 +1,10 @@
 #!/bin/bash
 set -uo pipefail
 
-# Script de verificação avançada do sistema PEM Analytics v1.1.0
+# Script de verificação avançada do sistema CIN Analytics v1.1.0
 # Verifica SDK, eventos avançados e estrutura de arquivos
 
-echo "=== VERIFICAÇÃO AVANÇADA PEM ANALYTICS v1.1.0 ==="
+echo "=== VERIFICAÇÃO AVANÇADA CIN ANALYTICS v1.1.0 ==="
 echo ""
 
 # Cores para output

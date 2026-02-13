@@ -2,7 +2,8 @@
  * Conteúdo do Artigo com limite de leitura
  */
 
-import { useState } from 'react';
+import { memo, useState, useMemo, useCallback } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { Lock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -17,45 +18,68 @@ interface ArticleContentProps {
   isLoggedIn: boolean;
 }
 
-export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
+export const ArticleContent = memo(function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
   const [showSurvey, setShowSurvey] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const { canReadFull, isUnlocked, unlockArticle, hasReachedLimit, readingLimitPercentage, limitActive } = useReadingLimit(isLoggedIn);
   const { isCompleted } = useSurvey();
 
-  const isFullyUnlocked = !limitActive || canReadFull || isUnlocked(article.slug) || isCompleted;
-  const limitIndex = Math.floor(article.content.length * readingLimitPercentage);
-  const previewContent = article.content.slice(0, limitIndex);
+  // useMemo para cálculos derivados
+  const isFullyUnlocked = useMemo(() => 
+    !limitActive || canReadFull || isUnlocked(article.slug) || isCompleted,
+  [limitActive, canReadFull, isUnlocked, article.slug, isCompleted]);
+
+  const limitIndex = useMemo(() => 
+    Math.floor(article.content.length * readingLimitPercentage),
+  [article.content.length, readingLimitPercentage]);
+
+  const previewContent = useMemo(() => 
+    article.content.slice(0, limitIndex),
+  [article.content, limitIndex]);
+
   const fullContent = article.content;
 
-  const handleReadFull = () => {
+  // useMemo para sanitização do conteúdo
+  const sanitizedContent = useMemo(() => 
+    sanitizeHtml(isFullyUnlocked ? fullContent : previewContent),
+  [isFullyUnlocked, fullContent, previewContent]);
+
+  // useCallback para handlers
+  const handleReadFull = useCallback(() => {
     if (isCompleted) {
       unlockArticle(article.slug);
     } else {
       setShowConfirm(true);
     }
-  };
+  }, [isCompleted, unlockArticle, article.slug]);
 
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     setShowConfirm(false);
     setShowSurvey(true);
-  };
+  }, []);
 
-  const handleSurveyComplete = () => {
+  const handleSurveyComplete = useCallback(() => {
     setShowSurvey(false);
     unlockArticle(article.slug);
-  };
+  }, [unlockArticle, article.slug]);
+
+  const handleCloseConfirm = useCallback(() => {
+    setShowConfirm(false);
+  }, []);
+
+  const handleCloseSurvey = useCallback((open: boolean) => {
+    setShowSurvey(open);
+  }, []);
 
   return (
     <>
       <article className="prose prose-lg max-w-none">
         {/* Conteúdo Preview ou Completo */}
-        {/* SECURITY: Este conteúdo deve ser sanitizado no backend antes de salvar */}
-        {/* TODO: Considerar usar DOMPurify para sanitização adicional no frontend */}
+        {/* SECURITY: Conteúdo sanitizado com DOMPurify para prevenir XSS */}
         <section 
           className="text-[#111111] leading-relaxed paywall-content"
           dangerouslySetInnerHTML={{ 
-            __html: isFullyUnlocked ? fullContent : previewContent 
+            __html: sanitizedContent
           }}
         />
 
@@ -94,7 +118,7 @@ export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
       </article>
 
       {/* Dialog de Confirmação */}
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+      <Dialog open={showConfirm} onOpenChange={handleCloseConfirm}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Desbloquear conteúdo completo?</DialogTitle>
@@ -104,7 +128,7 @@ export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
             </DialogDescription>
           </DialogHeader>
           <footer className="flex gap-3 justify-end mt-4">
-            <Button variant="outline" onClick={() => setShowConfirm(false)}>
+            <Button variant="outline" onClick={handleCloseConfirm}>
               Agora não
             </Button>
             <Button onClick={handleConfirm} className="bg-[#c40000] hover:bg-[#a00000]">
@@ -115,7 +139,7 @@ export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
       </Dialog>
 
       {/* Dialog do Questionário */}
-      <Dialog open={showSurvey} onOpenChange={setShowSurvey}>
+      <Dialog open={showSurvey} onOpenChange={handleCloseSurvey}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Questionário Rápido</DialogTitle>
@@ -128,4 +152,5 @@ export function ArticleContent({ article, isLoggedIn }: ArticleContentProps) {
       </Dialog>
     </>
   );
-}
+});
+ArticleContent.displayName = 'ArticleContent';

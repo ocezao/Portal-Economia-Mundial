@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 interface UseIntersectionObserverOptions {
   threshold?: number;
@@ -88,10 +89,9 @@ export function useAnalyticsView<T extends HTMLElement = HTMLDivElement>(
         });
       }
       
-      // Console em desenvolvimento
+      // Log em desenvolvimento
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log(`[Analytics] ${eventName}`, eventData);
+        logger.debug(`[Analytics] ${eventName}`, eventData);
       }
     }
   }, [isIntersecting, eventName, eventData]);

@@ -1,4 +1,4 @@
-# Checklist de QA - Portal Econômico Mundial
+# Checklist de QA - Cenario Internacional
 
 ## Testes Manuais Obrigatórios
 
@@ -46,7 +46,7 @@
 - [ ] Validação de email/senha
 - [ ] Credenciais demo funcionam:
   - usuario@exemplo.com / senha123
-  - admin@pem.com / admin123
+  - admin@cenariointernacional.com.br / admin123
 - [ ] Redirecionamento após login
 
 #### Cadastro (/cadastro)
@@ -222,6 +222,15 @@ npm run lint 2>&1 | grep -i "error" || echo "✅ Lint passou"
 ```bash
 # Build
 npm run build
+
+# Testes automatizados
+npm test
+
+# E2E (Playwright)
+# Observacao: o E2E sobe um servidor de producao (build + start) e aplica flags de determinismo via `playwright.config.ts`.
+npm run test:e2e
+npx playwright test --project=chromium --workers=1
+npx playwright test --project=firefox --workers=1
 
 # Verificar divs
 grep -rn "<div" src/

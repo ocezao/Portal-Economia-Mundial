@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este documento estabelece as políticas, convenções e responsabilidades para garantir a qualidade, consistência e rastreabilidade dos dados do sistema de analytics do Portal Econômico Mundial.
+Este documento estabelece as políticas, convenções e responsabilidades para garantir a qualidade, consistência e rastreabilidade dos dados do sistema de analytics do Cenario Internacional.
 
 ---
 

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/config/storage';
+import { secureStorage } from '@/config/storage';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
@@ -25,8 +26,10 @@ export function useReadingLimit(isLoggedIn: boolean): UseReadingLimitReturn {
   const { settings } = useAppSettings();
 
   const getAnonId = useCallback((): string => {
-    const storageKey = 'pem_anon_id';
-    const existing = localStorage.getItem(storageKey);
+    const storageKey = 'cin_anon_id';
+    if (typeof window === 'undefined') return `${Date.now()}-ssr-fallback`;
+    
+    const existing = secureStorage.get<string>(storageKey);
     if (existing) return existing;
 
     const generated =
@@ -34,7 +37,7 @@ export function useReadingLimit(isLoggedIn: boolean): UseReadingLimitReturn {
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-    localStorage.setItem(storageKey, generated);
+    secureStorage.set(storageKey, generated);
     return generated;
   }, []);
 
@@ -73,7 +76,7 @@ export function useReadingLimit(isLoggedIn: boolean): UseReadingLimitReturn {
 
         if (isMounted) setUnlockedArticles(slugs);
       } catch (error) {
-        console.error('Erro ao carregar limite anon:', error);
+        logger.error('Erro ao carregar limite anon:', error);
       }
     };
 

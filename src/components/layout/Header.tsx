@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Search, User, UserCircle } from 'lucide-react';
@@ -21,17 +21,7 @@ import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
-// Itens do menu principal
-const MENU_ITEMS = [
-  { label: 'Home', path: ROUTES.home },
-  { label: 'Em Alta', path: '/em-alta' },
-  { label: 'Destaque', path: '/destaque' },
-  { label: 'Todas as Categorias', path: '/categorias' },
-  { label: 'Sobre Nós', path: ROUTES.sobre },
-  { label: 'Contato', path: ROUTES.faleConosco },
-];
-
-export function Header() {
+export const Header = memo(function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +29,17 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isActive = (path: string) => pathname === path;
+  // useMemo para itens do menu
+  const menuItems = useMemo(() => [
+    { label: 'Home', path: ROUTES.home },
+    { label: 'Em Alta', path: '/em-alta' },
+    { label: 'Destaque', path: '/destaque' },
+    { label: 'Categorias', path: '/categorias' },
+    { label: 'Sobre Nós', path: ROUTES.sobre },
+    { label: 'Contato', path: ROUTES.faleConosco },
+  ], []);
+
+  const isActive = useCallback((path: string) => pathname === path, [pathname]);
 
   useEffect(() => {
     // Evita `useSearchParams()` no layout (SSG exige Suspense). Leitura client-side.
@@ -50,8 +50,32 @@ export function Header() {
     });
   }, [pathname]);
 
+  // useCallback para handlers de navegação
+  const handleToggleMenu = useCallback(() => {
+    setIsMenuOpen(prev => !prev);
+  }, []);
+
+  const handleToggleSearch = useCallback(() => {
+    setIsSearchOpen(prev => !prev);
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
+  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    router.push(q ? `${ROUTES.busca}?q=${encodeURIComponent(q)}` : ROUTES.busca);
+    setIsSearchOpen(false);
+  }, [searchQuery, router]);
+
+  const handleCloseMenu = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-[200] bg-white/95 backdrop-blur border-b border-[#e6e1d8]">
+    <header className="sticky top-0 z-[200] bg-white/95 backdrop-blur border-b border-[#e6e1d8]" data-testid="header">
       {/* Container principal com largura máxima */}
       <nav className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Linha principal: Logo | Menu | Ações */}
@@ -61,7 +85,7 @@ export function Header() {
           <Link
             href={ROUTES.home}
             className="flex-shrink-0 flex items-end gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c40000] focus-visible:ring-offset-2 tap-feedback"
-            aria-label={`${APP_CONFIG.brand.name} - Página inicial`}
+            aria-label={`${APP_CONFIG.brand.name} - Home`}
           >
             <span className="text-2xl sm:text-3xl font-black text-[#111111] tracking-tight font-headline">
               {APP_CONFIG.brand.short}
@@ -71,7 +95,7 @@ export function Header() {
           {/* Menu Desktop - distribuído igualmente no centro */}
           <ul className="hidden lg:flex items-center justify-center flex-1 mx-8">
             <div className="flex items-center justify-between w-full max-w-4xl">
-              {MENU_ITEMS.map((item) => {
+              {menuItems.map((item) => {
                 const active = isActive(item.path);
                 return (
                   <li key={item.path}>
@@ -95,7 +119,7 @@ export function Header() {
           <section className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Botão Busca */}
             <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              onClick={handleToggleSearch}
               className="p-2.5 rounded-full border border-[#e6e1d8] hover:border-[#111111] hover:bg-[#f6f3ef] transition-colors tap-feedback"
               aria-label="Abrir busca"
               aria-expanded={isSearchOpen}
@@ -115,10 +139,10 @@ export function Header() {
                       <User className="w-5 h-5 text-[#c40000]" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin" className="cursor-pointer">
-                        Dashboard Admin
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer">
+                        Painel Admin
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -133,7 +157,7 @@ export function Header() {
                 <Link
                   href={ROUTES.app.root}
                   className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#e6e1d8] hover:border-[#111111] hover:bg-[#f6f3ef] transition-colors tap-feedback"
-                  aria-label="Área do usuário"
+                  aria-label="Área do Usuário"
                 >
                   <span className="hidden md:block text-sm font-normal text-[#111111] max-w-[90px] truncate">
                     {user?.name.split(' ')[0]}
@@ -172,7 +196,7 @@ export function Header() {
 
             {/* Menu Mobile Toggle */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={handleToggleMenu}
               className="lg:hidden p-2.5 rounded-full border border-[#e6e1d8] hover:border-[#111111] hover:bg-[#f6f3ef] transition-colors tap-feedback"
               aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
               aria-expanded={isMenuOpen}
@@ -189,20 +213,15 @@ export function Header() {
         <section className="border-t border-[#e6e1d8] bg-[#f6f3ef] px-4 py-4">
           <form
             className="max-w-[1280px] mx-auto flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const q = searchQuery.trim();
-              router.push(q ? `${ROUTES.busca}?q=${encodeURIComponent(q)}` : ROUTES.busca);
-              setIsSearchOpen(false);
-            }}
+            onSubmit={handleSearchSubmit}
           >
             <input
               type="search"
-              placeholder="Buscar notícias..."
+              placeholder="Buscar..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="flex-1 min-h-[48px] px-4 py-2 border border-[#e6e1d8] rounded-full text-base focus:outline-none focus:ring-2 focus:ring-[#c40000] focus:border-transparent"
-              aria-label="Campo de busca"
+              aria-label="Buscar..."
             />
             <Button type="submit" className="bg-[#111111] hover:bg-[#000000] min-h-[48px] rounded-full px-6">
               Buscar
@@ -217,18 +236,18 @@ export function Header() {
           id="mobile-menu"
           className="lg:hidden border-t border-[#e6e1d8] bg-white max-h-[70vh] overflow-y-auto"
           role="navigation"
-          aria-label="Menu principal"
+          aria-label="Navegacao"
         >
           <ul className="px-4 py-4 space-y-1">
             <li className="px-3 pt-1 pb-2 text-xs uppercase tracking-[0.28em] text-[#6b6b6b]">
-              Navegação
+              Navegacao
             </li>
             
-            {MENU_ITEMS.map((item) => (
+            {menuItems.map((item) => (
               <li key={item.path}>
                 <Link
                   href={item.path}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleCloseMenu}
                   aria-current={isActive(item.path) ? 'page' : undefined}
                   className={`block py-3.5 px-3 rounded-xl text-lg font-normal tap-feedback ${
                     isActive(item.path)
@@ -247,7 +266,7 @@ export function Header() {
                 <li>
                   <Link
                     href={ROUTES.login}
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={handleCloseMenu}
                     className="block py-3.5 px-3 rounded-xl text-base font-normal text-[#111111] hover:bg-[#f6f3ef] tap-feedback"
                   >
                     Entrar
@@ -256,7 +275,7 @@ export function Header() {
                 <li>
                   <Link
                     href="/cadastro"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={handleCloseMenu}
                     className="block py-3.5 px-3 rounded-xl text-base font-normal text-[#c40000] hover:bg-[#fff5f5] tap-feedback"
                   >
                     Cadastrar
@@ -269,4 +288,5 @@ export function Header() {
       )}
     </header>
   );
-}
+});
+Header.displayName = 'Header';

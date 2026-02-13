@@ -182,7 +182,7 @@ async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
   
-  console.log('\n🚀 Otimizador de Imagens PEM\n');
+  console.log('\n🚀 Otimizador de Imagens CIN\n');
   
   try {
     // Ensure output directory exists

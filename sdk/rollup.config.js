@@ -31,7 +31,7 @@ export default [
     output: {
       file: 'dist/analytics.umd.js',
       format: 'umd',
-      name: 'PEMAnalytics',
+      name: 'CINAnalytics',
       sourcemap: true
     },
     plugins: [
@@ -47,7 +47,7 @@ export default [
     output: {
       file: '../public/analytics/analytics.min.js',
       format: 'iife',
-      name: 'PEMAnalytics',
+      name: 'CINAnalytics',
       sourcemap: true
     },
     plugins: [

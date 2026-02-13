@@ -1,4 +1,4 @@
-# Convenções de Desenvolvimento - PEM
+# Convenções de Desenvolvimento - CIN
 
 ## Padrões e Regras do Projeto
 

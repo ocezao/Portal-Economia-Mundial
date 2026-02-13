@@ -1,4 +1,4 @@
-# 🏆 Guia: Tornando o PEM um Modelo para Google AdSense
+# 🏆 Guia: Tornando o CIN um Modelo para Google AdSense
 
 ## 📊 Diagnóstico Atual do Projeto
 
@@ -322,7 +322,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   const author = await getAuthorBySlug(params.slug);
   
   return {
-    title: `${author.name} - Jornalista | Portal Econômico Mundial`,
+    title: `${author.name} - Jornalista | Cenario Internacional`,
     description: author.bio,
     authors: [{ name: author.name }],
     openGraph: {
@@ -340,7 +340,7 @@ const authorJsonLd = {
   jobTitle: 'Jornalista',
   worksFor: {
     '@type': 'NewsMediaOrganization',
-    name: 'Portal Econômico Mundial',
+    name: 'Cenario Internacional',
   },
   alumniOf: author.education?.map(edu => ({
     '@type': 'CollegeOrUniversity',
@@ -359,7 +359,7 @@ const authorJsonLd = {
 ```tsx
 // src/app/(site)/editorial/page.tsx
 export const metadata = {
-  title: 'Nossa Editorial - Portal Econômico Mundial',
+  title: 'Nossa Editorial - Cenario Internacional',
   description: 'Conheça nossa equipe editorial, princípios jornalísticos e processo de checagem de fatos.',
 };
 
@@ -370,7 +370,7 @@ const editorialJsonLd = {
   name: 'Política Editorial',
   about: {
     '@type': 'NewsMediaOrganization',
-    name: 'Portal Econômico Mundial',
+    name: 'Cenario Internacional',
     ethicsPolicy: 'https://portaleconomicomundial.com/etica',
     masthead: 'https://portaleconomicomundial.com/equipe',
     diversityPolicy: 'https://portaleconomicomundial.com/diversidade',

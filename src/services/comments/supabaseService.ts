@@ -11,6 +11,7 @@
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 import type {
   Comment,
   GetCommentsParams,
@@ -36,7 +37,7 @@ export const commentService = {
       .limit(limit);
 
     if (error) {
-      console.error('Erro ao buscar comentários:', error);
+      logger.error('Erro ao buscar comentários:', error);
       return [];
     }
 

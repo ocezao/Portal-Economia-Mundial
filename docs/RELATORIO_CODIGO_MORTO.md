@@ -1,4 +1,4 @@
-# Relatório de Código Morto - Portal Econômico Mundial
+# Relatório de Código Morto - Cenario Internacional
 
 **Data:** 2026-02-05  
 **Auditor:** Sistema automatizado  
