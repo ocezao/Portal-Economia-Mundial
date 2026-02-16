@@ -194,3 +194,13 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - Filtro global de dias habilitado no dashboard (`periodo_global`).
 - Cobertura de mapeamento do filtro: `20/20` cards.
 - Script de automacao adicionado: `scripts/metabase/apply-dashboard-date-filter.py`.
+
+## Atualizacao operacional - 2026-02-16 (Email Hostinger SMTP)
+
+- Integracao de email transacional via SMTP da Hostinger.
+- Rotas adicionadas: `/api/contact-messages` e `/api/career-applications`.
+- Notificacoes automáticas em `/api/admin-users` para criacao/alteracao de email/senha.
+- Templates centralizados em `src/lib/server/emailTemplates.ts`.
+- Servico SMTP centralizado em `src/lib/server/email.ts`.
+- Smoke test em 1 comando: `npm run test:smoke:email`.
+- Resultado validado no ambiente local: contato/carreiras `200` em payload valido e `400` em payload invalido.

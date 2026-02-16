@@ -67,6 +67,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 |---|-----------|-----------|
 | 18 | [Tradução Automática](./18-traducao-automatica.md) | Removido do app (mantido apenas para referência) |
 | 20 | [Contato e Carreiras](./product/CONTACT_FORMS_SETUP.md) | Setup dos formulários e tabelas (Supabase) |
+| 28 | [Email Hostinger SMTP](./28-email-hostinger-smtp.md) | Fluxos de email automatico, endpoints e smoke test |
 
 ### 🤖 Integração com IA (MCP)
 
@@ -140,6 +141,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 ## 🆕 Novidades
 
 ### Fev/2026
+- ✅ **[28-email-hostinger-smtp.md](./28-email-hostinger-smtp.md)** - Integracao SMTP Hostinger com smoke test
 - ✅ **[GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md)** - Guia completo de segurança
 - ✅ **[CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md)** - Correções críticas aplicadas
 - ✅ **[SECURITY_FIX_PLAN.md](../SECURITY_FIX_PLAN.md)** - Plano de correções de segurança
