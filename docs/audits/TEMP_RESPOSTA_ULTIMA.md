@@ -11,34 +11,34 @@ Este arquivo existe para voce conseguir ler o estado atual completo quando o cha
 - Removido canonical global do root para evitar canonical incorreto em paginas que nao definem metadata:
   - `src/app/layout.tsx`
 - Home agora define metadata completa (canonical/OG/Twitter) via `generateMetadata()`:
-  - `src/app/(site)/page.tsx`
+  - `src/app/page.tsx`
 - Rotas indexaveis com paginacao mantem canonical correto:
   - `/noticias/?page=N` (page > 1 vira canonical com `?page=N`, page 1 canonical sem query)
-    - `src/app/(site)/noticias/page.tsx`
+    - `src/app/noticias/page.tsx`
   - `/categoria/[slug]/?page=N` (mesma regra)
-    - `src/app/(site)/categoria/[slug]/page.tsx`
+    - `src/app/categoria/[slug]/page.tsx`
 
 ### 2) Noindex em rotas finas/internas via metadata (alem do robots.ts)
 
 Foram adicionados `layout.tsx` por rota para garantir `robots: { index: false }` mesmo quando a pagina e Client Component:
 
 - Admin (noindex + canonical/OG/Twitter):
-  - `src/app/(site)/admin/layout.tsx`
+  - `src/app/admin/layout.tsx`
 - Area logada (noindex + canonical/OG/Twitter):
-  - `src/app/(site)/app/layout.tsx`
-  - `src/app/(site)/perfil/layout.tsx`
-  - `src/app/(site)/preferencias/layout.tsx`
-  - `src/app/(site)/configuracoes/layout.tsx`
+  - `src/app/app/layout.tsx`
+  - `src/app/perfil/layout.tsx`
+  - `src/app/preferencias/layout.tsx`
+  - `src/app/configuracoes/layout.tsx`
 - Auth (noindex + canonical/OG/Twitter):
   - `src/app/(auth)/login/layout.tsx`
   - `src/app/(auth)/cadastro/layout.tsx`
 - Busca (continua noindex, mas com canonical/OG/Twitter para preview consistente):
-  - `src/app/(site)/busca/page.tsx`
+  - `src/app/busca/page.tsx`
 
 ### 3) Canonical e duplicacao: pagina fina de busca
 
 - Busca usa canonical fixo `/busca/` e continua `noindex` (boa pratica para pagina de resultados internos):
-  - `src/app/(site)/busca/page.tsx`
+  - `src/app/busca/page.tsx`
 
 ### 4) JSON-LD: validacao e coerencia (URLs/imagens)
 
@@ -58,11 +58,11 @@ Foram adicionados `layout.tsx` por rota para garantir `robots: { index: false }`
 Em App Router, `<title>` solto em JSX nao e o caminho correto e pode causar comportamento estranho de head.
 Esses `<title>` foram removidos para depender do metadata via layout de rota (admin e noindex):
 
-- `src/app/(site)/admin/page.tsx`
-- `src/app/(site)/admin/diagnostico/page.tsx`
-- `src/app/(site)/admin/usuarios/page.tsx`
-- `src/app/(site)/admin/noticias/novo/page.tsx`
-- `src/app/(site)/admin/noticias/editar/[slug]/page.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/admin/diagnostico/page.tsx`
+- `src/app/admin/usuarios/page.tsx`
+- `src/app/admin/noticias/novo/page.tsx`
+- `src/app/admin/noticias/editar/[slug]/page.tsx`
 
 ## Observacao importante (sem VPS/dominio)
 

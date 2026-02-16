@@ -34,26 +34,26 @@ Nota atual vs grandes portais (infra + SEO + base tecnica, sem contar volume de 
   - RSS por categoria: `src/app/rss/categoria/[slug]/rss.xml/route.ts`
   - Link no `<head>`: `src/app/layout.tsx`
 - Rotas antes client agora renderizam no servidor (SEO/performance):
-  - `src/app/(site)/em-alta/page.tsx`
-  - `src/app/(site)/mercados/page.tsx`
-  - `src/app/(site)/dados-economicos/page.tsx`
-  - `src/app/(site)/calendario-economico/page.tsx`
+  - `src/app/em-alta/page.tsx`
+  - `src/app/mercados/page.tsx`
+  - `src/app/dados-economicos/page.tsx`
+  - `src/app/calendario-economico/page.tsx`
 - Formularios client com wrapper server para SEO:
-  - `src/app/(site)/fale-conosco/page.tsx`
-  - `src/app/(site)/trabalhe-conosco/page.tsx`
+  - `src/app/fale-conosco/page.tsx`
+  - `src/app/trabalhe-conosco/page.tsx`
 - JSON-LD em listagens:
-  - `src/app/(site)/noticias/page.tsx`
-  - `src/app/(site)/categoria/[slug]/page.tsx`
-  - `src/app/(site)/destaque/page.tsx`
-  - `src/app/(site)/categorias/page.tsx`
-  - `src/app/(site)/em-alta/page.tsx`
+  - `src/app/noticias/page.tsx`
+  - `src/app/categoria/[slug]/page.tsx`
+  - `src/app/destaque/page.tsx`
+  - `src/app/categorias/page.tsx`
+  - `src/app/em-alta/page.tsx`
 - Paginacao indexavel (URLs com `?page=`):
-  - `src/app/(site)/noticias/page.tsx`
-  - `src/app/(site)/categoria/[slug]/page.tsx`
+  - `src/app/noticias/page.tsx`
+  - `src/app/categoria/[slug]/page.tsx`
 - Redirect 301 de slug antigo para novo (SEO):
   - migration `supabase/migrations/20260207170000_news_slug_redirects.sql`
   - upsert no update `src/services/newsManager.ts`
-  - redirect no artigo `src/app/(site)/noticias/[slug]/page.tsx`
+  - redirect no artigo `src/app/noticias/[slug]/page.tsx`
 - Sitemap "portal-grade" (sitemap index + particoes + imagens):
   - index: `src/app/sitemap.xml/route.ts`
   - estaticas: `src/app/sitemaps/static.xml/route.ts`
@@ -62,13 +62,13 @@ Nota atual vs grandes portais (infra + SEO + base tecnica, sem contar volume de 
   - noticias paginadas + image sitemap: `src/app/sitemaps/news/[page]/route.ts`
 - SEO portal-grade (canonical/OG/Twitter + noindex + robots + JSON-LD):
   - Removido canonical global do root (evita canonical errado herdado): `src/app/layout.tsx`
-  - Home com metadata completa: `src/app/(site)/page.tsx`
-  - `Editorial` com Twitter metadata: `src/app/(site)/editorial/page.tsx`
-  - `Busca` com canonical/OG/Twitter + `noindex` (e bloqueio em robots): `src/app/(site)/busca/page.tsx` + `src/app/robots.ts`
-  - Rotas internas com `noindex` via layout (alem do robots): `src/app/(site)/admin/layout.tsx`, `src/app/(site)/app/layout.tsx`, `src/app/(site)/perfil/layout.tsx`, `src/app/(site)/preferencias/layout.tsx`, `src/app/(site)/configuracoes/layout.tsx`, `src/app/(auth)/login/layout.tsx`, `src/app/(auth)/cadastro/layout.tsx`
+  - Home com metadata completa: `src/app/page.tsx`
+  - `Editorial` com Twitter metadata: `src/app/editorial/page.tsx`
+  - `Busca` com canonical/OG/Twitter + `noindex` (e bloqueio em robots): `src/app/busca/page.tsx` + `src/app/robots.ts`
+  - Rotas internas com `noindex` via layout (alem do robots): `src/app/admin/layout.tsx`, `src/app/app/layout.tsx`, `src/app/perfil/layout.tsx`, `src/app/preferencias/layout.tsx`, `src/app/configuracoes/layout.tsx`, `src/app/(auth)/login/layout.tsx`, `src/app/(auth)/cadastro/layout.tsx`
   - Higiene do `robots` para tracking params (`utm_`, `gclid`, etc): `src/app/robots.ts`
   - JSON-LD com URLs/imagens absolutas e `ItemList` coerente: `src/config/seo.ts`
-  - Remocao de `<title>` solto em paginas client do admin (head consistente): `src/app/(site)/admin/*/page.tsx`
+  - Remocao de `<title>` solto em paginas client do admin (head consistente): `src/app/admin/*/page.tsx`
 
 ---
 

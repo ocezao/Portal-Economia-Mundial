@@ -100,12 +100,12 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | Arquivo | Descrição |
 |---------|-----------|
 | [AUDITORIA_SEGURANCA.md](./audits/AUDITORIA_SEGURANCA.md) | Relatório de auditoria de segurança |
-| [CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md) | Correções de segurança aplicadas (10/02/2026) |
-| [GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md) | Guia de boas práticas de segurança |
-| [AUDITORIA_DATABASE.md](./AUDITORIA_DATABASE.md) | Auditoria do banco de dados |
-| [AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md](./AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md) | Auditoria de código morto |
-| [RELATORIO_CODIGO_MORTO.md](./RELATORIO_CODIGO_MORTO.md) | Relatório de código morto |
-| [RESUMO_LIMPEZA_FINAL.md](./RESUMO_LIMPEZA_FINAL.md) | Resumo da limpeza de código |
+| [CORRECOES_SEGURANCA_2026-02-10.md](./_security/CORRECOES_SEGURANCA_2026-02-10.md) | Correções de segurança aplicadas (10/02/2026) |
+| [GUIA_SEGURANCA_DESENVOLVEDORES.md](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md) | Guia de boas práticas de segurança |
+| [AUDITORIA_DATABASE.md](./audits/AUDITORIA_DATABASE.md) | Auditoria do banco de dados |
+| [AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md](./audits/AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md) | Auditoria de código morto |
+| [RELATORIO_CODIGO_MORTO.md](./audits/RELATORIO_CODIGO_MORTO.md) | Relatório de código morto |
+| [RESUMO_LIMPEZA_FINAL.md](./audits/RESUMO_LIMPEZA_FINAL.md) | Resumo da limpeza de código |
 
 ---
 
@@ -125,7 +125,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 4. [16-api-rest.md](./16-api-rest.md)
 5. [17-cicd-pipeline.md](./17-cicd-pipeline.md)
 6. [20-mcp-server.md](./20-mcp-server.md) - Integração com IA
-7. [GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md) - Boas práticas de segurança
+7. [GUIA_SEGURANCA_DESENVOLVEDORES.md](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md) - Boas práticas de segurança
 
 ### Product Owner/Manager
 1. [00-visao-geral.md](./00-visao-geral.md)
@@ -143,9 +143,9 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 ### Fev/2026
 - ✅ **Newsletter API** - `POST /api/newsletter/subscribe` integrada na Home com deduplicação e SMTP Hostinger
 - ✅ **[28-email-hostinger-smtp.md](./28-email-hostinger-smtp.md)** - Integracao SMTP Hostinger com smoke test
-- ✅ **[GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md)** - Guia completo de segurança
-- ✅ **[CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md)** - Correções críticas aplicadas
-- ✅ **[SECURITY_FIX_PLAN.md](../SECURITY_FIX_PLAN.md)** - Plano de correções de segurança
+- ✅ **[GUIA_SEGURANCA_DESENVOLVEDORES.md](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md)** - Guia completo de segurança
+- ✅ **[CORRECOES_SEGURANCA_2026-02-10.md](./_security/CORRECOES_SEGURANCA_2026-02-10.md)** - Correções críticas aplicadas
+- ✅ **[SECURITY_FIX_PLAN.md](./_security/SECURITY_FIX_PLAN.md)** - Plano de correções de segurança
 - ✅ **[20-mcp-server.md](./20-mcp-server.md)** - Servidor MCP para integração com Codex CLI
 - ✅ **FINNHUB-GUIA-COMPLETO.md** - Documentação consolidada da Finnhub API
 - ✅ **SEO Portal-Grade** - Canonical/OG/Twitter + noindex + robots hygiene + JSON-LD coerente

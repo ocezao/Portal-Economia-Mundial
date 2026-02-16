@@ -9,11 +9,11 @@ Objetivo: reduzir drasticamente o custo por visita (CPU/DB/rede) e deixar o site
 Resumo do que foi aplicado agora no repo:
 
 1. Home agora carrega dados no servidor (ISR)
-- `src/app/(site)/page.tsx` virou Server Component com `revalidate = 60`.
-- UI interativa foi separada para `src/app/(site)/HomePageClient.tsx` (sem `useEffect` para buscar noticias).
+- `src/app/page.tsx` virou Server Component com `revalidate = 60`.
+- UI interativa foi separada para `src/app/HomePageClient.tsx` (sem `useEffect` para buscar noticias).
 
 2. Pagina Destaque agora e Server Component (ISR)
-- `src/app/(site)/destaque/page.tsx` virou Server Component com `revalidate = 300`.
+- `src/app/destaque/page.tsx` virou Server Component com `revalidate = 300`.
 
 3. `newsManager` mais escalavel (menos "baixar tudo e filtrar")
 - `src/services/newsManager.ts`
@@ -23,12 +23,12 @@ Resumo do que foi aplicado agora no repo:
   - Leituras retornam `[]/null` quando Supabase nao esta configurado, para nao quebrar paginas server-side.
 
 4. Admin ajustado para paginacao no banco incluindo drafts
-- `src/app/(site)/admin/page.tsx` chama `getArticlesPaginated(..., { includeDrafts: true })`.
+- `src/app/admin/page.tsx` chama `getArticlesPaginated(..., { includeDrafts: true })`.
 
 5. Base para snapshots (cache) de dados externos (Finnhub)
 - Migration: `supabase/migrations/20260207130000_create_external_snapshots.sql`
 - Service: `src/services/economics/snapshots.ts`
-- Home usa snapshot para market news com fallback: `src/app/(site)/page.tsx`
+- Home usa snapshot para market news com fallback: `src/app/page.tsx`
  - Job (GitHub Actions schedule): `.github/workflows/refresh-snapshots.yml`
  - Script de refresh: `scripts/refresh-external-snapshots.mjs`
 
@@ -54,16 +54,16 @@ Resumo do que foi aplicado agora no repo:
 10. SEO portal-grade (sem VPS/dominio)
 - Canonical/OG/Twitter padronizados por rota (sem canonical global incorreto):
   - `src/app/layout.tsx`
-  - `src/app/(site)/page.tsx`
+  - `src/app/page.tsx`
 - Rotas internas e finas com `noindex` via metadata/layout:
-  - `src/app/(site)/admin/layout.tsx`
-  - `src/app/(site)/app/layout.tsx`
-  - `src/app/(site)/perfil/layout.tsx`
-  - `src/app/(site)/preferencias/layout.tsx`
-  - `src/app/(site)/configuracoes/layout.tsx`
+  - `src/app/admin/layout.tsx`
+  - `src/app/app/layout.tsx`
+  - `src/app/perfil/layout.tsx`
+  - `src/app/preferencias/layout.tsx`
+  - `src/app/configuracoes/layout.tsx`
   - `src/app/(auth)/login/layout.tsx`
   - `src/app/(auth)/cadastro/layout.tsx`
-  - `src/app/(site)/busca/page.tsx`
+  - `src/app/busca/page.tsx`
 - `robots` com higiene para tracking params (`utm_`, `gclid`, etc):
   - `src/app/robots.ts`
 - JSON-LD com URLs/imagens absolutas e `ItemList` coerente:

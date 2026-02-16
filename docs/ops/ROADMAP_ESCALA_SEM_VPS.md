@@ -178,11 +178,11 @@ Status agora:
   - `finnhub_commodities:main`
   - `finnhub_sectors:main`
 - Listagens com JSON-LD:
-  - `src/app/(site)/noticias/page.tsx`
-  - `src/app/(site)/categoria/[slug]/page.tsx`
-  - `src/app/(site)/destaque/page.tsx`
-  - `src/app/(site)/em-alta/page.tsx`
-  - `src/app/(site)/categorias/page.tsx`
+  - `src/app/noticias/page.tsx`
+  - `src/app/categoria/[slug]/page.tsx`
+  - `src/app/destaque/page.tsx`
+  - `src/app/em-alta/page.tsx`
+  - `src/app/categorias/page.tsx`
 
 Aceite:
 - Google consegue rastrear facilmente.
@@ -197,10 +197,10 @@ Proximo passo (SEO de cobertura total):
 - Garantir `NEXT_PUBLIC_SITE_URL` em producao para canonical/sitemaps/robots corretos.
 
 Status agora (cobertura):
-- `Busca` esta `noindex` e tem canonical/OG/Twitter: `src/app/(site)/busca/page.tsx`
-- `Editorial` tem canonical/OG/Twitter: `src/app/(site)/editorial/page.tsx`
+- `Busca` esta `noindex` e tem canonical/OG/Twitter: `src/app/busca/page.tsx`
+- `Editorial` tem canonical/OG/Twitter: `src/app/editorial/page.tsx`
 - Canonical global removido do root (evita canonical errado herdado): `src/app/layout.tsx`
-- Rotas internas (admin/app/auth/perfil/etc) com `noindex` via layout (alem do robots): `src/app/(site)/*/layout.tsx` e `src/app/(auth)/*/layout.tsx`
+- Rotas internas (admin/app/auth/perfil/etc) com `noindex` via layout (alem do robots): `src/app/*/layout.tsx` e `src/app/(auth)/*/layout.tsx`
 - Higiene do `robots` para tracking params (`utm_`, `gclid`, etc): `src/app/robots.ts`
 - JSON-LD com URLs/imagens absolutas e `ItemList` coerente: `src/config/seo.ts`
 
@@ -213,7 +213,7 @@ Status agora (cobertura):
 - Lazy-load do que for nao critico.
 
 Status agora:
-- Widgets pesados da home sao lazy-loaded via `next/dynamic`: `src/app/(site)/HomePageClient.tsx`
+- Widgets pesados da home sao lazy-loaded via `next/dynamic`: `src/app/HomePageClient.tsx`
 - Rotas antes client foram convertidas para server (menos JS): mercados/dados/calendario/em-alta
 
 3.2 Otimizacao de imagens
@@ -245,14 +245,14 @@ Status agora:
 - Implementado mecanismo de redirect de slug (best-effort):
   - Tabela: `supabase/migrations/20260207170000_news_slug_redirects.sql`
   - Upsert ao editar: `src/services/newsManager.ts`
-  - Redirect no artigo: `src/app/(site)/noticias/[slug]/page.tsx`
+  - Redirect no artigo: `src/app/noticias/[slug]/page.tsx`
 
 4.3 Paginas de categoria e listagem com paginacao real
 - Infinite scroll opcional, mas com URLs paginadas indexaveis.
 
 Status agora:
-- `/noticias` paginado via `?page=`: `src/app/(site)/noticias/page.tsx`
-- `/categoria/[slug]` paginado via `?page=`: `src/app/(site)/categoria/[slug]/page.tsx`
+- `/noticias` paginado via `?page=`: `src/app/noticias/page.tsx`
+- `/categoria/[slug]` paginado via `?page=`: `src/app/categoria/[slug]/page.tsx`
 
 Aceite:
 - Publicar nao quebra SEO.

@@ -1,4 +1,4 @@
-# 📋 Checklist Deploy Produção - VPS Hostinger
+﻿# 📋 Checklist Deploy Produção - VPS Hostinger
 
 > **Versão:** 1.0  
 > **Última atualização:** 2026-02-08  
@@ -40,9 +40,9 @@ Progresso: ████████░░░░░░░░░░░░ 40% (60%
 - [ ] Adicionar `public/uploads/` ao `.gitignore`
 
 **Arquivos a modificar:**
-- `src/app/(site)/admin/noticias/novo/page.tsx`
-- `src/app/(site)/admin/noticias/editar/[slug]/page.tsx`
-- `src/app/(site)/perfil/page.tsx`
+- `src/app/admin/noticias/novo/page.tsx`
+- `src/app/admin/noticias/editar/[slug]/page.tsx`
+- `src/app/perfil/page.tsx`
 - `src/components/upload/ImageUploader.tsx`
 
 ---
@@ -53,7 +53,7 @@ Progresso: ████████░░░░░░░░░░░░ 40% (60%
 **Tempo estimado:** Concluído
 
 #### Checklist:
-- [x] Converter `src/app/(site)/page.tsx` para Server Component
+- [x] Converter `src/app/page.tsx` para Server Component
 - [x] Mover interatividade para componente client separado (`HomePageClient.tsx`)
 - [ ] (Opcional) Expandir cache de dados com tags/`unstable_cache` onde fizer sentido
 - [ ] Rodar Lighthouse em ambiente proximo de producao
@@ -285,7 +285,7 @@ Notas:
 - `src/components/search/SearchBox.tsx`
 
 Implementacao atual:
-- Pagina: `src/app/(site)/busca/page.tsx` (noindex, canonical/OG/Twitter)
+- Pagina: `src/app/busca/page.tsx` (noindex, canonical/OG/Twitter)
 - Service: `src/services/newsManager.ts` (RPC FTS + fallback `ilike`)
 
 ---
@@ -508,7 +508,7 @@ Dia 5: Go live!
 
 ## 🎯 DEFINIÇÃO DE "PRONTO"
 
-A aplicação está **100% pronta para produção** quando:
+A aplicação pode ser considerada pronta para produção quando todos os itens abaixo estiverem concluídos e validados em ambiente real:
 
 - [ ] Todos os itens CRÍTICO estão feitos
 - [ ] 80% dos itens IMPORTANTE estão feitos
@@ -714,7 +714,7 @@ revalidateTag('articles');
 
 #### Uso na Home:
 ```typescript
-// src/app/(site)/page.tsx
+// src/app/page.tsx
 import { getCachedLatestArticles, getCachedFeaturedArticles } from '@/lib/cache';
 
 export default async function HomePage() {

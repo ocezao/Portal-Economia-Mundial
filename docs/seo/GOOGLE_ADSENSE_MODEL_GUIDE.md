@@ -205,7 +205,7 @@ export function AdUnitOptimized({ slot, format, className }: AdUnitProps) {
 #### 2.1 Posições Otimizadas (Baseadas em Heatmaps)
 
 ```tsx
-// src/app/(site)/page.tsx - Estrutura com slots de anúncio
+// src/app/page.tsx - Estrutura com slots de anúncio
 import { AdUnitOptimized } from '@/components/ads/AdUnitOptimized';
 
 export default function HomePage() {
@@ -315,7 +315,7 @@ export function AdUnitLazy({ slot, format }) {
 #### 3.1 Páginas de Autor Aprimoradas
 
 ```tsx
-// src/app/(site)/autor/[slug]/page.tsx
+// src/app/autor/[slug]/page.tsx
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }): Promise<Metadata> {
@@ -357,7 +357,7 @@ const authorJsonLd = {
 #### 3.2 About Us / Página Editorial
 
 ```tsx
-// src/app/(site)/editorial/page.tsx
+// src/app/editorial/page.tsx
 export const metadata = {
   title: 'Nossa Editorial - Cenario Internacional',
   description: 'Conheça nossa equipe editorial, princípios jornalísticos e processo de checagem de fatos.',

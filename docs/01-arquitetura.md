@@ -62,7 +62,7 @@ O CIN possui arquitetura modular dividida em três grandes camadas:
 - `isValidEmail`: Validação de formato de email
 - `sanitizeText`: Sanitização básica de texto
 
-> 📖 Ver detalhes em [Guia de Segurança para Desenvolvedores](./GUIA_SEGURANCA_DESENVOLVEDORES.md)
+> 📖 Ver detalhes em [Guia de Segurança para Desenvolvedores](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md)
 
 ---
 

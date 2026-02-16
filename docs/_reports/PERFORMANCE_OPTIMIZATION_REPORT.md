@@ -13,8 +13,8 @@ Este relatório documenta todas as otimizações de performance implementadas pa
 - ✅ `src/components/news/RelatedArticles.tsx` - 1 imagem otimizada
 - ✅ `src/components/home/HeroSection.tsx` - 2 imagens otimizadas
 - ✅ `src/components/interactive/CommentSection.tsx` - 1 avatar otimizado
-- ✅ `src/app/(site)/HomePageClient.tsx` - 1 imagem otimizada
-- ✅ `src/app/(site)/noticias/[slug]/NoticiaPageClient.tsx` - 1 imagem otimizada
+- ✅ `src/app/HomePageClient.tsx` - 1 imagem otimizada
+- ✅ `src/app/noticias/[slug]/NoticiaPageClient.tsx` - 1 imagem otimizada
 - ✅ `src/components/upload/ImageUploader.tsx` - preview mantido como img (Data URL)
 
 ### Configurações Aplicadas:
@@ -242,8 +242,8 @@ src/components/news/NewsCard.tsx - next/image
 src/components/news/RelatedArticles.tsx - next/image
 src/components/home/HeroSection.tsx - next/image
 src/components/interactive/CommentSection.tsx - next/image
-src/app/(site)/HomePageClient.tsx - next/image
-src/app/(site)/noticias/[slug]/NoticiaPageClient.tsx - next/image
+src/app/HomePageClient.tsx - next/image
+src/app/noticias/[slug]/NoticiaPageClient.tsx - next/image
 src/components/upload/ImageUploader.tsx - next/image
 src/components/economics/EarningsCalendar.tsx - Export interface
 ```
@@ -271,7 +271,7 @@ npm run build
 
 ## ⚠️ Notas Importantes
 
-1. **Erro de Build Existente**: Há um erro de importação de tipo em `src/app/(site)/admin/hooks/useAdminData.ts` que já existia antes das otimizações. Não foi causado por estas alterações.
+1. **Erro de Build Existente**: Há um erro de importação de tipo em `src/app/admin/hooks/useAdminData.ts` que já existia antes das otimizações. Não foi causado por estas alterações.
 
 2. **Imagens WebP**: As imagens em `public/images/news/` já estão em WebP, mas podem ser otimizadas ainda mais com o script criado.
 

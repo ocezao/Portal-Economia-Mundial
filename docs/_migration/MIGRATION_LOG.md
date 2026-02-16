@@ -1,4 +1,4 @@
-# Log de Migração Vite → Next.js
+﻿# Log de Migração Vite → Next.js
 
 ## 📋 Informações Gerais
 
@@ -6,7 +6,7 @@
 - **Status:** Concluída
 - **Responsável:** Assistente AI
 - **Versão Base:** Vite + React Router DOM
-- **Versão Target:** Next.js 14+ (App Router)
+- **Versão Target:** Next.js App Router
 
 ---
 
@@ -61,7 +61,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 ### Fase 2: Estrutura App Router
 
 #### [2026-02-06] 2.1 - Página Home
-- **Arquivo Novo:** `src/app/(site)/page.tsx`
+- **Arquivo Novo:** `src/app/page.tsx`
 - **Arquivo Original:** `src/views/Home.tsx`
 - **Alterações Realizadas:**
   - Mantido como Client Component ('use client') devido a estado e efeitos
@@ -71,7 +71,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 2.2 - Página Categoria Dinâmica
-- **Arquivo Novo:** `src/app/(site)/categoria/[slug]/page.tsx`
+- **Arquivo Novo:** `src/app/categoria/[slug]/page.tsx`
 - **Arquivo Original:** `src/views/Category.tsx`
 - **Alterações Realizadas:**
   - Client Component ('use client') devido a busca de dados no cliente
@@ -80,7 +80,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 2.3 - Página Notícia Dinâmica
-- **Arquivo Novo:** `src/app/(site)/noticias/[slug]/page.tsx`
+- **Arquivo Novo:** `src/app/noticias/[slug]/page.tsx`
 - **Arquivo Original:** `src/views/Article.tsx`
 - **Alterações Realizadas:**
   - Client Component com busca dinâmica via Supabase
@@ -94,7 +94,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 ### Fase 3: Páginas Estáticas
 
 #### [2026-02-06] 3.1 - Sobre
-- **Arquivo Novo:** `src/app/(site)/sobre/page.tsx`
+- **Arquivo Novo:** `src/app/sobre/page.tsx`
 - **Arquivo Original:** `src/views/About.tsx`
 - **Alterações:**
   - Convertido para Server Component
@@ -104,9 +104,9 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 
 #### [2026-02-06] 3.2 - Páginas Legais
 - **Arquivos Novos:**
-  - `src/app/(site)/privacidade/page.tsx` - Política de Privacidade
-  - `src/app/(site)/termos/page.tsx` - Termos de Uso
-  - `src/app/(site)/cookies/page.tsx` - Política de Cookies
+  - `src/app/privacidade/page.tsx` - Política de Privacidade
+  - `src/app/termos/page.tsx` - Termos de Uso
+  - `src/app/cookies/page.tsx` - Política de Cookies
 - **Arquivo Original:** `src/views/Legal.tsx`
 - **Alterações:**
   - Cada página separada com seu próprio metadata
@@ -116,9 +116,9 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 
 #### [2026-02-06] 3.3 - Em Alta, Destaque, Categorias
 - **Arquivos Novos:**
-  - `src/app/(site)/em-alta/page.tsx` - Client Component (useEffect/useState)
-  - `src/app/(site)/destaque/page.tsx` - Client Component (useEffect/useState)
-  - `src/app/(site)/categorias/page.tsx` - Server Component (metadata export)
+  - `src/app/em-alta/page.tsx` - Client Component (useEffect/useState)
+  - `src/app/destaque/page.tsx` - Client Component (useEffect/useState)
+  - `src/app/categorias/page.tsx` - Server Component (metadata export)
 - **Arquivos Originais:** `src/views/EmAlta.tsx`, `src/views/Destaque.tsx`, `src/views/TodasCategorias.tsx`
 - **Alterações:**
   - Em Alta e Destaque: mantidos como Client Components com hooks de estado
@@ -128,10 +128,10 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 
 #### [2026-02-06] 3.4 - Páginas Institucionais
 - **Arquivos Novos:**
-  - `src/app/(site)/fale-conosco/page.tsx` - Client Component com formulário
-  - `src/app/(site)/trabalhe-conosco/page.tsx` - Client Component com formulário
-  - `src/app/(site)/termometro-de-risco/page.tsx` - Server Component (info)
-  - `src/app/(site)/mapa-de-tensoes/page.tsx` - Server Component (info)
+  - `src/app/fale-conosco/page.tsx` - Client Component com formulário
+  - `src/app/trabalhe-conosco/page.tsx` - Client Component com formulário
+  - `src/app/termometro-de-risco/page.tsx` - Server Component (info)
+  - `src/app/mapa-de-tensoes/page.tsx` - Server Component (info)
 - **Arquivos Originais:** Respectivos em `src/views/`
 - **Alterações:**
   - FaleConosco e TrabalheConosco: Client Components ('use client')
@@ -141,9 +141,9 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 
 #### [2026-02-06] 3.5 - Páginas Econômicas
 - **Arquivos Novos:**
-  - `src/app/(site)/dados-economicos/page.tsx` - Client Component (hooks de economia)
-  - `src/app/(site)/mercados/page.tsx` - Client Component (hooks de mercado)
-  - `src/app/(site)/calendario-economico/page.tsx` - Client Component (hooks de calendário)
+  - `src/app/dados-economicos/page.tsx` - Client Component (hooks de economia)
+  - `src/app/mercados/page.tsx` - Client Component (hooks de mercado)
+  - `src/app/calendario-economico/page.tsx` - Client Component (hooks de calendário)
 - **Arquivos Originais:** `src/views/economics/`
 - **Alterações:**
   - Todas convertidas para Client Components devido a hooks de dados
@@ -179,7 +179,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 ### Fase 5: Área do Usuário (Protegida)
 
 #### [2026-02-06] 5.1 - Dashboard
-- **Arquivo Novo:** `src/app/(site)/app/page.tsx`
+- **Arquivo Novo:** `src/app/app/page.tsx`
 - **Arquivo Original:** `src/views/UserDashboard.tsx`
 - **Alterações Realizadas:**
   - Client Component ('use client') - ~950 linhas
@@ -191,7 +191,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 5.2 - Perfil
-- **Arquivo Novo:** `src/app/(site)/app/perfil/page.tsx`
+- **Arquivo Novo:** `src/app/app/perfil/page.tsx`
 - **Arquivo Original:** `src/views/UserProfile.tsx`
 - **Alterações:**
   - Client Component com tabs (info, social, segurança, estatísticas)
@@ -199,7 +199,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 5.3 - Preferências
-- **Arquivo Novo:** `src/app/(site)/app/preferencias/page.tsx`
+- **Arquivo Novo:** `src/app/app/preferencias/page.tsx`
 - **Arquivo Original:** `src/views/UserPreferences.tsx`
 - **Alterações:**
   - Client Component com seleção de categorias e tags
@@ -207,7 +207,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 5.4 - Configurações
-- **Arquivo Novo:** `src/app/(site)/app/configuracoes/page.tsx`
+- **Arquivo Novo:** `src/app/app/configuracoes/page.tsx`
 - **Arquivo Original:** `src/views/UserSettings.tsx`
 - **Alterações:**
   - Client Component com configurações de idioma, tema, privacidade
@@ -219,7 +219,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 ### Fase 6: Admin (Protegido)
 
 #### [2026-02-06] 6.1 - Dashboard Admin
-- **Arquivo Novo:** `src/app/(site)/admin/page.tsx`
+- **Arquivo Novo:** `src/app/admin/page.tsx`
 - **Arquivo Original:** `src/views/AdminDashboard.tsx`
 - **Alterações Realizadas:**
   - Client Component ('use client')
@@ -230,8 +230,8 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 
 #### [2026-02-06] 6.2 - Edição de Notícias
 - **Arquivos Novos:**
-  - `src/app/(site)/admin/noticias/novo/page.tsx` - Criar notícia
-  - `src/app/(site)/admin/noticias/editar/[slug]/page.tsx` - Editar notícia
+  - `src/app/admin/noticias/novo/page.tsx` - Criar notícia
+  - `src/app/admin/noticias/editar/[slug]/page.tsx` - Editar notícia
 - **Arquivo Original:** `src/views/AdminNewsEdit.tsx`
 - **Alterações Realizadas:**
   - Separado em duas páginas: novo (sem params) e editar (com [slug])
@@ -240,7 +240,7 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 6.3 - Gerenciamento de Usuários
-- **Arquivo Novo:** `src/app/(site)/admin/usuarios/page.tsx`
+- **Arquivo Novo:** `src/app/admin/usuarios/page.tsx`
 - **Arquivo Original:** `src/views/AdminUsers.tsx`
 - **Alterações Realizadas:**
   - Client Component com filtros e ações
@@ -248,14 +248,14 @@ Migrar completamente a aplicação do Cenario Internacional de Vite para Next.js
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 6.4 - Diagnóstico
-- **Arquivo Novo:** `src/app/(site)/admin/diagnostico/page.tsx`
+- **Arquivo Novo:** `src/app/admin/diagnostico/page.tsx`
 - **Arquivo Original:** `src/views/AdminDiagnostico.tsx`
 - **Alterações Realizadas:**
   - Client Component com verificações do sistema
 - **Status:** ✅ Concluído
 
 #### [2026-02-06] 6.5 - Teste Finnhub
-- **Arquivo Novo:** `src/app/(site)/admin/teste-finnhub/page.tsx`
+- **Arquivo Novo:** `src/app/admin/teste-finnhub/page.tsx`
 - **Arquivo Original:** Componente `FinnhubTest`
 - **Decisão:** Não migrado - funcionalidade de diagnóstico acessível via `/admin/diagnostico`
 - **Status:** ⏭️ Postergado (não crítico para o funcionamento)
