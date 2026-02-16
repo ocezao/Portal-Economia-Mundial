@@ -149,3 +149,73 @@ export function accountPasswordUpdatedTemplate(name: string): { subject: string;
     text: `Ola ${name}, detectamos uma alteracao de senha na sua conta.`,
   };
 }
+
+export function newsletterAckTemplate(): { subject: string; html: string; text: string } {
+  return {
+    subject: 'Inscricao confirmada na newsletter',
+    html: wrap(
+      'Newsletter',
+      '<p>Seu email foi inscrito com sucesso na nossa newsletter.</p><p>Voce recebera os principais destaques diretamente na caixa de entrada.</p>',
+    ),
+    text: 'Seu email foi inscrito com sucesso na newsletter do Cenario Internacional.',
+  };
+}
+
+export function newsletterInternalTemplate(input: {
+  email: string;
+  source: string;
+  path?: string | null;
+}): { subject: string; html: string; text: string } {
+  return {
+    subject: `[Newsletter] Nova inscricao - ${input.source}`,
+    html: wrap(
+      'Nova inscricao na newsletter',
+      `
+      <p><strong>Email:</strong> ${html.esc(input.email)}</p>
+      <p><strong>Origem:</strong> ${html.esc(input.source)}</p>
+      <p><strong>Path:</strong> ${html.esc(input.path || '-')}</p>
+      `,
+    ),
+    text: [
+      'Nova inscricao na newsletter',
+      `Email: ${input.email}`,
+      `Origem: ${input.source}`,
+      `Path: ${input.path || '-'}`,
+    ].join('\n'),
+  };
+}
+
+export function newsletterConfirmTemplate(input: {
+  confirmUrl: string;
+}): { subject: string; html: string; text: string } {
+  return {
+    subject: 'Confirme sua inscricao na newsletter',
+    html: wrap(
+      'Confirme sua inscricao',
+      `
+      <p>Ola,</p>
+      <p>Recebemos sua solicitacao para receber nossa newsletter. Para confirmar sua inscricao, clique no link abaixo:</p>
+      <p style="margin: 24px 0;">
+        <a href="${html.esc(input.confirmUrl)}" 
+           style="display: inline-block; padding: 12px 24px; background-color: #111; color: #fff; text-decoration: none; border-radius: 4px;">
+          Confirmar inscricao
+        </a>
+      </p>
+      <p>Ou copie e cole o link no seu navegador:</p>
+      <p style="word-break: break-all; color: #666;">${html.esc(input.confirmUrl)}</p>
+      <p style="color: #666; font-size: 12px; margin-top: 16px;">Este link expira em 24 horas.</p>
+      <p style="color: #666; font-size: 12px;">Se voce nao solicitou esta inscricao, ignore este email.</p>
+      `,
+    ),
+    text: [
+      'Ola,',
+      '',
+      'Recebemos sua solicitacao para receber nossa newsletter. Para confirmar sua inscricao, acesse o link abaixo:',
+      '',
+      input.confirmUrl,
+      '',
+      'Este link expira em 24 horas.',
+      'Se voce nao solicitou esta inscricao, ignore este email.',
+    ].join('\n'),
+  };
+}

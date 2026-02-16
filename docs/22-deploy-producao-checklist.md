@@ -241,22 +241,25 @@ Notas:
 ---
 
 ### 11. Newsletter Funcional
-**Status:** ⚠️ Só UI (form sem backend)  
-**Impacto:** Não captura leads  
+**Status:** ⚠️ Parcial (API funcional + fallback operacional)  
+**Impacto:** Captura leads sem double opt-in  
 **Tempo estimado:** 2-3 horas
 
 #### Checklist:
-- [ ] Criar conta Buttondown (1.000 subs grátis)
-- [ ] Criar API Route `/api/newsletter/subscribe`
-- [ ] Integrar com Buttondown API
-- [ ] Validar email no backend
-- [ ] Prevenir duplicatas
+- [x] Criar API Route `/api/newsletter/subscribe`
+- [x] Integrar Home com endpoint de newsletter
+- [x] Validar email no backend
+- [x] Prevenir duplicatas (segunda tentativa retorna `alreadySubscribed`)
+- [x] Enviar confirmação/alerta interno via SMTP Hostinger
+- [ ] Criar conta Buttondown (opcional)
+- [ ] Integrar com Buttondown API (opcional)
 - [ ] Adicionar confirmação (double opt-in)
-- [ ] Testar fluxo completo
+- [x] Testar fluxo base (API): `200` inscrição nova e `200` duplicada
 
 **Arquivos a modificar/criar:**
 - `src/app/api/newsletter/subscribe/route.ts`
 - Componente de newsletter existente
+  - Obs operacional: no ambiente atual, fallback de persistência em `contact_messages` quando `public.leads` não estiver disponível no schema API.
 
 ---
 
@@ -497,7 +500,7 @@ Dia 5: Go live!
 | Cloudinary | Free (25GB) | $0 |
 | Sentry | Developer (5k erros) | $0 |
 | UptimeRobot | Free (50 monitores) | $0 |
-| Buttondown | Free (1k subs) | $0 |
+| Newsletter via SMTP Hostinger | Incluso no plano atual | $0 |
 | Backup S3 | ~5GB | ~$0.50/mês |
 | **TOTAL** | | **~$7.50/mês** |
 
@@ -761,7 +764,7 @@ import { FixedSizeList } from 'react-window';
 | Rank | Item | Impacto | Esforço | ROI | Prazo |
 |------|------|---------|---------|-----|-------|
 | 1 | **OneSignal Push** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
-| 2 | **Newsletter (Buttondown)** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
+| 2 | **Newsletter (API interna + SMTP Hostinger)** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
 | 3 | **Comentários (Giscus)** | ⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥 | 1 dia |
 | 4 | **Cache (ISR)** | ⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥 | 1 dia |
 | 5 | **PWA** | ⭐⭐⭐⭐ | 3-4h | 🔥🔥🔥🔥 | 2 dias |
@@ -782,7 +785,7 @@ import { FixedSizeList } from 'react-window';
 | Cloudinary | Free (25GB) | $0 | ✅ |
 | Sentry | Developer (5k erros) | $0 | ✅ |
 | UptimeRobot | Free (50 monitores) | $0 | ✅ |
-| Buttondown | Free (1k subs) | $0 | ✅ |
+| Newsletter via SMTP Hostinger | Incluso no plano atual | $0 | ✅ |
 | OneSignal | Free (10k subs) | $0 | ✅ |
 | Backup S3 | ~5GB | ~$0.50/mês | Opcional |
 | **TOTAL MÍNIMO** | | **$0** | ✅ |
@@ -797,7 +800,7 @@ import { FixedSizeList } from 'react-window';
 3. **Monitore os logs** - Os primeiros dias são críticos
 4. **Tenha um rollback plan** - Snapshot do VPS antes do deploy
 5. **Documente tudo** - Você vai esquecer daqui 6 meses
-6. **Implemente Push + Newsletter primeiro** - São os itens de maior ROI e gratuito
+6. **Implemente Push + double opt-in da Newsletter primeiro** - São os itens de maior ROI e gratuito
 
 ---
 

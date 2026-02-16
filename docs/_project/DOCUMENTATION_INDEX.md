@@ -107,7 +107,7 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 
 **🟡 IMPORTANTE (exemplos):**
 - CI/CD de deploy
-- Newsletter funcional
+- Newsletter funcional (API interna + SMTP Hostinger)
 - Comentários (validar setup final)
 
 **🟢 BOM TER (7 itens):**
@@ -119,7 +119,7 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 | # | Funcionalidade | ROI | Custo |
 |---|---------------|-----|-------|
 | 1 | **Push Notifications (OneSignal)** | 🔥🔥🔥🔥🔥 | $0 |
-| 2 | **Newsletter (Buttondown)** | 🔥🔥🔥🔥🔥 | $0 |
+| 2 | **Newsletter (API interna + SMTP Hostinger)** | 🔥🔥🔥🔥🔥 | $0 |
 | 3 | **Comentários (Giscus)** | 🔥🔥🔥🔥 | $0 |
 | 4 | **Cache Avançado (ISR)** | 🔥🔥🔥🔥 | $0 |
 | 5 | **PWA Completo** | 🔥🔥🔥🔥 | $0 |

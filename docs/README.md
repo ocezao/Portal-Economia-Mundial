@@ -141,6 +141,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 ## 🆕 Novidades
 
 ### Fev/2026
+- ✅ **Newsletter API** - `POST /api/newsletter/subscribe` integrada na Home com deduplicação e SMTP Hostinger
 - ✅ **[28-email-hostinger-smtp.md](./28-email-hostinger-smtp.md)** - Integracao SMTP Hostinger com smoke test
 - ✅ **[GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md)** - Guia completo de segurança
 - ✅ **[CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md)** - Correções críticas aplicadas

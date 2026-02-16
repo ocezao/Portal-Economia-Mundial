@@ -187,10 +187,10 @@ docker-compose up -d
 1. Integração com storage para imagens dos usuários
 2. Inserir componente do AdSense real
 3. Monitorar limites do Supabase
-4. Newsletter real
+4. Newsletter (API + SMTP) com double opt-in pendente
 5. Expansão dos dashboards Metabase
 
 ---
 
 **Versão:** 1.2.0  
-**Última atualização:** 2026-02-08
+**Última atualização:** 2026-02-16

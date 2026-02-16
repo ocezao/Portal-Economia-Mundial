@@ -6,7 +6,7 @@
  * e permitir ISR/cache.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, TrendingUp, Clock, Zap, Flame, Mail, MessageSquareText } from 'lucide-react';
@@ -22,6 +22,7 @@ import { ROUTES, CATEGORIES } from '@/config/routes';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { EarningsEvent, MarketNews } from '@/services/economics/finnhubService';
 import { publicStorage } from '@/config/storage';
+import { subscribeNewsletter } from '@/services/newsletterService';
 
 const ADSENSE_SLOT_HOME_INLINE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;
 
@@ -61,6 +62,10 @@ export default function HomePageClient({
   const [activeCategory, setActiveCategory] = useState('all');
   const [pollVote, setPollVote] = useState<string | null>(null);
   const [pollSubmitted, setPollSubmitted] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterFeedback, setNewsletterFeedback] = useState<string | null>(null);
+  const [newsletterFeedbackType, setNewsletterFeedbackType] = useState<'success' | 'error' | null>(null);
   const locale = 'pt-BR';
 
   const pollOptions = useMemo(() => ['Economia', 'Geopolitica', 'Tecnologia'], []);
@@ -86,6 +91,42 @@ export default function HomePageClient({
     if (!pollVote) return;
     publicStorage.set('cin_home_poll_vote', pollVote);
     setPollSubmitted(true);
+  };
+
+  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedEmail = newsletterEmail.trim().toLowerCase();
+    if (!trimmedEmail) {
+      setNewsletterFeedback('Informe um e-mail valido.');
+      setNewsletterFeedbackType('error');
+      return;
+    }
+
+    setNewsletterLoading(true);
+    setNewsletterFeedback(null);
+    setNewsletterFeedbackType(null);
+
+    try {
+      const result = await subscribeNewsletter({
+        email: trimmedEmail,
+        source: 'newsletter_home',
+        path: typeof window !== 'undefined' ? window.location.pathname : '/',
+      });
+
+      if (result.alreadySubscribed) {
+        setNewsletterFeedback('Este e-mail ja estava inscrito na newsletter.');
+      } else {
+        setNewsletterFeedback('Inscricao realizada com sucesso. Confira sua caixa de entrada.');
+      }
+      setNewsletterFeedbackType('success');
+      setNewsletterEmail('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao assinar newsletter';
+      setNewsletterFeedback(message);
+      setNewsletterFeedbackType('error');
+    } finally {
+      setNewsletterLoading(false);
+    }
   };
 
   const topByCategory = useMemo(() => {
@@ -198,18 +239,31 @@ export default function HomePageClient({
             <p className="text-sm text-white/80 mb-4">
               Receba as principais noticias no seu email.
             </p>
-            <form className="space-y-2" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-2" onSubmit={handleNewsletterSubmit}>
               <input
                 type="email"
                 placeholder="Seu e-mail"
+                value={newsletterEmail}
+                onChange={(event) => setNewsletterEmail(event.target.value)}
+                disabled={newsletterLoading}
+                required
                 className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm placeholder:text-white/50 focus:outline-none focus:border-[#c40000]"
               />
               <button
                 type="submit"
+                disabled={newsletterLoading}
                 className="w-full px-4 py-2 bg-[#c40000] hover:bg-[#a00000] text-sm font-medium rounded transition-colors"
               >
-                Assinar
+                {newsletterLoading ? 'Assinando...' : 'Assinar'}
               </button>
+              {newsletterFeedback && (
+                <p
+                  className={`text-xs ${newsletterFeedbackType === 'error' ? 'text-red-300' : 'text-green-300'}`}
+                  role="status"
+                >
+                  {newsletterFeedback}
+                </p>
+              )}
             </form>
           </article>
 

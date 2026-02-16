@@ -204,3 +204,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - Servico SMTP centralizado em `src/lib/server/email.ts`.
 - Smoke test em 1 comando: `npm run test:smoke:email`.
 - Resultado validado no ambiente local: contato/carreiras `200` em payload valido e `400` em payload invalido.
+
+## Atualizacao operacional - 2026-02-16 (Newsletter)
+
+- Endpoint implementado: `/api/newsletter/subscribe`.
+- Formulario da Home integrado ao endpoint (`src/app/HomePageClient.tsx`).
+- Confirmacao por email e alerta interno via SMTP Hostinger.
+- Deduplicacao validada por API (`alreadySubscribed: true` na segunda tentativa com mesmo email).
+- Persistencia operacional com fallback em `contact_messages` quando `public.leads` nao estiver disponivel no schema API do ambiente.
+- Pendencia mantida: migrar operacao para `public.leads` no ambiente e implementar double opt-in.
