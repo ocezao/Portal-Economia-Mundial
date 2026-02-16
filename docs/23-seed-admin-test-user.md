@@ -59,3 +59,8 @@ $env:ADMIN_SEED_NAME  = "Admin Teste CIN"
 
 node .\make-admin.mjs
 ```
+
+Observacao (VPS / producao)
+- Os scripts `confirm-email.mjs` / `make-admin.mjs` importam `@supabase/supabase-js`.
+- Em servidores onde voce nao tem `node_modules` (ex.: deploy com Next.js standalone via Docker), rodar `node make-admin.mjs` direto pode falhar com `ERR_MODULE_NOT_FOUND`.
+- Solucao: rode os scripts a partir de um ambiente com dependencias instaladas (ex.: sua maquina local com `npm install`) ou instale dependencias na pasta do projeto antes de executar (`npm ci`).

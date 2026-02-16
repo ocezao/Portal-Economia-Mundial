@@ -127,8 +127,8 @@ O projeto tinha 136 problemas de lint pré-existentes (não relacionados às cor
 ### Criados:
 - `src/lib/logger.ts` - Logger seguro
 - `src/config/secureStorage.ts` - Armazenamento seguro
-- `docs/AUDITORIA_SEGURANCA.md` - Relatório completo
-- `docs/DEPLOY_SEGURO.md` - Guia de deploy seguro
+- `docs/audits/AUDITORIA_SEGURANCA.md` - Relatório completo
+- `docs/ops/DEPLOY_SEGURO.md` - Guia de deploy seguro
 - `docs/CORRECOES_SEGURANCA_APLICADAS.md` - Este arquivo
 
 ### Modificados (correções de segurança):

@@ -581,5 +581,5 @@ chmod +x security-check.sh
 
 ---
 
-**Relatório completo:** `SECURITY_AUDIT_REPORT.md`  
+**Relatório completo:** `docs/_security/SECURITY_AUDIT_REPORT.md`  
 **Este plano:** `SECURITY_FIX_PLAN.md`

@@ -21,6 +21,7 @@ export function AdSenseScript() {
     <Script
       id="adsense-script"
       src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+      async
       strategy="afterInteractive"
       crossOrigin="anonymous"
       onLoad={() => {
@@ -30,4 +31,3 @@ export function AdSenseScript() {
     />
   );
 }
-

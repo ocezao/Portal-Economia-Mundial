@@ -1,100 +1,100 @@
-﻿# TraduÃ§Ã£o AutomÃ¡tica - Portal EconÃ´mico Mundial
+﻿# Tradução Automática - Portal Econômico Mundial
 
 **Status: Removido do app.** Este documento permanece apenas como referencia historica.
 
-## VisÃ£o Geral
+## Visão Geral
 
-O Portal EconÃ´mico Mundial possui funcionalidade de traduÃ§Ã£o automÃ¡tica que funciona tanto em **desenvolvimento local** (porta 5173) quanto em **produÃ§Ã£o**.
+O Portal Econômico Mundial possui funcionalidade de tradução automática que funciona tanto em **desenvolvimento local** (porta 5173) quanto em **produção**.
 
 ---
 
-## ðŸŽ¯ Como Funciona
+## 🎯 Como Funciona
 
-### EstratÃ©gia Dual
+### Estratégia Dual
 
-| Ambiente | MÃ©todo | Funcionamento |
+| Ambiente | Método | Funcionamento |
 |----------|--------|---------------|
-| **Localhost (5173)** | Widget Inline | Google Translate embeddado na pÃ¡gina |
-| **ProduÃ§Ã£o** | Redirecionamento | Abre translate.google.com com a URL |
+| **Localhost (5173)** | Widget Inline | Google Translate embeddado na página |
+| **Produção** | Redirecionamento | Abre translate.google.com com a URL |
 
-### Por que duas estratÃ©gias?
+### Por que duas estratégias?
 
-O **Google Translate** (via URL) **nÃ£o traduz pÃ¡ginas de localhost** - ele precisa de uma URL pÃºblica acessÃ­vel. Por isso:
+O **Google Translate** (via URL) **não traduz páginas de localhost** - ele precisa de uma URL pública acessível. Por isso:
 
 - Em desenvolvimento: Usamos o widget inline do Google Translate
-- Em produÃ§Ã£o: Redirecionamos para o serviÃ§o de traduÃ§Ã£o do Google
+- Em produção: Redirecionamos para o serviço de tradução do Google
 
 ---
 
-## ðŸŒ Idiomas Suportados
+## 🌍 Idiomas Suportados
 
-| CÃ³digo | Idioma | Bandeira |
+| Código | Idioma | Bandeira |
 |--------|--------|----------|
-| pt | PortuguÃªs | ðŸ‡§ðŸ‡· |
-| en | English | ðŸ‡ºðŸ‡¸ |
-| es | EspaÃ±ol | ðŸ‡ªðŸ‡¸ |
-| fr | FranÃ§ais | ðŸ‡«ðŸ‡· |
-| de | Deutsch | ðŸ‡©ðŸ‡ª |
-| it | Italiano | ðŸ‡®ðŸ‡¹ |
+| pt | Português | 🇧🇷 |
+| en | English | 🇺🇸 |
+| es | Español | 🇪🇸 |
+| fr | Français | 🇫🇷 |
+| de | Deutsch | 🇩🇪 |
+| it | Italiano | 🇮🇹 |
 
 ---
 
-## ðŸ“ Arquivos
+## 📁 Arquivos
 
 ```
 src/components/layout/
-â”œâ”€â”€ LanguageSwitcher.tsx           # Componente principal (header)
-â”‚   â”œâ”€â”€ LanguageSwitcher           # Dropdown com detecÃ§Ã£o
-â”‚   â””â”€â”€ LanguageSwitcherFooter     # Select compacto (footer)
+├── LanguageSwitcher.tsx           # Componente principal (header)
+│   ├── LanguageSwitcher           # Dropdown com detecção
+│   └── LanguageSwitcherFooter     # Select compacto (footer)
 ```
 
 ---
 
-## ðŸ–¼ï¸ Interface
+## 🖼️ Interface
 
 ### Header
 ```
-[ðŸ”] [ðŸŒ EN] [ðŸ‘¤ User]
-      â†‘
+[🔍] [🌐 EN] [👤 User]
+      ↑
    Clique: mostra dropdown com idiomas
 ```
 
-### Banner de DetecÃ§Ã£o (aparece automaticamente)
+### Banner de Detecção (aparece automaticamente)
 ```
-ðŸŒ Traduzir para English?
-Detectamos que seu navegador estÃ¡ em English.
+🌐 Traduzir para English?
+Detectamos que seu navegador está em English.
 (Modo desenvolvimento)
-[Traduzir] [NÃ£o, obrigado] [Ã—]
+[Traduzir] [Não, obrigado] [×]
 ```
 
 ### Footer
 ```
-ðŸŒ PortuguÃªs  Â© 2024 Portal EconÃ´mico Mundial
-   â†‘
+🌐 Português  © 2024 Portal Econômico Mundial
+   ↑
 Select para trocar idioma
 ```
 
 ---
 
-## ðŸ”§ Uso
+## 🔧 Uso
 
-### Para UsuÃ¡rios (Desenvolvimento Local)
+### Para Usuários (Desenvolvimento Local)
 
 1. **Acesse** `http://localhost:5173`
-2. Se seu navegador estÃ¡ em inglÃªs, um **banner aparecerÃ¡** apÃ³s 2 segundos
-3. Clique **"Traduzir"** - a pÃ¡gina serÃ¡ traduzida inline (sem redirecionamento)
-4. Ou use o Ã­cone ðŸŒ no header para escolher outro idioma
+2. Se seu navegador está em inglês, um **banner aparecerá** após 2 segundos
+3. Clique **"Traduzir"** - a página será traduzida inline (sem redirecionamento)
+4. Ou use o ícone 🌐 no header para escolher outro idioma
 
-### Para UsuÃ¡rios (ProduÃ§Ã£o)
+### Para Usuários (Produção)
 
 1. Acesse o site
-2. Clique no Ã­cone ðŸŒ no header
+2. Clique no ícone 🌐 no header
 3. Selecione o idioma desejado
-4. VocÃª serÃ¡ redirecionado para `translate.google.com` com a pÃ¡gina traduzida
+4. Você será redirecionado para `translate.google.com` com a página traduzida
 
 ---
 
-## âš™ï¸ ConfiguraÃ§Ã£o
+## ⚙️ Configuração
 
 ### Adicionar Novo Idioma
 
@@ -102,86 +102,86 @@ Edite `src/components/layout/LanguageSwitcher.tsx`:
 
 ```typescript
 const LANGUAGES: Language[] = [
-  { code: 'pt', name: 'PortuguÃªs', flag: 'ðŸ‡§ðŸ‡·', googleCode: 'pt' },
-  { code: 'en', name: 'English', flag: 'ðŸ‡ºðŸ‡¸', googleCode: 'en' },
+  { code: 'pt', name: 'Português', flag: '🇧🇷', googleCode: 'pt' },
+  { code: 'en', name: 'English', flag: '🇺🇸', googleCode: 'en' },
   // Adicione:
-  { code: 'ko', name: 'í•œêµ­ì–´', flag: 'ðŸ‡°ðŸ‡·', googleCode: 'ko' },
+  { code: 'ko', name: '한국어', flag: '🇰🇷', googleCode: 'ko' },
 ];
 ```
 
 ---
 
-## âš ï¸ LimitaÃ§Ãµes
+## ⚠️ Limitações
 
 ### Em Desenvolvimento (Localhost)
 
-- âœ… TraduÃ§Ã£o instantÃ¢nea na mesma pÃ¡gina
-- âœ… MantÃ©m sessÃ£o e estado
-- âš ï¸ Carrega script externo do Google
-- âš ï¸ Pode ter pequeno delay inicial
+- ✅ Tradução instantânea na mesma página
+- ✅ Mantém sessão e estado
+- ⚠️ Carrega script externo do Google
+- ⚠️ Pode ter pequeno delay inicial
 
-### Em ProduÃ§Ã£o
+### Em Produção
 
-- âœ… Traduz toda a pÃ¡gina automaticamente
-- âœ… Google Translate otimizado
-- âš ï¸ Redireciona para outro domÃ­nio
-- âš ï¸ URL muda para translate.google.com
+- ✅ Traduz toda a página automaticamente
+- ✅ Google Translate otimizado
+- ⚠️ Redireciona para outro domínio
+- ⚠️ URL muda para translate.google.com
 
 ---
 
-## ðŸ”’ Privacidade
+## 🔒 Privacidade
 
 - Nenhum dado enviado para nossos servidores
-- TraduÃ§Ã£o processada pelo Google
-- PreferÃªncia salva apenas localmente (localStorage)
+- Tradução processada pelo Google
+- Preferência salva apenas localmente (localStorage)
 
 ---
 
-## ðŸ› Troubleshooting
+## 🐛 Troubleshooting
 
-### "Can't translate this page" em produÃ§Ã£o
+### "Can't translate this page" em produção
 
-Isso Ã© normal se o site ainda nÃ£o estÃ¡ publicado. O Google Translate precisa de uma URL pÃºblica.
+Isso é normal se o site ainda não está publicado. O Google Translate precisa de uma URL pública.
 
-**SoluÃ§Ã£o:** Use o modo desenvolvimento (localhost:5173) para testar.
+**Solução:** Use o modo desenvolvimento (localhost:5173) para testar.
 
-### Widget nÃ£o aparece em localhost
+### Widget não aparece em localhost
 
-1. Verifique conexÃ£o com internet
-2. Desative bloqueadores de anÃºncios
+1. Verifique conexão com internet
+2. Desative bloqueadores de anúncios
 3. Verifique console do navegador (F12)
-4. Recarregue a pÃ¡gina (F5)
+4. Recarregue a página (F5)
 
-### Idioma nÃ£o muda
+### Idioma não muda
 
 1. Limpe localStorage: `localStorage.removeItem('pem_lang')`
-2. Recarregue a pÃ¡gina
+2. Recarregue a página
 3. Tente novamente
 
 ---
 
-## ðŸ“Š Testando
+## 📊 Testando
 
 ### Teste em Desenvolvimento
 
 ```bash
 npm run dev
 # Acesse http://localhost:5173
-# Mude idioma do navegador para inglÃªs
+# Mude idioma do navegador para inglês
 # Verifique se banner aparece
 ```
 
-### Teste em ProduÃ§Ã£o (simulado)
+### Teste em Produção (simulado)
 
 ```bash
 npm run build
 npm run preview
 # Acesse http://localhost:4173
-# Clique no Ã­cone ðŸŒ
+# Clique no ícone 🌐
 # Deve redirecionar para translate.google.com
 ```
 
 ---
 
-**VersÃ£o:** 3.0 (EstratÃ©gia Dual)
+**Versão:** 3.0 (Estratégia Dual)
 **Data:** 04/02/2024

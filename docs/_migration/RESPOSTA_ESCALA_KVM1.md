@@ -95,4 +95,4 @@ Resumo do que foi aplicado agora no repo:
 3. Medicao real de RPM/AdSense e ajustes finos (CWV, viewability, posicionamento de ads) com site no ar e indexado.
 
 ## Plano completo (ordem por dependencias)
-- `docs/SCALING_KVM1_EXECUTION.md`
+- `docs/ops/SCALING_KVM1_EXECUTION.md`

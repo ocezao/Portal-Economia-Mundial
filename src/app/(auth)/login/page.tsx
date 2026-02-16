@@ -45,13 +45,13 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const success = await login({ email, password });
-    
-    if (success) {
+    const result = await login({ email, password });
+
+    if (result.ok) {
       toast.success('Sucesso');
-      // O redirecionamento é feito pelo useEffect baseado em isAuthenticated/isAdmin
+      // O redirecionamento ?? feito pelo useEffect baseado em isAuthenticated/isAdmin
     } else {
-      toast.error('Erro');
+      toast.error(result.error.message);
     }
     
     setIsLoading(false);

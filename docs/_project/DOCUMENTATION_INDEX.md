@@ -1,4 +1,4 @@
-# 📚 Índice de Documentação - Cenario Internacional
+﻿# 📚 Índice de Documentação - Cenario Internacional
 
 Guia rápido de navegação para toda a documentação do projeto.
 
@@ -8,8 +8,8 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Quando Ler |
 |-----------|-----------|------------|
-| [README.md](./README.md) | Visão geral do projeto, tecnologias e primeiros passos | **Primeira leitura** |
-| [docs/00-visao-geral.md](./docs/00-visao-geral.md) | Introdução detalhada ao projeto | Após o README |
+| [README.md](../README.md) | Visão geral do projeto, tecnologias e primeiros passos | **Primeira leitura** |
+| [docs/00-visao-geral.md](../docs/00-visao-geral.md) | Introdução detalhada ao projeto | Após o README |
 
 ---
 
@@ -17,10 +17,10 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/01-arquitetura.md](./docs/01-arquitetura.md) | Arquitetura técnica, camadas e fluxo de dados | Backend/DevOps |
-| [docs/19-convencoes-desenvolvimento.md](./docs/19-convencoes-desenvolvimento.md) | Padrões de código e convenções | Todos os devs |
-| [docs/15-testing.md](./docs/15-testing.md) | Estratégia de testes automatizados | QA/Devs |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Como contribuir com o projeto | Contribuidores |
+| [docs/01-arquitetura.md](../docs/01-arquitetura.md) | Arquitetura técnica, camadas e fluxo de dados | Backend/DevOps |
+| [docs/19-convencoes-desenvolvimento.md](../docs/19-convencoes-desenvolvimento.md) | Padrões de código e convenções | Todos os devs |
+| [docs/15-testing.md](../docs/15-testing.md) | Estratégia de testes automatizados | QA/Devs |
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | Como contribuir com o projeto | Contribuidores |
 
 ---
 
@@ -28,9 +28,10 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/20-mcp-server.md](./docs/20-mcp-server.md) | **Documentação completa do MCP Server** | Backend/DevOps |
-| [mcp-server/INSTALL.md](./mcp-server/INSTALL.md) | **Guia de instalação do MCP** | DevOps |
-| [mcp-server/README.md](./mcp-server/README.md) | Referência rápida do MCP | Todos |
+| [docs/20-mcp-server.md](../docs/20-mcp-server.md) | **Documentação completa do MCP Server** | Backend/DevOps |
+| [mcp-server/INSTALL.md](../mcp-server/INSTALL.md) | **Guia de instalação do MCP** | DevOps |
+| [mcp-server/README.md](../mcp-server/README.md) | Referência rápida do MCP | Todos |
+| [docs/26-mcp-vps-admin.md](../docs/26-mcp-vps-admin.md) | MCP da VPS (administração) - servidor vps-admin | DevOps |
 
 **Funcionalidades do MCP v1.1.0:**
 - 📊 **Analytics completo** (6 ferramentas): tracking, métricas, sessões
@@ -50,11 +51,11 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/04-analytics-first-party.md](./docs/04-analytics-first-party.md) | Sistema de analytics próprio | Backend/Product |
-| [docs/05-lgpd-compliance.md](./docs/05-lgpd-compliance.md) | Conformidade com LGPD | Legal/Product |
-| [docs/10-data-model-postgres.md](./docs/10-data-model-postgres.md) | Modelo de dados do PostgreSQL | Backend |
-| [docs/08-data-governance.md](./docs/08-data-governance.md) | Governança de dados | Backend/Legal |
-| [docs/09-event-schema.md](./docs/09-event-schema.md) | Schema completo de eventos | Backend |
+| [docs/04-analytics-first-party.md](../docs/04-analytics-first-party.md) | Sistema de analytics próprio | Backend/Product |
+| [docs/05-lgpd-compliance.md](../docs/05-lgpd-compliance.md) | Conformidade com LGPD | Legal/Product |
+| [docs/10-data-model-postgres.md](../docs/10-data-model-postgres.md) | Modelo de dados do PostgreSQL | Backend |
+| [docs/08-data-governance.md](../docs/08-data-governance.md) | Governança de dados | Backend/Legal |
+| [docs/09-event-schema.md](../docs/09-event-schema.md) | Schema completo de eventos | Backend |
 
 ---
 
@@ -62,9 +63,9 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/02-seo-e-adsense.md](./docs/02-seo-e-adsense.md) | Estratégia de SEO e AdSense | Marketing/Dev |
-| [docs/GOOGLE_ADSENSE_MODEL_GUIDE.md](./docs/GOOGLE_ADSENSE_MODEL_GUIDE.md) | Guia para ser modelo AdSense | Marketing |
-| [docs/ANALISE_MERCADO_ADSENSE_BRASIL.md](./docs/ANALISE_MERCADO_ADSENSE_BRASIL.md) | Análise de mercado AdSense | Marketing |
+| [docs/02-seo-e-adsense.md](../docs/02-seo-e-adsense.md) | Estratégia de SEO e AdSense | Marketing/Dev |
+| [docs/seo/GOOGLE_ADSENSE_MODEL_GUIDE.md](../docs/seo/GOOGLE_ADSENSE_MODEL_GUIDE.md) | Guia para ser modelo AdSense | Marketing |
+| [docs/seo/ANALISE_MERCADO_ADSENSE_BRASIL.md](../docs/seo/ANALISE_MERCADO_ADSENSE_BRASIL.md) | Análise de mercado AdSense | Marketing |
 
 ---
 
@@ -72,7 +73,7 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/FINNHUB-GUIA-COMPLETO.md](./docs/FINNHUB-GUIA-COMPLETO.md) | **Documentação completa da Finnhub API** | Todos |
+| [docs/product/FINNHUB-GUIA-COMPLETO.md](../docs/product/FINNHUB-GUIA-COMPLETO.md) | **Documentação completa da Finnhub API** | Todos |
 
 ---
 
@@ -80,7 +81,7 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/03-design-system.md](./docs/03-design-system.md) | Design system completo | Frontend/Design |
+| [docs/03-design-system.md](../docs/03-design-system.md) | Design system completo | Frontend/Design |
 
 ---
 
@@ -88,12 +89,12 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| **[docs/22-deploy-producao-checklist.md](./docs/22-deploy-producao-checklist.md)** | **🆕 Checklist completo produção** | DevOps |
-| [docs/06-deploy-hostinger.md](./docs/06-deploy-hostinger.md) | Deploy no Hostinger | DevOps |
-| [docs/DEPLOY_SEGURO.md](./docs/DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy | DevOps |
-| [docs/17-cicd-pipeline.md](./docs/17-cicd-pipeline.md) | CI/CD Pipeline | DevOps |
-| [docs/14-deploy.md](./docs/14-deploy.md) | Deploy do analytics | DevOps |
-| [docs/21-image-processing.md](./docs/21-image-processing.md) | Processamento de imagens | DevOps |
+| **[docs/22-deploy-producao-checklist.md](../docs/22-deploy-producao-checklist.md)** | **🆕 Checklist completo produção** | DevOps |
+| [docs/06-deploy-hostinger.md](../docs/06-deploy-hostinger.md) | Deploy no Hostinger | DevOps |
+| [docs/ops/DEPLOY_SEGURO.md](../docs/ops/DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy | DevOps |
+| [docs/17-cicd-pipeline.md](../docs/17-cicd-pipeline.md) | CI/CD Pipeline | DevOps |
+| [docs/14-deploy.md](../docs/14-deploy.md) | Deploy do analytics | DevOps |
+| [docs/21-image-processing.md](../docs/21-image-processing.md) | Processamento de imagens | DevOps |
 
 ### Checklist Deploy Produção
 Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do progresso.
@@ -128,7 +129,7 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 📊 **Nota atual do projeto:** 6.8/10  
 🎯 **Com esses itens:** 9.0+/10
 
-👉 [Ver checklist completo com implementação](./docs/22-deploy-producao-checklist.md)
+👉 [Ver checklist completo com implementação](../docs/22-deploy-producao-checklist.md)
 
 ---
 
@@ -136,8 +137,8 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/AUDITORIA_SEGURANCA.md](./docs/AUDITORIA_SEGURANCA.md) | Relatório de auditoria de segurança | DevOps/Security |
-| [docs/CORRECOES_SEGURANCA_APLICADAS.md](./docs/CORRECOES_SEGURANCA_APLICADAS.md) | Correções aplicadas | DevOps |
+| [docs/audits/AUDITORIA_SEGURANCA.md](../docs/audits/AUDITORIA_SEGURANCA.md) | Relatório de auditoria de segurança | DevOps/Security |
+| [docs/_security/CORRECOES_SEGURANCA_APLICADAS.md](../docs/_security/CORRECOES_SEGURANCA_APLICADAS.md) | Correções aplicadas | DevOps |
 
 ---
 
@@ -145,7 +146,7 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
-| [docs/AUDITORIA_DATABASE.md](./docs/AUDITORIA_DATABASE.md) | Auditoria do banco de dados | Backend |
+| [docs/AUDITORIA_DATABASE.md](../docs/AUDITORIA_DATABASE.md) | Auditoria do banco de dados | Backend |
 
 ---
 
@@ -153,18 +154,18 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 
 | Documento | Descrição |
 |-----------|-----------|
-| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Histórico de mudanças |
-| [docs/AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md](./docs/AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md) | Arquivos não necessários |
-| [docs/RELATORIO_CODIGO_MORTO.md](./docs/RELATORIO_CODIGO_MORTO.md) | Código morto identificado |
-| [docs/RESUMO_LIMPEZA_FINAL.md](./docs/RESUMO_LIMPEZA_FINAL.md) | Resumo da limpeza |
+| [docs/meta/CHANGELOG.md](../docs/meta/CHANGELOG.md) | Histórico de mudanças |
+| [docs/AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md](../docs/AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md) | Arquivos não necessários |
+| [docs/RELATORIO_CODIGO_MORTO.md](../docs/RELATORIO_CODIGO_MORTO.md) | Código morto identificado |
+| [docs/RESUMO_LIMPEZA_FINAL.md](../docs/RESUMO_LIMPEZA_FINAL.md) | Resumo da limpeza |
 
 ---
 
 ## 🆕 Novidades Recentes (Fev/2026)
 
 ### MCP Server v1.1.0 - Integração com IA
-- [docs/20-mcp-server.md](./docs/20-mcp-server.md) - Documentação completa
-- [mcp-server/](./mcp-server/) - Código fonte
+- [docs/20-mcp-server.md](../docs/20-mcp-server.md) - Documentação completa
+- [mcp-server/](../mcp-server/) - Código fonte
 - **17 ferramentas** organizadas em 3 categorias:
   - Analytics (6): tracking completo
   - Gerenciamento de Conteúdo (7): CRUD de artigos com **todos os campos**
@@ -224,9 +225,9 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 | Documentação MCP completa | [docs/20-mcp-server.md](./docs/20-mcp-server.md) |
 | Configurar Codex CLI | [docs/20-mcp-server.md#configuração](./docs/20-mcp-server.md#️-configuração) |
 | Ver exemplos de uso MCP | [docs/20-mcp-server.md#exemplos-de-uso-avançado](./docs/20-mcp-server.md#-exemplos-de-uso-avançado) |
-| API Finnhub | [docs/FINNHUB-GUIA-COMPLETO.md](./docs/FINNHUB-GUIA-COMPLETO.md) |
+| API Finnhub | [docs/product/FINNHUB-GUIA-COMPLETO.md](../docs/product/FINNHUB-GUIA-COMPLETO.md) |
 | Checklist Deploy Produção | [docs/22-deploy-producao-checklist.md](./docs/22-deploy-producao-checklist.md) |
-| Deploy | [docs/DEPLOY_SEGURO.md](./docs/DEPLOY_SEGURO.md) |
+| Deploy | [docs/ops/DEPLOY_SEGURO.md](../docs/ops/DEPLOY_SEGURO.md) |
 | LGPD/Cookies | [docs/05-lgpd-compliance.md](./docs/05-lgpd-compliance.md) |
 | SEO/AdSense | [docs/02-seo-e-adsense.md](./docs/02-seo-e-adsense.md) |
 | Analytics | [docs/04-analytics-first-party.md](./docs/04-analytics-first-party.md) |
@@ -235,3 +236,4 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 ---
 
 **Última atualização:** 08/02/2026 (Atualizacao SEO portal-grade + docs)
+

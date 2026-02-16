@@ -103,4 +103,4 @@ Publicas (browser):
 - `NEXT_PUBLIC_SITE_URL` (obrigatorio em producao para canonical/sitemaps/robots corretos)
 
 ## Status atual
-Ver `RESPOSTA_ESCALA_KVM1.md` para "o que ja foi aplicado" e "o que falta".
+Ver `docs/_migration/RESPOSTA_ESCALA_KVM1.md` para "o que ja foi aplicado" e "o que falta".

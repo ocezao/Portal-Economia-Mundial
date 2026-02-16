@@ -16,6 +16,8 @@ out/
 
 # logs
 *.log
+*.err
+logs/
 
 # misc
 .DS_Store
@@ -24,6 +26,13 @@ out/
 public/uploads/
 *.webp
 
+# test/coverage artifacts (local only)
+coverage/
+test-results/
+playwright-report/
+tmp-*.html
+scripts/*report-*.json
+scripts/*-report-*.json
 
 # local build artifacts
 *.tsbuildinfo
@@ -35,3 +44,10 @@ supabase/.temp/
 # Scripts env
 .env.scripts
 .env.scripts.*
+
+# VPS (local only - contains secrets)
+scripts/vps-provision-manual.md
+scripts/vps-provision.sh
+docs/_security/SECURITY_STATUS_REAL.md
+docs/_reports/RELATORIO_SUBAGENTE_B.md
+

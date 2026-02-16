@@ -66,14 +66,14 @@ npm uninstall kimi-plugin-inspect-react
 |---------|--------|---------------|
 | `docs/TRADING_ECONOMICS_SETUP.md` | 🟡 Revisar | Setup de API específica - ainda em uso? |
 | `docs/CONTACT_FORMS_SETUP.md` | 🟢 Manter | Forms de contato são usados |
-| `docs/CORRECOES_SEGURANCA_APLICADAS.md` | 🟢 Manter | Histórico de segurança |
+| `docs/_security/CORRECOES_SEGURANCA_APLICADAS.md` | 🟢 Manter | Histórico de segurança |
 
 ### 3.3 Documentações Duplicadas/Alternativas
 
 | Arquivo | Duplicado com | Ação |
 |---------|---------------|------|
 | `docs/07-checklist-qa.md` | `docs/07-event-versioning.md` | 🟡 Mesmo número - revisar nomenclatura |
-| `docs/08-changelog.md` | `docs/CHANGELOG.md` | 🟡 Consolidar |
+| `docs/08-changelog.md` | `docs/meta/CHANGELOG.md` | 🟡 Consolidar |
 | `docs/14-deploy.md` | `docs/06-deploy-hostinger.md` | 🟡 Consolidar |
 
 ---

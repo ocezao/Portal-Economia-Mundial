@@ -104,8 +104,8 @@ Nota atual vs grandes portais (infra + SEO + base tecnica, sem contar volume de 
 - Checklist de export/backup.
 - Processo consistente de migrations por ambiente.
 
-Referencia completa: `docs/ROADMAP_ESCALA_SEM_VPS.md`
+Referencia completa: `docs/ops/ROADMAP_ESCALA_SEM_VPS.md`
 
 Backup (sem VPS):
-- Guia: `docs/BACKUP_SEM_VPS.md`
+- Guia: `docs/ops/BACKUP_SEM_VPS.md`
 - Script: `scripts/export-supabase-content.mjs`

@@ -315,7 +315,7 @@ Dependencias:
 7.1 Export periodico (gratis)
 - Dump de conteudo (SQL) manual ou via GitHub Actions (se possivel/permitido) ou ao menos checklist operacional.
 - Export JSON via Service Role (nao depende de VPS):
-  - Guia: `docs/BACKUP_SEM_VPS.md`
+  - Guia: `docs/ops/BACKUP_SEM_VPS.md`
   - Script: `scripts/export-supabase-content.mjs`
 
 7.2 Versionamento de migrations

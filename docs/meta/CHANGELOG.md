@@ -186,3 +186,11 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 ---
 
 **Nota:** Este changelog foca na documentação e especificação técnica. Mudanças de código são adicionadas à medida que o sistema é implementado.
+
+## Atualizacao operacional - 2026-02-16
+
+- Metabase: dashboard principal `Tracking Completo - Executivo` (ID `3`).
+- URL de acesso: `https://metabase.cenariointernacional.com.br/dashboard/3-tracking-completo-executivo`.
+- Filtro global de dias habilitado no dashboard (`periodo_global`).
+- Cobertura de mapeamento do filtro: `20/20` cards.
+- Script de automacao adicionado: `scripts/metabase/apply-dashboard-date-filter.py`.

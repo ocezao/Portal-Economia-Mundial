@@ -12,7 +12,7 @@ Portal de notícias profissional especializado em geopolítica, economia interna
 - **Backend**: Supabase (Postgres + Auth + Edge Functions)
 - **Ícones**: Lucide React
 
-> **Nota:** Migração concluída para Next.js App Router (Vite/React Router removidos). Veja [MIGRATION_LOG.md](./MIGRATION_LOG.md) para histórico.
+> **Nota:** Migração concluída para Next.js App Router (Vite/React Router removidos). Veja [MIGRATION_LOG.md](./docs/_migration/MIGRATION_LOG.md) para histórico.
 
 ## 📁 Estrutura
 
@@ -65,7 +65,7 @@ npm run lint
 
 ## 🔒 Segurança
 
-Veja o **[Relatório de Auditoria de Segurança](./docs/AUDITORIA_SEGURANCA.md)** para detalhes completos.
+Veja o **[Relatório de Auditoria de Segurança](./docs/audits/AUDITORIA_SEGURANCA.md)** para detalhes completos.
 
 ### Checklist Pré-Deploy
 
@@ -245,7 +245,7 @@ const trends = await getRecommendationTrends('AAPL');
 2. **Earnings na Home** - Próximos resultados trimestrais
 3. **EconomicAgenda** - Calendário econômico
 
-📚 **[Documentação Completa da Integração](./docs/FINNHUB-GUIA-COMPLETO.md)**
+📚 **[Documentação Completa da Integração](./docs/product/FINNHUB-GUIA-COMPLETO.md)**
 
 ---
 
@@ -335,8 +335,8 @@ Veja a pasta [`/docs`](./docs):
 
 | Documento | Descrição |
 |-----------|-----------|
-| [`AUDITORIA_SEGURANCA.md`](./docs/AUDITORIA_SEGURANCA.md) | 🔒 **Relatório de segurança completo** |
-| [`FINNHUB-GUIA-COMPLETO.md`](./docs/FINNHUB-GUIA-COMPLETO.md) | 📈 **Guia completo Finnhub API** |
+| [`AUDITORIA_SEGURANCA.md`](./docs/audits/AUDITORIA_SEGURANCA.md) | 🔒 **Relatório de segurança completo** |
+| [`FINNHUB-GUIA-COMPLETO.md`](./docs/product/FINNHUB-GUIA-COMPLETO.md) | 📈 **Guia completo Finnhub API** |
 | [`AUDITORIA_DATABASE.md`](./docs/AUDITORIA_DATABASE.md) | 📊 **Auditoria do banco de dados** |
 | [`00-visao-geral.md`](./docs/00-visao-geral.md) | Visão geral do projeto |
 | [`01-arquitetura.md`](./docs/01-arquitetura.md) | Arquitetura e padrões |
@@ -364,4 +364,4 @@ O projeto está preparado para integração com backend real:
 
 ---
 
-**⚠️ IMPORTANTE:** Antes de fazer deploy em produção, leia o [Relatório de Auditoria de Segurança](./docs/AUDITORIA_SEGURANCA.md) e execute o checklist de segurança.
+**⚠️ IMPORTANTE:** Antes de fazer deploy em produção, leia o [Relatório de Auditoria de Segurança](./docs/audits/AUDITORIA_SEGURANCA.md) e execute o checklist de segurança.

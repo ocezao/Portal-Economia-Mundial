@@ -264,14 +264,22 @@ docker compose exec postgres psql -U analytics -d pem_analytics -c "
 
 ### Primeiro Acesso
 
-1. Acesse: http://localhost:3001
-2. Complete o setup inicial (criar conta)
-3. Adicione a conexão PostgreSQL:
-   - Host: `postgres`
-   - Port: `5432`
-   - Database: `pem_analytics`
-   - Username: `analytics`
-   - Password: (ver .env)
+1. Acesse: http://localhost:3001 (ou o subdomínio `metabase.<seu-dominio>` se estiver atrás do Nginx)
+2. Complete o setup inicial (criar conta admin)
+3. Conecte o Metabase ao banco que contém os dados de analytics.
+
+Opção A (recomendada): via API (sem clicar na UI)
+
+- Configure no `.env` (na VPS, não commitar):
+  - `METABASE_URL` (ex: `https://metabase.cenariointernacional.com.br`)
+  - `METABASE_API_KEY` (API key admin do Metabase)
+  - `SUPABASE_DB_URL` (Postgres do Supabase) ou `METABASE_SOURCE_DB_URL`
+- Rode: `npm run metabase:setup`
+
+Opção B: via UI do Metabase
+
+- Admin -> Databases -> Add database -> PostgreSQL
+- Use as credenciais do Postgres (ex: Supabase Postgres com SSL habilitado).
 
 ### Queries de Exemplo
 
@@ -324,3 +332,16 @@ docker compose exec -T postgres psql -U analytics -d pem_analytics < backup.sql
 
 **Data de criação:** 2024-01-20  
 **Última atualização:** 2024-02-03 (adicionado verify.sh)
+
+---
+
+## Atualizacao operacional (2026-02-16)
+
+- Dashboard principal definido no Metabase:
+  - `Tracking Completo - Executivo` (ID `3`)
+  - URL: `https://metabase.cenariointernacional.com.br/dashboard/3-tracking-completo-executivo`
+- Filtro global por dias habilitado no dashboard principal:
+  - Parametro: `periodo_global`
+  - Cobertura: `20/20` cards mapeados
+- Script de automacao em lote:
+  - `scripts/metabase/apply-dashboard-date-filter.py`

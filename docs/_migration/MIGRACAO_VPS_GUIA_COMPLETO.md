@@ -344,8 +344,8 @@ systemctl restart nginx
 
 - `README.md` - Visão geral do projeto
 - `docs/06-deploy-hostinger.md` - Deploy em hospedagem compartilhada
-- `SECURITY_AUDIT_REPORT.md` - Auditoria de segurança
-- `MIGRATION_LOG.md` - Histórico de migrações
+- `docs/_security/SECURITY_AUDIT_REPORT.md` - Auditoria de segurança
+- `docs/_migration/MIGRATION_LOG.md` - Histórico de migrações
 
 ### Skills dos Agentes
 

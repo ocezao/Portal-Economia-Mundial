@@ -28,10 +28,10 @@
 
 **Arquivos:**
 - `docs/08-changelog.md` (mantido como base)
-- `docs/CHANGELOG.md` (conteúdo migrado para 08-changelog.md)
+- `docs/meta/CHANGELOG.md` (conteúdo migrado para 08-changelog.md)
 
 **Ação:** 
-- Manter `docs/CHANGELOG.md` na raiz como padrão do projeto
+- Manter `docs/meta/CHANGELOG.md` como padrão do projeto
 - Remover `docs/08-changelog.md`
 - Atualizar conteúdo consolidado em CHANGELOG.md
 
@@ -44,7 +44,7 @@
 - `docs/FINNHUB_INTEGRACAO.md` (endpoints implementados)
 - `docs/FINNHUB_ENDPOINTS_ANALISE.md` (endpoints disponíveis)
 
-**Novo arquivo:** `docs/FINNHUB-GUIA-COMPLETO.md`
+**Novo arquivo:** `docs/product/FINNHUB-GUIA-COMPLETO.md`
 
 **Estrutura do novo documento:**
 ```

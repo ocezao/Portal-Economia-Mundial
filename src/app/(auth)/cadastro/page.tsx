@@ -44,13 +44,18 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    const success = await register({ name, email, password });
-    
-    if (success) {
-      toast.success('Sucesso');
-      router.push('/app');
+    const result = await register({ name, email, password });
+
+    if (result.ok) {
+      if (result.needsEmailConfirmation) {
+        toast.info('Conta criada. Confirme seu e-mail para entrar.');
+        router.replace('/login');
+      } else {
+        toast.success('Sucesso');
+        router.push('/app');
+      }
     } else {
-      toast.error('Erro');
+      toast.error(result.error.message);
     }
     
     setIsLoading(false);

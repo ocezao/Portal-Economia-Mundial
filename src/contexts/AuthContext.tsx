@@ -26,8 +26,8 @@ interface AuthContextType {
   error: AuthError | null;
 
   // Ações
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  register: (data: RegisterData) => Promise<boolean>;
+  login: (credentials: LoginCredentials) => Promise<{ ok: true } | { ok: false; error: AuthError }>;
+  register: (data: RegisterData) => Promise<{ ok: true; needsEmailConfirmation: boolean } | { ok: false; error: AuthError }>;
   logout: () => void;
   clearError: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -109,6 +109,27 @@ const updateSupabaseMetadata = async (updates: Partial<User>) => {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function mapSupabaseAuthError(err: unknown): AuthError {
+  const message =
+    err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : '';
+  const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status?: unknown }).status) : null;
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('email not confirmed')) {
+    return { code: 'AUTH_EMAIL_NOT_CONFIRMED', message: 'Confirme seu e-mail antes de entrar.' };
+  }
+
+  if (normalized.includes('invalid login credentials') || status === 400) {
+    return { code: 'AUTH_INVALID_CREDENTIALS', message: 'E-mail ou senha incorretos.' };
+  }
+
+  if (normalized.includes('rate limit') || status === 429) {
+    return { code: 'AUTH_RATE_LIMITED', message: 'Muitas tentativas. Aguarde e tente novamente.' };
+  }
+
+  return { code: 'AUTH_UNKNOWN_ERROR', message: message || 'Erro ao autenticar. Tente novamente.' };
+}
+
 // ==================== PROVIDER ====================
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -184,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Login
-  const login = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<{ ok: true } | { ok: false; error: AuthError }> => {
     setIsLoading(true);
     setError(null);
 
@@ -194,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         message: 'Supabase nÃ£o configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.',
       });
       setIsLoading(false);
-      return false;
+      return { ok: false, error: { code: 'AUTH_SUPABASE_NOT_CONFIGURED', message: 'Supabase nao configurado.' } };
     }
 
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -203,22 +224,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (signInError) {
-      setError({
-        code: 'status' in signInError && signInError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
-        message: signInError.message || 'E-mail ou senha incorretos',
-      });
+      const authErr = mapSupabaseAuthError(signInError);
+      setError(authErr);
       setIsLoading(false);
-      return false;
+      return { ok: false, error: authErr };
     }
 
     if (!data.session?.user) {
-      setError({
+      const authErr: AuthError = {
         code: 'AUTH_NO_SESSION',
-        message: 'Sessão não encontrada. Tente novamente.',
-      });
+        message: 'Sessao nao encontrada. Tente novamente.',
+      };
+      setError(authErr);
       setIsLoading(false);
-      return false;
+      return { ok: false, error: authErr };
     }
+
 
     const mappedUser = mapSupabaseUser(data.session.user);
     const lastLogin = new Date().toISOString();
@@ -227,11 +248,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateSupabaseMetadata({ lastLogin });
 
     setIsLoading(false);
-    return true;
+    return { ok: true };
   }, []);
 
   // Registro
-  const register = useCallback(async (data: RegisterData): Promise<boolean> => {
+  const register = useCallback(async (data: RegisterData): Promise<{ ok: true; needsEmailConfirmation: boolean } | { ok: false; error: AuthError }> => {
     setIsLoading(true);
     setError(null);
 
@@ -241,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         message: 'Supabase nÃ£o configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.',
       });
       setIsLoading(false);
-      return false;
+      return { ok: false, error: { code: 'AUTH_SUPABASE_NOT_CONFIGURED', message: 'Supabase nao configurado.' } };
     }
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -257,22 +278,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (signUpError) {
-      setError({
-        code: 'status' in signUpError && signUpError.status === 400 ? 'AUTH_INVALID_CREDENTIALS' : 'AUTH_UNKNOWN_ERROR',
-        message: signUpError.message || 'Erro ao criar conta. Tente novamente.',
-      });
+      const authErr = mapSupabaseAuthError(signUpError);
+      setError(authErr);
       setIsLoading(false);
-      return false;
+      return { ok: false, error: authErr };
     }
+
 
     if (signUpData.session?.user) {
       const mappedUser = mapSupabaseUser(signUpData.session.user);
       setUser(mappedUser);
       setSessionExpiresAt(signUpData.session.expires_at ? signUpData.session.expires_at * 1000 : null);
+      setIsLoading(false);
+      return { ok: true, needsEmailConfirmation: false };
     }
 
     setIsLoading(false);
-    return true;
+    return { ok: true, needsEmailConfirmation: true };
   }, []);
 
   // Logout

@@ -1,8 +1,13 @@
-# Documentação do Cenario Internacional
+﻿# Documentação do Cenario Internacional
 
 Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 ---
+
+## Leituras Recomendadas (atalhos)
+
+- Indice geral (navegacao por topicos): `docs/_project/DOCUMENTATION_INDEX.md`
+- Requisitos para executar sem interrupcoes (inputs/credenciais): `docs/_ops/REQUISITOS_PARA_EXECUCAO_SEM_INTERROMPER.md`
 
 ## 📚 Índice de Documentação
 
@@ -20,7 +25,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | 02 | [SEO e AdSense](./02-seo-e-adsense.md) | Estratégia de SEO e integração com Google AdSense |
 | 03 | [Design System](./03-design-system.md) | Paleta de cores, tipografia, componentes e padrões de design |
 | 06 | [Deploy Hostinger](./06-deploy-hostinger.md) | Guia de deploy no Hostinger |
-| DEPLOY | [Deploy Seguro](./DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy |
+| DEPLOY | [Deploy Seguro](./ops/DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy |
 
 ### Analytics First-Party
 
@@ -34,6 +39,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | 10 | [Data Model PostgreSQL](./10-data-model-postgres.md) | Modelo de dados do PostgreSQL |
 | 11 | [Data Quality](./11-data-quality.md) | Qualidade de dados e monitoramento |
 | 14 | [Deploy Analytics](./14-deploy.md) | Guia de deploy do sistema analytics |
+| 27 | [Metabase Dashboard Principal](./27-metabase-dashboard-principal.md) | Dashboard principal de tracking e filtro global por dias |
 
 ### Qualidade e Testes
 
@@ -47,7 +53,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | # | Documento | Descrição |
 |---|-----------|-----------|
 | 16 | [API REST](./16-api-rest.md) | Especificação OpenAPI, endpoints e integração |
-| FINNHUB | [Finnhub - Guia Completo](./FINNHUB-GUIA-COMPLETO.md) | Integração completa com Finnhub API |
+| FINNHUB | [Finnhub - Guia Completo](./product/FINNHUB-GUIA-COMPLETO.md) | Integração completa com Finnhub API |
 
 ### CI/CD e DevOps
 
@@ -60,13 +66,14 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | # | Documento | Descrição |
 |---|-----------|-----------|
 | 18 | [Tradução Automática](./18-traducao-automatica.md) | Removido do app (mantido apenas para referência) |
-| 20 | [Contato e Carreiras](./CONTACT_FORMS_SETUP.md) | Setup dos formulários e tabelas (Supabase) |
+| 20 | [Contato e Carreiras](./product/CONTACT_FORMS_SETUP.md) | Setup dos formulários e tabelas (Supabase) |
 
 ### 🤖 Integração com IA (MCP)
 
 | # | Documento | Descrição |
 |---|-----------|-----------|
 | 20 | [MCP Server](./20-mcp-server.md) | Servidor Model Context Protocol para integração com Codex CLI |
+| 26 | [MCP da VPS (Admin)](./26-mcp-vps-admin.md) | MCP exclusivo da VPS para administração (vps-admin) |
 
 ### Contribuição
 
@@ -85,13 +92,13 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 | Arquivo | Descrição |
 |---------|-----------|
-| [CHANGELOG.md](../CHANGELOG.md) | Histórico de mudanças (formato Keep a Changelog) |
+| [CHANGELOG.md](./meta/CHANGELOG.md) | Histórico de mudanças (formato Keep a Changelog) |
 
 ### Auditorias e Relatórios
 
 | Arquivo | Descrição |
 |---------|-----------|
-| [AUDITORIA_SEGURANCA.md](./AUDITORIA_SEGURANCA.md) | Relatório de auditoria de segurança |
+| [AUDITORIA_SEGURANCA.md](./audits/AUDITORIA_SEGURANCA.md) | Relatório de auditoria de segurança |
 | [CORRECOES_SEGURANCA_2026-02-10.md](./CORRECOES_SEGURANCA_2026-02-10.md) | Correções de segurança aplicadas (10/02/2026) |
 | [GUIA_SEGURANCA_DESENVOLVEDORES.md](./GUIA_SEGURANCA_DESENVOLVEDORES.md) | Guia de boas práticas de segurança |
 | [AUDITORIA_DATABASE.md](./AUDITORIA_DATABASE.md) | Auditoria do banco de dados |
@@ -107,7 +114,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 1. [00-visao-geral.md](./00-visao-geral.md)
 2. [03-design-system.md](./03-design-system.md)
 3. [15-testing.md](./15-testing.md)
-4. [FINNHUB-GUIA-COMPLETO.md](./FINNHUB-GUIA-COMPLETO.md)
+4. [FINNHUB-GUIA-COMPLETO.md](./product/FINNHUB-GUIA-COMPLETO.md)
 5. [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ### Desenvolvedor Backend/DevOps
@@ -158,4 +165,5 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 ---
 
-**Última atualização:** 08/02/2026
+**Última atualização:** 16/02/2026
+

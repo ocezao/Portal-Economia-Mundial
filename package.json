@@ -26,7 +26,8 @@
     "image:sanitize": "node scripts/process-image.mjs --sanitize",
     "test:image-processor": "node scripts/test-image-processor.mjs",
     "analyze": "cross-env ANALYZE=true next build",
-    "optimize-images": "node scripts/optimize-images.mjs"
+    "optimize-images": "node scripts/optimize-images.mjs",
+    "metabase:setup": "node scripts/metabase/setup-metabase.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
