@@ -1,4 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { isEmailConfigured, sendEmailSafe } from '@/lib/server/email';
+import {
+  accountCreatedTemplate,
+  accountEmailUpdatedTemplate,
+  accountPasswordUpdatedTemplate,
+} from '@/lib/server/emailTemplates';
 
 type Payload = Record<string, unknown> & { action?: string };
 
@@ -17,22 +23,11 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-function getAdminClient() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  if (!url || !serviceKey) {
-    throw new Error('Missing env. Set SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY.');
-  }
-  return createClient(url, serviceKey, {
-    auth: { persistSession: false },
-  });
-}
-
 async function requireAdmin(req: Request) {
   const token = getBearerToken(req);
   if (!token) return { ok: false as const, status: 401, message: 'Nao autenticado' };
 
-  const admin = getAdminClient();
+  const admin = getSupabaseAdminClient();
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user) return { ok: false as const, status: 401, message: 'Sessao invalida' };
 
@@ -109,6 +104,16 @@ export async function POST(req: Request) {
         await admin.from('profiles').upsert({ id: userId, name, role: role ?? 'user' }, { onConflict: 'id' });
       }
 
+      if (isEmailConfigured()) {
+        const tpl = accountCreatedTemplate(name || email);
+        await sendEmailSafe({
+          to: email,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
+      }
+
       return json({ ok: true, userId });
     }
 
@@ -125,6 +130,16 @@ export async function POST(req: Request) {
       }
 
       await admin.from('profiles').upsert({ id: userId, name, role }, { onConflict: 'id' });
+
+      if (email && isEmailConfigured()) {
+        const tpl = accountEmailUpdatedTemplate(name || email);
+        await sendEmailSafe({
+          to: email,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
+      }
       return json({ ok: true });
     }
 
@@ -135,6 +150,22 @@ export async function POST(req: Request) {
 
       const { error } = await admin.auth.admin.updateUserById(userId, { password });
       if (error) return json({ error: error.message }, 500);
+
+      if (isEmailConfigured()) {
+        const { data: userData } = await admin.auth.admin.getUserById(userId);
+        const email = userData.user?.email;
+        const name = ((userData.user?.user_metadata as { name?: string } | undefined)?.name) || email || 'Usuario';
+
+        if (email) {
+          const tpl = accountPasswordUpdatedTemplate(name);
+          await sendEmailSafe({
+            to: email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+        }
+      }
 
       return json({ ok: true });
     }
@@ -155,4 +186,3 @@ export async function POST(req: Request) {
     return json({ error: message }, 500);
   }
 }
-

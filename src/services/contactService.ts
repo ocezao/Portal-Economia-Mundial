@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabaseClient';
-
 export type ContactMessageInput = {
   name: string;
   email: string;
@@ -24,32 +22,23 @@ export type JobApplicationInput = {
 };
 
 export async function createContactMessage(input: ContactMessageInput) {
-  const { error } = await supabase.from('contact_messages').insert({
-    name: input.name,
-    email: input.email,
-    phone: input.phone ?? null,
-    subject: input.subject,
-    category: input.category,
-    message: input.message,
-    user_id: input.userId ?? null,
+  const response = await fetch('/api/contact-messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
   });
 
-  if (error) throw error;
+  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+  if (!response.ok) throw new Error(payload.error || 'Falha ao enviar mensagem');
 }
 
 export async function createJobApplication(input: JobApplicationInput) {
-  const { error } = await supabase.from('career_applications').insert({
-    name: input.name,
-    email: input.email,
-    phone: input.phone ?? null,
-    role: input.role,
-    location: input.location ?? null,
-    linkedin_url: input.linkedinUrl ?? null,
-    portfolio_url: input.portfolioUrl ?? null,
-    resume_url: input.resumeUrl ?? null,
-    cover_letter: input.coverLetter,
-    user_id: input.userId ?? null,
+  const response = await fetch('/api/career-applications', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
   });
 
-  if (error) throw error;
+  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+  if (!response.ok) throw new Error(payload.error || 'Falha ao enviar candidatura');
 }

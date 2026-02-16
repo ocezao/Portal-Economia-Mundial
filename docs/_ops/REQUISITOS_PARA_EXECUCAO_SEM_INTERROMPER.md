@@ -47,6 +47,8 @@ o MCP pode falhar com erro de transporte. Nesses casos, use SSH direto a partir 
 ### O que falta voce fornecer/confirmar
 - Qual e a fonte de verdade do `.env` de producao (arquivo na VPS vs este `.env` local).
 - Credenciais do provedor de email/newsletter (se for requisito agora).
+  - Status atual: Hostinger SMTP definido como padrao.
+  - Variaveis necessarias: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURITY`, `FROM_EMAIL`, `FROM_NAME`, `REPLY_TO`.
 - Chaves VAPID se push web for requisito agora.
 
 ## 4) Contas de terceiros (quando aplicavel)
