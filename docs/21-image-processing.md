@@ -1,119 +1,92 @@
-# Image Processing and Uploads (CIN)
+# Upload e Processamento de Imagens (CIN)
 
-This document describes how image uploads work in the CIN project, including WebP conversion and SVG support.
+Este documento descreve o fluxo real de upload de midia no CIN, incluindo conversao para WebP e suporte a SVG.
 
-## Overview
+## Visao geral
 
-- Raster images are processed with Sharp and stored as `.webp`.
-- Vector images (`.svg`) are stored as `.svg` (no Sharp processing), with basic server-side safety checks.
-- Files are stored in Supabase Storage under `SUPABASE_UPLOAD_BUCKET` (default: `uploads`).
-- Object paths follow: `yyyy/mm/<uuid>.(webp|svg)`
+- Upload e feito via API interna: `POST /api/upload`.
+- Imagens raster sao processadas com Sharp e armazenadas como `.webp`.
+- Arquivos vetoriais (`.svg`) sao armazenados como `.svg` (sem conversao).
+- Os arquivos sao gravados no Supabase Storage no bucket definido por `SUPABASE_UPLOAD_BUCKET` (default: `uploads`).
+- O path de storage segue o padrao: `yyyy/mm/<uuid>.(webp|svg)`.
 
-## Admin Panel
+## Painel admin
 
-- Admin page: `/admin/arquivos`
-  - Upload (uses `/api/upload`)
-  - List/search/filter files (uses `/api/admin-files`)
-  - Copy public URL
-  - Delete file
+- Pagina: `/admin/arquivos`
+  - Upload (usa `POST /api/upload`)
+  - Listagem/Busca/Filtro/Exclusao (usa `GET|DELETE /api/admin-files`)
+  - Copia de URL publica
 
-## API Endpoints
+Arquivos relevantes:
+- `src/app/admin/arquivos/page.tsx`
+- `src/components/upload/ImageUploader.tsx`
+
+## API
 
 ### `POST /api/upload`
 
-Uploads a file and stores it in Supabase Storage.
-
 Auth:
-- Required: `Authorization: Bearer <access_token>` (Supabase session token)
-- Permission: admin-only (checked from user role metadata)
+- Obrigatorio: `Authorization: Bearer <access_token>` (token da sessao Supabase)
+- Permissao: admin-only (checado via role do usuario)
 
-Limits:
-- Max file size: 10MB
-- Rate limit: 30 uploads/minute per IP (best-effort in-memory)
+Limites (baseline atual):
+- Tamanho maximo: 10MB
+- Rate limit best-effort: 30 uploads/min por IP
 
-Accepted types:
+Tipos aceitos:
 - Raster: `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `image/avif`
-- Vector: `image/svg+xml` (or `.svg` extension fallback)
+- Vetor: `image/svg+xml` (ou fallback por extensao `.svg`)
 
-Raster behavior:
-- Converted to WebP (`.webp`)
-- Optional resize via `width`/`height` (clamped to 4096)
-- Optional watermark (`watermark=true`)
-- Metadata removal by default (`keepMetadata=false`)
+Campos (multipart/form-data):
+- `file` (obrigatorio)
+- `quality` (opcional, 1-95, default 85) para raster
+- `width`, `height` (opcional) para raster (clamp em 4096)
+- `watermark` (opcional: `true|false`) para raster
+- `keepMetadata` (opcional: `true|false`) para raster
 
-SVG behavior:
-- Stored as `.svg` (no conversion)
-- Basic safety checks reject SVGs containing:
+Comportamento raster:
+- Conversao para WebP
+- Resize opcional (fit inside, sem enlarging)
+- Metadados removidos por padrao (preserva apenas se `keepMetadata=true`)
+
+Comportamento SVG:
+- Armazenado como `.svg`
+- Validacao basica para recusar SVGs com conteudo potencialmente inseguro:
   - `<script ...>`
-  - inline event handlers (`on*=` attributes)
-  - `javascript:` URLs
+  - atributos `on*=` (handlers inline)
+  - `javascript:`
   - `<foreignObject ...>`
-  - `<!ENTITY ...>` (to avoid entity expansion)
+  - `<!ENTITY ...>`
 
-Request (multipart/form-data):
-- `file`: required
-- `quality`: optional (1-95, default 85) for raster only
-- `width`, `height`: optional for raster only
-- `watermark`: optional (`true|false`) for raster only
-- `keepMetadata`: optional (`true|false`) for raster only
-
-Response (success):
-```json
-{
-  "success": true,
-  "file": {
-    "filename": "uuid.webp",
-    "url": "https://.../storage/v1/object/public/<bucket>/yyyy/mm/uuid.webp",
-    "originalName": "original.ext",
-    "originalSize": "123.45 KB",
-    "processedSize": "67.89 KB",
-    "reduction": "45.0%",
-    "format": "webp",
-    "metadata": { "removed": true, "hadGPS": false }
-  }
-}
-```
+Arquivo: `src/app/api/upload/route.ts`
 
 ### `GET|DELETE /api/admin-files`
 
-Lists and deletes uploaded files (recursive listing).
+Listagem recursiva e exclusao de arquivos do bucket de upload.
 
 Auth:
-- Required: `Authorization: Bearer <access_token>` (Supabase session token)
-- Permission: user must have `profiles.role = 'admin'`
+- Obrigatorio: `Authorization: Bearer <access_token>`
+- Permissao: `profiles.role = 'admin'`
 
-`GET /api/admin-files` response:
-```json
-{
-  "ok": true,
-  "bucket": "uploads",
-  "files": [
-    {
-      "name": "uuid.webp",
-      "path": "yyyy/mm/uuid.webp",
-      "size": 12345,
-      "contentType": "image/webp",
-      "updatedAt": "2026-02-17T00:00:00.000Z",
-      "publicUrl": "https://.../storage/v1/object/public/<bucket>/yyyy/mm/uuid.webp",
-      "isVector": false
-    }
-  ]
-}
-```
+Bucket:
+- `SUPABASE_UPLOAD_BUCKET` (default: `uploads`)
+
+`GET /api/admin-files` retorna:
+- `{ ok, bucket, files[] }`
+- `files[]` inclui: `name`, `path`, `size`, `contentType`, `updatedAt`, `publicUrl`, `isVector`
 
 `DELETE /api/admin-files` body:
 ```json
 { "path": "yyyy/mm/uuid.webp" }
 ```
 
-## Environment Variables
+Arquivo: `src/app/api/admin-files/route.ts`
 
-- `SUPABASE_UPLOAD_BUCKET`: Supabase Storage bucket for uploads (default: `uploads`)
+## Variaveis de ambiente
 
-## Key Files
+- `SUPABASE_UPLOAD_BUCKET` (opcional; default: `uploads`)
+
+## Referencias no codigo
 
 - `src/app/api/upload/route.ts`
-- `src/components/upload/ImageUploader.tsx`
-- `src/app/admin/arquivos/page.tsx`
 - `src/app/api/admin-files/route.ts`
-
