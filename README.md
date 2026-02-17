@@ -1,36 +1,138 @@
-# Cenario Internacional (CIN)
+﻿# Cenario Internacional (CIN)
 
-Portal de not?cias focado em geopol?tica, economia internacional e tecnologia.
+> **Portal de notícias internacional** focado em geopolítica, economia global e tecnologia, pensado para combinar **jornalismo estruturado**, **SEO forte** e **operação enxuta**.
 
-## Stack atual
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Em%20Evolucao-F59E0B)
+
+---
+
+## Visão do Projeto
+
+O CIN foi desenhado para ser um portal de conteúdo com padrão profissional, mas com arquitetura pragmática e custos controlados.
+
+A ideia central do produto é:
+
+- transformar temas complexos (geopolítica/economia) em conteúdo claro e navegável;
+- crescer organicamente com SEO técnico consistente;
+- manter independência operacional com stack moderna e simples de manter;
+- permitir evolução contínua sem reescrever a base inteira.
+
+## Como o Projeto Foi Pensado
+
+A construção foi guiada por 4 pilares:
+
+1. **Conteúdo como ativo principal**
+- Estrutura editorial com categorias, autores, páginas institucionais e área administrativa.
+
+2. **Distribuição e retenção**
+- Estratégia de newsletter com double opt-in e automações por email.
+
+3. **Base técnica escalável**
+- Next.js App Router + Supabase + APIs internas para evitar dependências desnecessárias.
+
+4. **Governança e operação**
+- Documentação extensa, checklists de deploy e trilha de auditorias técnicas.
+
+---
+
+## Funcionalidades Principais
+
+### Público / Portal
+
+- Home editorial com destaques e blocos temáticos
+- Páginas de notícias, categorias, autor e busca
+- Seções dedicadas (`/mercados`, `/dados-economicos`, `/calendario-economico`, etc.)
+- Sitemap, RSS e robots para SEO técnico
+
+### Relacionamento e Captação
+
+- Formulário de contato (`/fale-conosco`)
+- Formulário de carreiras (`/trabalhe-conosco`)
+- Newsletter com confirmação por token (double opt-in)
+
+### Administração
+
+- Área admin para gestão operacional
+- APIs de administração de usuários
+- Upload/processamento de imagens com validações
+
+### Observabilidade e Robustez
+
+- Health check de aplicação (`/api/health`)
+- Endpoint de telemetria de erros (`/api/telemetry/error`)
+- Validações com Zod em fluxos críticos de entrada
+
+---
+
+## Arquitetura Atual
+
+**Stack técnica**
 
 - Framework: Next.js 16 (App Router)
 - Frontend: React 19 + TypeScript
-- Estiliza??o: Tailwind CSS + shadcn/ui
-- Backend de dados e auth: Supabase (Postgres + Auth)
+- UI: Tailwind CSS + shadcn/ui
+- Dados e Auth: Supabase (Postgres + Auth)
 - Email transacional: SMTP Hostinger (Nodemailer)
-- Ferramentas auxiliares: MCP Server (`mcp-server/`) e collector (`collector/`)
+- Serviços auxiliares: `mcp-server/` e `collector/`
 
-## Estrutura do reposit?rio
+**Estrutura do repositório**
 
 ```text
 /src
-  /app           # Rotas e p?ginas (Next.js App Router)
-    /(auth)      # Grupo de autentica??o
-    /api         # API Routes do app
+  /app           # Rotas e páginas (Next.js App Router)
+    /(auth)      # Grupo de autenticação
+    /api         # API Routes
   /components
   /config
   /hooks
   /lib
   /services
   /types
-/collector       # Analytics collector (servi?o separado)
+/collector       # Serviço de analytics separado
 /mcp-server      # Servidor MCP
 /supabase        # Migrations e functions
-/docs            # Documenta??o
+/docs            # Documentação funcional e operacional
 ```
 
-## Desenvolvimento
+---
+
+## API Routes Reais do Projeto
+
+Todas implementadas em `src/app/api`:
+
+- `POST /api/admin-users`
+- `POST /api/career-applications`
+- `POST /api/contact-messages`
+- `GET|HEAD /api/health`
+- `POST /api/newsletter/subscribe`
+- `GET /api/newsletter/confirm`
+- `POST /api/telemetry/error`
+- `POST /api/upload`
+
+Documentação detalhada: `docs/16-api-rest.md`
+
+---
+
+## Newsletter (Fluxo Atual)
+
+1. `POST /api/newsletter/subscribe` cria/atualiza lead pendente
+2. sistema gera token com expiração
+3. usuário recebe email com link de confirmação
+4. `GET /api/newsletter/confirm?token=...` ativa inscrição
+5. notificações internas são enviadas via SMTP
+
+Dependências:
+
+- tabela `leads` no Supabase
+- variáveis SMTP configuradas
+
+---
+
+## Desenvolvimento Local
 
 ```bash
 npm install
@@ -41,11 +143,9 @@ npm run lint
 npm run test
 ```
 
-## Vari?veis de ambiente
+### Variáveis de ambiente mínimas
 
 Use `.env.example` como base.
-
-M?nimo para app web + APIs internas:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=
@@ -66,60 +166,41 @@ CAREERS_INBOX_EMAIL=
 NEWSLETTER_INBOX_EMAIL=
 ```
 
-Observa??es:
-- `BUTTONDOWN_API_KEY` ? opcional. Se vazio, o fluxo segue apenas com banco + SMTP.
-- N?o commitar `.env` com credenciais reais.
+Notas:
 
-## API Routes atuais
+- `BUTTONDOWN_API_KEY` é opcional
+- não commitar `.env` com credenciais reais
 
-Todas expostas em `src/app/api`:
-
-- `POST /api/admin-users`
-- `POST /api/career-applications`
-- `POST /api/contact-messages`
-- `GET|HEAD /api/health`
-- `POST /api/newsletter/subscribe`
-- `GET /api/newsletter/confirm`
-- `POST /api/telemetry/error`
-- `POST /api/upload`
-
-Refer?ncia detalhada: `docs/16-api-rest.md`.
-
-## Newsletter (estado atual)
-
-Fluxo implementado:
-
-1. `POST /api/newsletter/subscribe` cria/atualiza lead pendente com token.
-2. Envia email de confirma??o com link para `/api/newsletter/confirm?token=...`.
-3. `GET /api/newsletter/confirm` ativa a inscri??o.
-4. Envia notifica??es via SMTP (assinante + inbox interna).
-
-Depend?ncias operacionais:
-- Tabela `leads` no Supabase (com campos de confirma??o)
-- SMTP configurado
+---
 
 ## Deploy
 
-Para deploy com funcionalidades din?micas (API routes), use runtime Node.js (VPS/host com Node).
+Para manter funcionalidades dinâmicas (API Routes), usar runtime Node.js.
 
-Com `output: 'export'`, APIs internas n?o funcionam.
+Com `output: 'export'`, APIs internas não funcionam.
 
-Guias:
+Referências:
+
 - `docs/22-deploy-producao-checklist.md`
 - `docs/24-deploy-vps-execucao-manual.md`
 - `docs/ops/DEPLOY_SEGURO.md`
 
-## Documenta??o
+---
 
-- ?ndice principal: `docs/README.md`
-- ?ndice de navega??o r?pida: `docs/_project/DOCUMENTATION_INDEX.md`
+## Documentação do Projeto
+
+- Índice geral: `docs/README.md`
+- Índice rápido: `docs/_project/DOCUMENTATION_INDEX.md`
 - Arquitetura: `docs/01-arquitetura.md`
-- Seguran?a: `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
-- Auditoria de seguran?a: `docs/audits/AUDITORIA_SEGURANCA.md`
+- API: `docs/16-api-rest.md`
+- Segurança: `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
+- Auditoria de segurança: `docs/audits/AUDITORIA_SEGURANCA.md`
 
-## Status real do projeto
+---
+
+## Estado Atual
 
 - `npm run build`: passando
-- `npm run lint`: possui pend?ncias
+- `npm run lint`: ainda possui pendências
 
-N?o considerar o projeto ?100% pronto? enquanto lint/testes obrigat?rios n?o estiverem verdes no pipeline.
+> O projeto não deve ser tratado como “100% concluído” enquanto lint/testes de qualidade não estiverem totalmente verdes no pipeline.
