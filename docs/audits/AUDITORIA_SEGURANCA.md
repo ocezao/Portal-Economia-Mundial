@@ -1,39 +1,39 @@
-# 🔒 Relatório de Auditoria de Segurança
+﻿# ðŸ”’ RelatÃ³rio de Auditoria de SeguranÃ§a
 
-> ⚠️ **NOTA HISTÓRICA:** Este relatório foi gerado em 04/02/2026. Algumas referências de arquivos podem estar desatualizadas devido à migração para Next.js App Router e limpeza de código realizada posteriormente. Consulte a documentação atual para a estrutura de arquivos mais recente.
+> âš ï¸ **NOTA HISTÃ“RICA:** Este relatÃ³rio foi gerado em 04/02/2026. Algumas referÃªncias de arquivos podem estar desatualizadas devido Ã  migraÃ§Ã£o para Next.js App Router e limpeza de cÃ³digo realizada posteriormente. Consulte a documentaÃ§Ã£o atual para a estrutura de arquivos mais recente.
 
 **Data:** 04/02/2026  
 **Projeto:** Cenario Internacional (CIN)  
 **Realizado por:** Kimi Code CLI  
-**Status:** ✅ CONCLUÍDO (Histórico)
+**Status:** âœ… CONCLUÃDO (HistÃ³rico)
 
 ---
 
-## 📊 Resumo Executivo
+## ðŸ“Š Resumo Executivo
 
 | Severidade | Quantidade | Status |
 |------------|------------|--------|
-| 🔴 CRÍTICO | 1 | **REQUER AÇÃO IMEDIATA** |
-| 🟠 MÉDIO | 5 | Recomendado corrigir antes do deploy |
-| 🟡 BAIXO | 8 | Boas práticas a implementar |
-| ✅ OK | - | Sem problemas identificados |
+| ðŸ”´ CRÃTICO | 1 | **REQUER AÃ‡ÃƒO IMEDIATA** |
+| ðŸŸ  MÃ‰DIO | 5 | Recomendado corrigir antes do deploy |
+| ðŸŸ¡ BAIXO | 8 | Boas prÃ¡ticas a implementar |
+| âœ… OK | - | Sem problemas identificados |
 
 ---
 
-## 🔴 PROBLEMAS CRÍTICOS
+## ðŸ”´ PROBLEMAS CRÃTICOS
 
 ### 1. Senha Hardcoded no Collector
 **Arquivo:** `collector/src/db/index.ts`  
 **Linha:** 12  
-**Severidade:** 🔴 CRÍTICO
+**Severidade:** ðŸ”´ CRÃTICO
 
 ```typescript
 password: process.env.POSTGRES_PASSWORD || 'dev_password_123',
 ```
 
-**Risco:** A senha padrão `'dev_password_123'` expõe o banco de dados caso a variável de ambiente não esteja configurada.
+**Risco:** A senha padrÃ£o `'dev_password_123'` expÃµe o banco de dados caso a variÃ¡vel de ambiente nÃ£o esteja configurada.
 
-**Correção:**
+**CorreÃ§Ã£o:**
 ```typescript
 const password = process.env.POSTGRES_PASSWORD;
 if (!password) {
@@ -49,17 +49,16 @@ const config: PoolConfig = {
 
 ---
 
-## 🟠 PROBLEMAS MÉDIOS
+## ðŸŸ  PROBLEMAS MÃ‰DIOS
 
-### 2. Console.log em Produção
-**Arquivos afetados:** Múltiplos (ver lista abaixo)  
-**Severidade:** 🟠 MÉDIO
+### 2. Console.log em ProduÃ§Ã£o
+**Arquivos afetados:** MÃºltiplos (ver lista abaixo)  
+**Severidade:** ðŸŸ  MÃ‰DIO
 
 Arquivos com console.log/warn/error:
 - `src/contexts/AuthContext.tsx:208`
 - `src/lib/supabaseClient.ts:8`
 - `src/config/storage.ts:132`
-- `src/hooks/useAppSettings.ts:40,66`
 - `src/services/economics/finnhubService.ts:319,327,338,712,720,725,729`
 - `src/services/economics/tradingEconomicsService.ts:133`
 - `src/services/economics/worldBankService.ts:136,293`
@@ -69,14 +68,13 @@ Arquivos com console.log/warn/error:
 - `src/pages/Home.tsx:61`
 - `src/pages/UserDashboard.tsx:117`
 - `src/components/news/RelatedArticles.tsx:28`
-- `src/hooks/useReadingLimit.ts:64,75,110`
 - `src/hooks/useBookmarks.ts:47,94,119,138`
 - `src/hooks/useLocalStorage.ts:17,33`
 - `src/hooks/useReadingHistory.ts:39`
 
-**Risco:** Logs podem expor dados sensíveis em produção.
+**Risco:** Logs podem expor dados sensÃ­veis em produÃ§Ã£o.
 
-**Correção:** Substituir por um logger condicional:
+**CorreÃ§Ã£o:** Substituir por um logger condicional:
 ```typescript
 const logger = {
   error: (...args: unknown[]) => {
@@ -93,20 +91,20 @@ const logger = {
 
 ### 3. Dados em localStorage sem Criptografia
 **Arquivos:** `src/config/storage.ts`, hooks diversos  
-**Severidade:** 🟠 MÉDIO
+**Severidade:** ðŸŸ  MÃ‰DIO
 
 Dados armazenados sem criptografia:
-- Token de autenticação (`pem_auth_token`)
-- Dados do usuário (`pem_user`, `pem_profile`)
-- Histórico de leitura (`pem_reading_history`)
-- Questionários (`pem_survey_data`)
+- Token de autenticaÃ§Ã£o (`pem_auth_token`)
+- Dados do usuÃ¡rio (`pem_user`, `pem_profile`)
+- HistÃ³rico de leitura (`pem_reading_history`)
+- QuestionÃ¡rios (`pem_survey_data`)
 - Dados financeiros/analytics (`pem_market_data`)
 
-**Risco:** Dados acessíveis via XSS ou acesso físico ao dispositivo.
+**Risco:** Dados acessÃ­veis via XSS ou acesso fÃ­sico ao dispositivo.
 
-**Correção:** Implementar criptografia básica ou usar sessionStorage para dados sensíveis:
+**CorreÃ§Ã£o:** Implementar criptografia bÃ¡sica ou usar sessionStorage para dados sensÃ­veis:
 ```typescript
-// Para dados sensíveis, usar sessionStorage
+// Para dados sensÃ­veis, usar sessionStorage
 export const secureStorage = {
   set: (key: string, value: unknown) => {
     sessionStorage.setItem(key, JSON.stringify(value));
@@ -119,35 +117,35 @@ export const secureStorage = {
 };
 ```
 
-### 4. dangerouslySetInnerHTML sem Sanitização
+### 4. dangerouslySetInnerHTML sem SanitizaÃ§Ã£o
 **Arquivos:**
 - `src/pages/AdminNewsEdit.tsx:711`
 - `src/pages/Article.tsx:189`
 - `src/components/news/ArticleContent.tsx:55`
 - `src/components/ui/chart.tsx:83`
 
-**Severidade:** 🟠 MÉDIO
+**Severidade:** ðŸŸ  MÃ‰DIO
 
-**Risco:** Potencial XSS se conteúdo não for confiável.
+**Risco:** Potencial XSS se conteÃºdo nÃ£o for confiÃ¡vel.
 
-**Status:** No `Article.tsx:189` é seguro (JSON.stringify de objeto controlado). Os outros precisam de revisão.
+**Status:** No `Article.tsx:189` Ã© seguro (JSON.stringify de objeto controlado). Os outros precisam de revisÃ£o.
 
-### 5. API Keys Exp no Código (Mesmo via env)
+### 5. API Keys Exp no CÃ³digo (Mesmo via env)
 **Arquivos:**
 - `src/services/economics/finnhubService.ts:15`
 - `src/services/economics/tradingEconomicsService.ts:8`
 
-**Severidade:** 🟠 MÉDIO
+**Severidade:** ðŸŸ  MÃ‰DIO
 
-**Observação:** As APIs usam `import.meta.env` corretamente, mas as chaves ainda são visíveis no build. Para APIs pagas, considerar proxy no backend.
+**ObservaÃ§Ã£o:** As APIs usam `import.meta.env` corretamente, mas as chaves ainda sÃ£o visÃ­veis no build. Para APIs pagas, considerar proxy no backend.
 
 ---
 
-## 🟡 PROBLEMAS BAIXOS
+## ðŸŸ¡ PROBLEMAS BAIXOS
 
-### 6. Kimi Plugin em Produção
+### 6. Kimi Plugin em ProduÃ§Ã£o
 **Arquivo:** `vite.config.ts:9`  
-**Severidade:** 🟡 BAIXO
+**Severidade:** ðŸŸ¡ BAIXO
 
 ```typescript
 plugins: [inspectAttr(), react()],
@@ -155,7 +153,7 @@ plugins: [inspectAttr(), react()],
 
 **Risco:** Plugin de desenvolvimento pode afetar performance.
 
-**Correção:**
+**CorreÃ§Ã£o:**
 ```typescript
 plugins: [
   ...(import.meta.env.DEV ? [inspectAttr()] : []),
@@ -163,55 +161,42 @@ plugins: [
 ],
 ```
 
-### 7. Comentários Expositivos
+### 7. ComentÃ¡rios Expositivos
 **Arquivo:** `src/services/economics/finnhubService.ts`  
 **Linhas:** 1-11  
-**Severidade:** 🟡 BAIXO
+**Severidade:** ðŸŸ¡ BAIXO
 
-Comentários detalhados sobre a API podem ajudar atacantes.
+ComentÃ¡rios detalhados sobre a API podem ajudar atacantes.
 
-### 8. Validação de URL Fraca
+### 8. ValidaÃ§Ã£o de URL Fraca
 **Arquivo:** `src/pages/UserProfile.tsx:179`  
-**Severidade:** 🟡 BAIXO
+**Severidade:** ðŸŸ¡ BAIXO
 
 ```typescript
-newErrors.website = 'URL inválida (deve começar com http:// ou https://)';
+newErrors.website = 'URL invÃ¡lida (deve comeÃ§ar com http:// ou https://)';
 ```
 
-Validação apenas verifica prefixo, não estrutura completa.
+ValidaÃ§Ã£o apenas verifica prefixo, nÃ£o estrutura completa.
 
-### 9. UUID Fallback Inseguro
-**Arquivo:** `src/hooks/useReadingLimit.ts:31-34`  
-**Severidade:** 🟡 BAIXO
-
-```typescript
-const generated =
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-```
-
-Fallback usando Math.random() não é criptograficamente seguro.
-
-### 10. Dados de Usuário no localStorage
+### 10. Dados de UsuÃ¡rio no localStorage
 **Arquivo:** `src/pages/AdminDiagnostico.tsx:119`  
-**Severidade:** 🟡 BAIXO
+**Severidade:** ðŸŸ¡ BAIXO
 
 ```typescript
 const registeredUsers = storage.get<Array<unknown>>('pem_registered_users') || [];
 ```
 
-Lista de usuários armazenada localmente.
+Lista de usuÃ¡rios armazenada localmente.
 
 ### 11. SQL Injection Potencial (Edge Functions)
 **Arquivos:** `supabase/functions/`  
-**Severidade:** 🟡 BAIXO
+**Severidade:** ðŸŸ¡ BAIXO
 
-Requer revisão das Edge Functions para garantir uso de prepared statements.
+Requer revisÃ£o das Edge Functions para garantir uso de prepared statements.
 
 ### 12. XSS via JSON-LD
 **Arquivo:** `src/pages/Article.tsx:189`  
-**Severidade:** 🟡 BAIXO
+**Severidade:** ðŸŸ¡ BAIXO
 
 ```typescript
 <script
@@ -220,35 +205,35 @@ Requer revisão das Edge Functions para garantir uso de prepared statements.
 />
 ```
 
-Embora `JSON.stringify` escape caracteres, dados dinâmicos em `articleJsonLd` precisam ser validados.
+Embora `JSON.stringify` escape caracteres, dados dinÃ¢micos em `articleJsonLd` precisam ser validados.
 
 ---
 
-## ✅ PONTOS POSITIVOS
+## âœ… PONTOS POSITIVOS
 
-1. **Uso correto de variáveis de ambiente** - Todas as configurações sensíveis usam `import.meta.env`
+1. **Uso correto de variÃ¡veis de ambiente** - Todas as configuraÃ§Ãµes sensÃ­veis usam `import.meta.env`
 2. **Supabase Auth implementado** - Sistema de auth seguro com tokens auto-refresh
 3. **RLS habilitado** - Tabelas do Supabase com Row Level Security
-4. **Validação de formulários** - Uso de Zod para validação
-5. **CSP potencial** - Estrutura permite implementação de Content Security Policy
-6. **HTTPS forçado** - Todas as URLs de API usam HTTPS
+4. **ValidaÃ§Ã£o de formulÃ¡rios** - Uso de Zod para validaÃ§Ã£o
+5. **CSP potencial** - Estrutura permite implementaÃ§Ã£o de Content Security Policy
+6. **HTTPS forÃ§ado** - Todas as URLs de API usam HTTPS
 
 ---
 
-## 📝 RECOMENDAÇÕES GERAIS
+## ðŸ“ RECOMENDAÃ‡Ã•ES GERAIS
 
 ### Antes do Deploy
 
 1. **Corrigir senha hardcoded** no collector
-2. **Remover console.logs** ou torná-los condicionais
+2. **Remover console.logs** ou tornÃ¡-los condicionais
 3. **Revisar** todos os `dangerouslySetInnerHTML`
 4. **Configurar CSP** (Content Security Policy)
 5. **Habilitar HTTPS-only** cookies
 
-### Configurações de Deploy
+### ConfiguraÃ§Ãµes de Deploy
 
 ```nginx
-# Exemplo de headers de segurança (nginx)
+# Exemplo de headers de seguranÃ§a (nginx)
 add_header X-Frame-Options "SAMEORIGIN" always;
 add_header X-Content-Type-Options "nosniff" always;
 add_header X-XSS-Protection "1; mode=block" always;
@@ -256,7 +241,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
 ```
 
-### Variáveis de Ambiente Obrigatórias
+### VariÃ¡veis de Ambiente ObrigatÃ³rias
 
 ```bash
 # Frontend (.env)
@@ -273,28 +258,29 @@ POSTGRES_PASSWORD=<SENHA_FORTE_OBRIGATORIA>
 
 ---
 
-## 🔍 CHECKLIST PRÉ-DEPLOY
+## ðŸ” CHECKLIST PRÃ‰-DEPLOY
 
 - [ ] Senha hardcoded removida do collector
 - [ ] Console.logs removidos ou protegidos
 - [ ] dangerouslySetInnerHTML revisados
-- [ ] localStorage para dados sensíveis removido/substituído
-- [ ] Headers de segurança configurados
+- [ ] localStorage para dados sensÃ­veis removido/substituÃ­do
+- [ ] Headers de seguranÃ§a configurados
 - [ ] HTTPS habilitado em todos os endpoints
-- [ ] Variáveis de ambiente configuradas em produção
-- [ ] Testes de penetração básicos realizados
-- [ ] Dependências atualizadas (`npm audit`)
+- [ ] VariÃ¡veis de ambiente configuradas em produÃ§Ã£o
+- [ ] Testes de penetraÃ§Ã£o bÃ¡sicos realizados
+- [ ] DependÃªncias atualizadas (`npm audit`)
 
 ---
 
-## 📞 Próximos Passos
+## ðŸ“ž PrÃ³ximos Passos
 
-1. Corrigir problema CRÍTICO #1 imediatamente
-2. Implementar correções para problemas MÉDIOS
-3. Revisar código das Edge Functions
-4. Executar testes de segurança automatizados
+1. Corrigir problema CRÃTICO #1 imediatamente
+2. Implementar correÃ§Ãµes para problemas MÃ‰DIOS
+3. Revisar cÃ³digo das Edge Functions
+4. Executar testes de seguranÃ§a automatizados
 5. Documentar procedimentos de resposta a incidentes
 
 ---
 
-**Fim do Relatório**
+**Fim do RelatÃ³rio**
+

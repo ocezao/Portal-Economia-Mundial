@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin Dashboard - Painel Administrativo Completo
  * 100% Responsivo - Mobile First
  * Refatorado: Componentes divididos para melhor manutenibilidade
@@ -43,7 +43,6 @@ import {
   getAllArticles,
   getScheduledArticles,
 } from '@/services/newsManager';
-import { updateAppSettings } from '@/services/appSettings';
 import {
   createAdminUser,
   updateAdminUser,
@@ -88,7 +87,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     return 'dashboard';
   }, [pathname]);
 
-  // Calendário
+  // CalendÃ¡rio
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -98,7 +97,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
   const [editScheduledOpen, setEditScheduledOpen] = useState(false);
   const [scheduledToEdit, setScheduledToEdit] = useState<{ id: string; scheduledDate: string; scheduledTime: string } | null>(null);
 
-  // Formulários
+  // FormulÃ¡rios
   const [showUserForm, setShowUserForm] = useState(false);
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [userToEdit, setUserToEdit] = useState<SystemUser | null>(null);
@@ -149,11 +148,6 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     selectedArticles,
     toggleArticleSelection,
     selectAllArticles,
-    appSettings,
-    setAppSettings,
-    isSettingsLoading,
-    isSettingsSaving,
-    setIsSettingsSaving,
     users,
     loadUsers,
     authors,
@@ -186,7 +180,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     [router]
   );
 
-  // Verificar publicações agendadas periodicamente
+  // Verificar publicaÃ§Ãµes agendadas periodicamente
   useEffect(() => {
     const interval = setInterval(() => {
       void checkScheduled();
@@ -204,7 +198,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     if (!articleToDelete) return;
     const success = await deleteArticle(articleToDelete.slug);
     if (success) {
-      toast.success(`Artigo "${articleToDelete.title}" excluído!`);
+      toast.success(`Artigo "${articleToDelete.title}" excluÃ­do!`);
       await loadData();
     }
     setDeleteDialogOpen(false);
@@ -240,7 +234,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     await loadData();
   }, [scheduledToEdit, loadData]);
 
-  // Handlers de usuários
+  // Handlers de usuÃ¡rios
   const handleAddUser = useCallback(() => {
     setIsEditingUser(false);
     setUserFormData({
@@ -278,24 +272,24 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
   const saveUser = useCallback(async () => {
     if (!userFormData.name || !userFormData.email) {
-      toast.error('Nome e email são obrigatórios!');
+      toast.error('Nome e email sÃ£o obrigatÃ³rios!');
       return;
     }
 
     if (!isEditingUser) {
       if (!userFormData.password || !userFormData.confirmPassword) {
-        toast.error('Senha é obrigatória para novo usuário');
+        toast.error('Senha Ã© obrigatÃ³ria para novo usuÃ¡rio');
         return;
       }
       if (userFormData.password !== userFormData.confirmPassword) {
-        toast.error('As senhas não conferem');
+        toast.error('As senhas nÃ£o conferem');
         return;
       }
     }
 
     if (userFormData.password && userFormData.confirmPassword) {
       if (userFormData.password !== userFormData.confirmPassword) {
-        toast.error('As senhas não conferem');
+        toast.error('As senhas nÃ£o conferem');
         return;
       }
       if (userFormData.password.length < 6) {
@@ -320,7 +314,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           });
         }
 
-        toast.success('Usuário atualizado com sucesso!');
+        toast.success('UsuÃ¡rio atualizado com sucesso!');
       } else {
         await createAdminUser({
           name: userFormData.name,
@@ -328,27 +322,27 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           password: userFormData.password ?? '',
           role: (userFormData.role as UserRole) ?? 'user',
         });
-        toast.success('Usuário criado com sucesso!');
+        toast.success('UsuÃ¡rio criado com sucesso!');
       }
 
       setShowUserForm(false);
       await loadUsers();
     } catch {
-      toast.error('Erro ao salvar usuário');
+      toast.error('Erro ao salvar usuÃ¡rio');
     }
   }, [userFormData, isEditingUser, userToEdit, loadUsers]);
 
   const handleDeleteUser = useCallback(async (user: SystemUser) => {
     if (user.id === currentUser?.id) {
-      toast.error('Você não pode excluir sua própria conta!');
+      toast.error('VocÃª nÃ£o pode excluir sua prÃ³pria conta!');
       return;
     }
     try {
       await deleteAdminUser({ userId: user.id });
-      toast.success(`Usuário "${user.name}" excluído!`);
+      toast.success(`UsuÃ¡rio "${user.name}" excluÃ­do!`);
       await loadUsers();
     } catch {
-      toast.error('Erro ao excluir usuário');
+      toast.error('Erro ao excluir usuÃ¡rio');
     }
   }, [currentUser?.id, loadUsers]);
 
@@ -399,34 +393,34 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
   const saveAuthor = useCallback(async () => {
     if (!authorFormData.name.trim()) {
-      toast.error('Nome é obrigatório');
+      toast.error('Nome Ã© obrigatÃ³rio');
       return;
     }
     if (!authorFormData.slug.trim()) {
-      toast.error('Slug é obrigatório');
+      toast.error('Slug Ã© obrigatÃ³rio');
       return;
     }
     if (!authorFormData.shortName.trim()) {
-      toast.error('Nome curto é obrigatório');
+      toast.error('Nome curto Ã© obrigatÃ³rio');
       return;
     }
     if (!authorFormData.title.trim()) {
-      toast.error('Cargo/título é obrigatório');
+      toast.error('Cargo/tÃ­tulo Ã© obrigatÃ³rio');
       return;
     }
     if (!authorFormData.bio.trim()) {
-      toast.error('Bio curta é obrigatória');
+      toast.error('Bio curta Ã© obrigatÃ³ria');
       return;
     }
 
     const longBio = authorFormData.longBio.trim() || authorFormData.bio.trim();
 
     if (!authorFormData.photo.trim()) {
-      toast.error('Foto (caminho em /public) é obrigatória');
+      toast.error('Foto (caminho em /public) Ã© obrigatÃ³ria');
       return;
     }
     if (!authorFormData.email.trim()) {
-      toast.error('Email é obrigatório');
+      toast.error('Email Ã© obrigatÃ³rio');
       return;
     }
 
@@ -499,21 +493,10 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     }
   }, [loadAuthors]);
 
-  // Handlers de configurações
-  const saveAppSettings = useCallback(async () => {
-    setIsSettingsSaving(true);
-    try {
-      await updateAppSettings(appSettings);
-      toast.success('Configurações salvas!');
-    } catch {
-      toast.error('Erro ao salvar configurações');
-    } finally {
-      setIsSettingsSaving(false);
-    }
-  }, [appSettings, setIsSettingsSaving]);
+  // Handlers de configuraÃ§Ãµes
 
   const handleReset = useCallback(async () => {
-    if (confirm('ATENÇÃO: Isso apagará todas as alterações. Continuar?')) {
+    if (confirm('ATENÃ‡ÃƒO: Isso apagarÃ¡ todas as alteraÃ§Ãµes. Continuar?')) {
       await resetToDefault();
       toast.success('Dados resetados!');
       await loadData();
@@ -522,13 +505,13 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
   const handleAssignPostsToAdmin = useCallback(async () => {
     if (!currentUser?.id) {
-      toast.error('Admin não identificado');
+      toast.error('Admin nÃ£o identificado');
       return;
     }
     if (!confirm('Atribuir todos os posts ao admin atual?')) return;
     try {
       const count = await assignAllArticlesToAuthor(currentUser.id, currentUser.name || 'Admin CIN');
-      toast.success(`${count} post(s) atribuídos ao admin atual`);
+      toast.success(`${count} post(s) atribuÃ­dos ao admin atual`);
       await loadData();
     } catch {
       toast.error('Erro ao atribuir posts ao admin');
@@ -560,7 +543,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
   const exportUsersCSV = useCallback(() => {
     const csv = [
-      ['ID', 'Nome', 'Email', 'Tipo', 'Região', 'Profissão', 'Empresa', 'Data de Cadastro', 'Último Login', 'Status'].join(','),
+      ['ID', 'Nome', 'Email', 'Tipo', 'RegiÃ£o', 'ProfissÃ£o', 'Empresa', 'Data de Cadastro', 'Ãšltimo Login', 'Status'].join(','),
       ...users.map((u) =>
         [
           u.id,
@@ -583,10 +566,10 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     a.download = `cin-usuarios-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Usuários exportados!');
+    toast.success('UsuÃ¡rios exportados!');
   }, [users]);
 
-  // Handlers de calendário
+  // Handlers de calendÃ¡rio
   const prevMonth = useCallback(() => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   }, [currentMonth]);
@@ -603,7 +586,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
   // Alertas
   const alerts = [];
   if (stats.scheduled > 0) {
-    alerts.push({ type: 'info' as const, message: `${stats.scheduled} artigo(s) agendado(s) para publicação` });
+    alerts.push({ type: 'info' as const, message: `${stats.scheduled} artigo(s) agendado(s) para publicaÃ§Ã£o` });
   }
   if (selectedArticles.length > 0) {
     alerts.push({ type: 'warning' as const, message: `${selectedArticles.length} artigo(s) selecionado(s)` });
@@ -620,7 +603,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
             <section>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#111111]">Painel Administrativo</h1>
               <p className="text-sm text-[#6b6b6b]">
-                Bem-vindo, {currentUser?.name} • Acesso total ao sistema
+                Bem-vindo, {currentUser?.name} â€¢ Acesso total ao sistema
               </p>
             </section>
           </section>
@@ -662,7 +645,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           </section>
         )}
 
-        {/* Conteúdo das Tabs */}
+        {/* ConteÃºdo das Tabs */}
         <div className="space-y-4">
           {activeTab === 'dashboard' && (
             <DashboardStats
@@ -748,11 +731,6 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
           {activeTab === 'settings' && (
             <SettingsPanel
-              appSettings={appSettings}
-              isLoading={isSettingsLoading}
-              isSaving={isSettingsSaving}
-              onSettingsChange={setAppSettings}
-              onSave={saveAppSettings}
               onReset={handleReset}
               onAssignPosts={handleAssignPostsToAdmin}
               onExport={handleExport}
@@ -761,17 +739,17 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           )}
         </div>
 
-        {/* Dialog de Exclusão de Artigo */}
+        {/* Dialog de ExclusÃ£o de Artigo */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent className="max-w-sm sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-[#ef4444]">
-                <AlertTriangle className="w-5 h-5" /> Confirmar Exclusão
+                <AlertTriangle className="w-5 h-5" /> Confirmar ExclusÃ£o
               </DialogTitle>
               <DialogDescription>
                 Tem certeza que deseja excluir o artigo <strong>&quot;{articleToDelete?.title}&quot;</strong>?
                 <br />
-                Esta ação não pode ser desfeita.
+                Esta aÃ§Ã£o nÃ£o pode ser desfeita.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -785,7 +763,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Edição de Agendamento */}
+        {/* Dialog de EdiÃ§Ã£o de Agendamento */}
         <Dialog open={editScheduledOpen} onOpenChange={setEditScheduledOpen}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
@@ -822,11 +800,11 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Formulário de Usuário */}
+        {/* Dialog de FormulÃ¡rio de UsuÃ¡rio */}
         <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{isEditingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+              <DialogTitle>{isEditingUser ? 'Editar UsuÃ¡rio' : 'Novo UsuÃ¡rio'}</DialogTitle>
             </DialogHeader>
             <section className="space-y-4 py-4">
               <section>
@@ -854,7 +832,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
                   onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value as UserRole })}
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="user">Usuário</option>
+                  <option value="user">UsuÃ¡rio</option>
                   <option value="admin">Admin</option>
                 </select>
               </section>
@@ -882,7 +860,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
               )}
               {isEditingUser && (
                 <section>
-                  <label className="text-sm font-medium">Nova Senha (deixe em branco para não alterar)</label>
+                  <label className="text-sm font-medium">Nova Senha (deixe em branco para nÃ£o alterar)</label>
                   <input
                     type="password"
                     value={userFormData.password}
@@ -901,7 +879,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Formulário de Autor */}
+        {/* Dialog de FormulÃ¡rio de Autor */}
         <Dialog open={showAuthorForm} onOpenChange={setShowAuthorForm}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -940,7 +918,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
                   />
                 </section>
                 <section>
-                  <label className="text-sm font-medium">Título/Cargo *</label>
+                  <label className="text-sm font-medium">TÃ­tulo/Cargo *</label>
                   <input
                     type="text"
                     value={authorFormData.title}
@@ -999,3 +977,5 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     </>
   );
 }
+
+

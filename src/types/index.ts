@@ -114,17 +114,6 @@ export interface Comment {
   replies?: Comment[];
 }
 
-// ==================== SURVEY ====================
-
-export interface SurveyData {
-  name: string;
-  age: number;
-  gender: 'M' | 'F' | 'O' | 'N';
-  region: string;
-  interests: string[];
-  completedAt: string;
-}
-
 // ==================== SEO ====================
 
 export interface SeoMeta {

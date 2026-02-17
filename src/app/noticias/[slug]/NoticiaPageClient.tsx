@@ -1,6 +1,6 @@
-/**
- * Página de Artigo Individual (UI)
- * O artigo é carregado no servidor e passado como props para melhorar SEO.
+﻿/**
+ * PÃ¡gina de Artigo Individual (UI)
+ * O artigo Ã© carregado no servidor e passado como props para melhorar SEO.
  */
 
 'use client';
@@ -31,7 +31,6 @@ import { ArticleContent } from '@/components/news/ArticleContent';
 import { RelatedArticles } from '@/components/news/RelatedArticles';
 import { CommentSection } from '@/components/interactive/CommentSection';
 import { CONTENT_CONFIG } from '@/config/content';
-import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import type { NewsArticle } from '@/types';
 
@@ -41,7 +40,6 @@ interface NoticiaPageClientProps {
 };
 
 export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageClientProps) {
-  const { isAuthenticated: isLoggedIn } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(article.slug);
 
@@ -62,18 +60,18 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
     year: 'numeric',
   });
 
-  // Mock data para módulos contextuais
+  // Mock data para mÃ³dulos contextuais
   const contexto = article.excerpt;
 
   const impacto = [
     'Mercados financeiros reagem com volatilidade aumentada',
-    'Política monetária pode sofrer ajustes nos próximos meses',
+    'PolÃ­tica monetÃ¡ria pode sofrer ajustes nos prÃ³ximos meses',
     'Investidores devem monitorar indicadores de perto',
   ];
 
   const timeline = [
-    { date: article.publishedAt, evento: 'Publicação original' },
-    { date: article.updatedAt, evento: 'Atualização com novos dados' },
+    { date: article.publishedAt, evento: 'PublicaÃ§Ã£o original' },
+    { date: article.updatedAt, evento: 'AtualizaÃ§Ã£o com novos dados' },
   ];
 
   const termosChave = article.tags.slice(0, 5).map((tag) => ({
@@ -82,9 +80,9 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
   }));
 
   const fontes = [
-    'Agências de notícias internacionais',
-    'Relatórios oficiais de instituições financeiras',
-    'Análises de especialistas do setor',
+    'AgÃªncias de notÃ­cias internacionais',
+    'RelatÃ³rios oficiais de instituiÃ§Ãµes financeiras',
+    'AnÃ¡lises de especialistas do setor',
   ];
 
   const handleShare = (platform: string) => {
@@ -108,7 +106,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
         break;
       default:
         navigator.clipboard.writeText(url);
-        toast.success('Link copiado para a área de transferência!');
+        toast.success('Link copiado para a Ã¡rea de transferÃªncia!');
         return;
     }
 
@@ -159,11 +157,11 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
 
       <main className="max-w-[1280px] mx-auto px-4 py-8">
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Conteúdo Principal */}
+          {/* ConteÃºdo Principal */}
           <article className="lg:col-span-2">
             {/* Header */}
             <header className="mb-8">
-              {/* Badges de Verificação */}
+              {/* Badges de VerificaÃ§Ã£o */}
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <span
                   className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider text-white rounded"
@@ -183,15 +181,15 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
                   <FactCheckBadge status="updated" />
                 )}
                 
-                {article.tags?.includes('Publicação Patrocinada') && (
+                {article.tags?.includes('PublicaÃ§Ã£o Patrocinada') && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-800 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-full border border-amber-200">
                     <Gem className="w-3.5 h-3.5" />
-                    Publicação Patrocinada
+                    PublicaÃ§Ã£o Patrocinada
                   </span>
                 )}
               </div>
 
-              {/* Título com classe para Speakable */}
+              {/* TÃ­tulo com classe para Speakable */}
               <h1 className="article-headline text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#111111] leading-tight mb-4">
                 {article.title}
               </h1>
@@ -277,7 +275,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               </nav>
             </section>
 
-            {/* Módulo: Contexto */}
+            {/* MÃ³dulo: Contexto */}
             <aside className="mb-8 p-4 sm:p-6 bg-[#f8fafc] border-l-4 border-[#c40000] rounded-r-lg">
               <header className="flex items-center gap-2 mb-3">
                 <BookOpen className="w-5 h-5 text-[#c40000]" />
@@ -286,10 +284,10 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               <p className="text-sm sm:text-base text-[#6b6b6b] leading-relaxed">{contexto}</p>
             </aside>
 
-            {/* Conteúdo Principal */}
-            <ArticleContent article={article} isLoggedIn={isLoggedIn} />
+            {/* ConteÃºdo Principal */}
+            <ArticleContent article={article} />
 
-            {/* Módulo: Impacto */}
+            {/* MÃ³dulo: Impacto */}
             <aside className="my-8 p-4 sm:p-6 bg-[#fefce8] border border-[#fde047] rounded-lg">
               <header className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-[#ca8a04]" />
@@ -298,14 +296,14 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               <ul className="space-y-2">
                 {impacto.map((item, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm sm:text-base text-[#713f12]">
-                    <span className="text-[#ca8a04] mt-1">•</span>
+                    <span className="text-[#ca8a04] mt-1">â€¢</span>
                     {item}
                   </li>
                 ))}
               </ul>
             </aside>
 
-            {/* Módulo: Linha do Tempo */}
+            {/* MÃ³dulo: Linha do Tempo */}
             <aside className="my-8">
               <h2 className="text-lg font-bold text-[#111111] mb-4">Linha do Tempo</h2>
               <ul className="space-y-3">
@@ -328,7 +326,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               </ul>
             </aside>
 
-            {/* Módulo: Termos-chave */}
+            {/* MÃ³dulo: Termos-chave */}
             <aside className="my-8">
               <h2 className="text-lg font-bold text-[#111111] mb-4">Termos-chave</h2>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -341,7 +339,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               </dl>
             </aside>
 
-            {/* Módulo: Fontes */}
+            {/* MÃ³dulo: Fontes */}
             <aside className="my-8 p-4 bg-[#f8fafc] rounded-lg">
               <header className="flex items-center gap-2 mb-3">
                 <FileText className="w-4 h-4 text-[#6b6b6b]" />
@@ -350,7 +348,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               <ul className="space-y-1">
                 {fontes.map((fonte, index) => (
                   <li key={index} className="text-xs text-[#6b6b6b]">
-                    • {fonte}
+                    â€¢ {fonte}
                   </li>
                 ))}
               </ul>
@@ -373,7 +371,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
             {/* Related Articles */}
             <RelatedArticles currentArticle={article} limit={4} />
 
-            {/* Comentários */}
+            {/* ComentÃ¡rios */}
             <CommentSection articleSlug={article.slug} />
           </article>
 
@@ -383,7 +381,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
             <section className="p-4 sm:p-6 bg-[#111111] text-white rounded-lg">
               <h3 className="text-lg font-bold mb-2">Newsletter CIN</h3>
               <p className="text-sm text-[#9ca3af] mb-4">
-                Receba análises exclusivas diretamente no seu e-mail.
+                Receba anÃ¡lises exclusivas diretamente no seu e-mail.
               </p>
               <form className="space-y-2" onSubmit={(e) => e.preventDefault()}>
                 <input
@@ -407,7 +405,7 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
                 <h3 className="text-sm font-semibold text-[#dc2626]">Aviso</h3>
               </header>
               <p className="text-xs text-[#7f1d1d]">
-                Este conteúdo é informativo e não constitui recomendação de investimento.
+                Este conteÃºdo Ã© informativo e nÃ£o constitui recomendaÃ§Ã£o de investimento.
               </p>
             </section>
           </aside>
@@ -416,3 +414,6 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
     </>
   );
 }
+
+
+

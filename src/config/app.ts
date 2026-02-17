@@ -1,5 +1,5 @@
-/**
- * Configuração Global da Aplicação
+﻿/**
+ * ConfiguraÃ§Ã£o Global da AplicaÃ§Ã£o
  * Cenario Internacional - CIN
  */
 
@@ -7,7 +7,7 @@ export const APP_CONFIG = {
   brand: {
     name: 'Cenario Internacional',
     short: 'CIN',
-    tagline: 'Notícias que movem o mundo',
+    tagline: 'NotÃ­cias que movem o mundo',
     founded: 2024,
     // Keep this pointing to a real, existing asset in `public/`.
     logo: '/favicon.ico',
@@ -17,7 +17,7 @@ export const APP_CONFIG = {
   contact: {
     email: 'contato@cenariointernacional.com.br',
     phone: '+55 11 3000-0000',
-    address: 'São Paulo, SP - Brasil',
+    address: 'SÃ£o Paulo, SP - Brasil',
     social: {
       twitter: '@cenariointernacional',
       facebook: 'cenariointernacional',
@@ -34,8 +34,6 @@ export const APP_CONFIG = {
   },
   
   features: {
-    readingLimit: 0.2, // 20% para não-logados
-    maxFreeArticles: 3,
     enableTranslation: true,
     // Allow disabling in E2E/preview environments to avoid flaky external dependencies.
     enableMarketTicker: process.env.NEXT_PUBLIC_ENABLE_MARKET_TICKER !== 'false',
@@ -64,3 +62,4 @@ export const APP_CONFIG = {
 } as const;
 
 export type AppConfig = typeof APP_CONFIG;
+

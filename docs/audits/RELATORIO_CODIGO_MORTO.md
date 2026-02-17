@@ -1,14 +1,14 @@
-# Relatório de Código Morto - Cenario Internacional
+﻿# RelatÃ³rio de CÃ³digo Morto - Cenario Internacional
 
 **Data:** 2026-02-05  
 **Auditor:** Sistema automatizado  
-**Status:** 🟢 Pronto para remoção
+**Status:** ðŸŸ¢ Pronto para remoÃ§Ã£o
 
 ---
 
-## 📊 RESUMO EXECUTIVO
+## ðŸ“Š RESUMO EXECUTIVO
 
-| Categoria | Total | Em Uso | Código Morto | % Morto |
+| Categoria | Total | Em Uso | CÃ³digo Morto | % Morto |
 |-----------|-------|--------|--------------|---------|
 | Componentes UI | 54 | 19 | 35 | **65%** |
 | Componentes Economics | 5 | 0 | 5 | **100%** |
@@ -20,119 +20,119 @@
 
 ---
 
-## 🔴 LISTA COMPLETA DE ARQUIVOS PARA REMOVER
+## ðŸ”´ LISTA COMPLETA DE ARQUIVOS PARA REMOVER
 
-### 1. Componentes UI Não Utilizados (35 arquivos)
+### 1. Componentes UI NÃ£o Utilizados (35 arquivos)
 
 ```
 src/components/ui/
-├── accordion.tsx          # Nenhum uso
-├── alert.tsx              # Nenhum uso
-├── alert-dialog.tsx       # Nenhum uso
-├── aspect-ratio.tsx       # Nenhum uso
-├── avatar.tsx             # Nenhum uso
-├── breadcrumb.tsx         # Nenhum uso
-├── button-group.tsx       # Nenhum uso externo
-├── calendar.tsx           # Nenhum uso externo
-├── carousel.tsx           # Nenhum uso externo
-├── chart.tsx              # Nenhum uso
-├── collapsible.tsx        # Nenhum uso
-├── command.tsx            # Nenhum uso externo
-├── context-menu.tsx       # Nenhum uso
-├── drawer.tsx             # Nenhum uso
-├── empty.tsx              # Nenhum uso
-├── field.tsx              # Nenhum uso externo
-├── form.tsx               # Nenhum uso externo
-├── hover-card.tsx         # Nenhum uso
-├── input-group.tsx        # Nenhum uso externo
-├── input-otp.tsx          # Nenhum uso
-├── item.tsx               # Nenhum uso externo
-├── kbd.tsx                # Nenhum uso
-├── loading.tsx            # Nenhum uso
-├── menubar.tsx            # Nenhum uso
-├── navigation-menu.tsx    # Nenhum uso
-├── pagination.tsx         # Nenhum uso externo
-├── popover.tsx            # Nenhum uso
-├── radio-group.tsx        # Nenhum uso
-├── resizable.tsx          # Nenhum uso
-├── scroll-area.tsx        # Nenhum uso
-├── select.tsx             # Nenhum uso
-├── sidebar.tsx            # Nenhum uso externo
-├── spinner.tsx            # Nenhum uso
-├── toggle.tsx             # Nenhum uso externo
-└── toggle-group.tsx       # Nenhum uso externo
+â”œâ”€â”€ accordion.tsx          # Nenhum uso
+â”œâ”€â”€ alert.tsx              # Nenhum uso
+â”œâ”€â”€ alert-dialog.tsx       # Nenhum uso
+â”œâ”€â”€ aspect-ratio.tsx       # Nenhum uso
+â”œâ”€â”€ avatar.tsx             # Nenhum uso
+â”œâ”€â”€ breadcrumb.tsx         # Nenhum uso
+â”œâ”€â”€ button-group.tsx       # Nenhum uso externo
+â”œâ”€â”€ calendar.tsx           # Nenhum uso externo
+â”œâ”€â”€ carousel.tsx           # Nenhum uso externo
+â”œâ”€â”€ chart.tsx              # Nenhum uso
+â”œâ”€â”€ collapsible.tsx        # Nenhum uso
+â”œâ”€â”€ command.tsx            # Nenhum uso externo
+â”œâ”€â”€ context-menu.tsx       # Nenhum uso
+â”œâ”€â”€ drawer.tsx             # Nenhum uso
+â”œâ”€â”€ empty.tsx              # Nenhum uso
+â”œâ”€â”€ field.tsx              # Nenhum uso externo
+â”œâ”€â”€ form.tsx               # Nenhum uso externo
+â”œâ”€â”€ hover-card.tsx         # Nenhum uso
+â”œâ”€â”€ input-group.tsx        # Nenhum uso externo
+â”œâ”€â”€ input-otp.tsx          # Nenhum uso
+â”œâ”€â”€ item.tsx               # Nenhum uso externo
+â”œâ”€â”€ kbd.tsx                # Nenhum uso
+â”œâ”€â”€ loading.tsx            # Nenhum uso
+â”œâ”€â”€ menubar.tsx            # Nenhum uso
+â”œâ”€â”€ navigation-menu.tsx    # Nenhum uso
+â”œâ”€â”€ pagination.tsx         # Nenhum uso externo
+â”œâ”€â”€ popover.tsx            # Nenhum uso
+â”œâ”€â”€ radio-group.tsx        # Nenhum uso
+â”œâ”€â”€ resizable.tsx          # Nenhum uso
+â”œâ”€â”€ scroll-area.tsx        # Nenhum uso
+â”œâ”€â”€ select.tsx             # Nenhum uso
+â”œâ”€â”€ sidebar.tsx            # Nenhum uso externo
+â”œâ”€â”€ spinner.tsx            # Nenhum uso
+â”œâ”€â”€ toggle.tsx             # Nenhum uso externo
+â””â”€â”€ toggle-group.tsx       # Nenhum uso externo
 ```
 
-**Nota:** Alguns componentes são usados internamente por outros componentes UI (ex: `toggle` é usado por `toggle-group`), mas nenhum é usado por páginas ou componentes de negócio.
+**Nota:** Alguns componentes sÃ£o usados internamente por outros componentes UI (ex: `toggle` Ã© usado por `toggle-group`), mas nenhum Ã© usado por pÃ¡ginas ou componentes de negÃ³cio.
 
-### 2. Componentes Economics Não Utilizados (5 arquivos)
+### 2. Componentes Economics NÃ£o Utilizados (5 arquivos)
 
 ```
 src/components/economics/
-├── CountryComparisonChart.tsx    # Não importado em lugar nenhum
-├── EconomicCalendarWidget.tsx    # Não importado em lugar nenhum
-├── EconomicIndicatorCard.tsx     # Não importado em lugar nenhum
-├── index.ts                      # Apenas re-exporta
-└── MarketDataTable.tsx           # Não importado em lugar nenhum
+â”œâ”€â”€ CountryComparisonChart.tsx    # NÃ£o importado em lugar nenhum
+â”œâ”€â”€ EconomicCalendarWidget.tsx    # NÃ£o importado em lugar nenhum
+â”œâ”€â”€ EconomicIndicatorCard.tsx     # NÃ£o importado em lugar nenhum
+â”œâ”€â”€ index.ts                      # Apenas re-exporta
+â””â”€â”€ MarketDataTable.tsx           # NÃ£o importado em lugar nenhum
 ```
 
-**Análise:** Todo o diretório `economics/` pode ser removido. Os componentes foram criados mas nunca integrados às páginas.
+**AnÃ¡lise:** Todo o diretÃ³rio `economics/` pode ser removido. Os componentes foram criados mas nunca integrados Ã s pÃ¡ginas.
 
-### 3. Componentes GeoEcon Não Utilizados (1 arquivo)
+### 3. Componentes GeoEcon NÃ£o Utilizados (1 arquivo)
 
 ```
 src/components/geoEcon/
-└── EconomicComparator.tsx        # Não importado em lugar nenhum
+â””â”€â”€ EconomicComparator.tsx        # NÃ£o importado em lugar nenhum
 ```
 
-**Nota:** `EconomicAgenda.tsx`, `RiskThermometer.tsx` e `TensionMap.tsx` são usados na Home.
+**Nota:** `EconomicAgenda.tsx`, `RiskThermometer.tsx` e `TensionMap.tsx` sÃ£o usados na Home.
 
-### 4. Hooks Não Utilizados (4 arquivos)
+### 4. Hooks NÃ£o Utilizados (4 arquivos)
 
 ```
 src/hooks/
-├── economics/
-│   ├── useTradingEconomics.ts    # Não importado
-│   └── useWorldBank.ts           # Não importado
-├── useLocalStorage.ts            # Não importado
-└── useMarket.ts                  # Não importado
+â”œâ”€â”€ economics/
+â”‚   â”œâ”€â”€ useTradingEconomics.ts    # NÃ£o importado
+â”‚   â””â”€â”€ useWorldBank.ts           # NÃ£o importado
+â”œâ”€â”€ useLocalStorage.ts            # NÃ£o importado
+â””â”€â”€ useMarket.ts                  # NÃ£o importado
 ```
 
-**Nota:** `useLocalStorage.ts` pode ter sido substituído pelo hook de storage do config.
+**Nota:** `useLocalStorage.ts` pode ter sido substituÃ­do pelo hook de storage do config.
 
-### 5. Services Não Utilizados (6 arquivos)
+### 5. Services NÃ£o Utilizados (6 arquivos)
 
 ```
 src/services/
-├── economics/
-│   ├── index.ts                  # Apenas re-exporta, não usado
-│   ├── tradingEconomicsService.ts # Não importado
-│   └── worldBankService.ts       # Não importado
-├── comments/
-│   ├── supabaseService.ts        # Não importado (usa index.ts)
-│   └── types.ts                  # Não importado (usa index.ts)
-└── newsService.ts                # Não importado (usa newsManager.ts)
+â”œâ”€â”€ economics/
+â”‚   â”œâ”€â”€ index.ts                  # Apenas re-exporta, nÃ£o usado
+â”‚   â”œâ”€â”€ tradingEconomicsService.ts # NÃ£o importado
+â”‚   â””â”€â”€ worldBankService.ts       # NÃ£o importado
+â”œâ”€â”€ comments/
+â”‚   â”œâ”€â”€ supabaseService.ts        # NÃ£o importado (usa index.ts)
+â”‚   â””â”€â”€ types.ts                  # NÃ£o importado (usa index.ts)
+â””â”€â”€ newsService.ts                # NÃ£o importado (usa newsManager.ts)
 ```
 
-### 6. Configs Não Utilizadas (2 arquivos)
+### 6. Configs NÃ£o Utilizadas (2 arquivos)
 
 ```
 src/config/
-├── secureStorage.ts              # Não importado
-└── theme.css                     # Não importado
+â”œâ”€â”€ secureStorage.ts              # NÃ£o importado
+â””â”€â”€ theme.css                     # NÃ£o importado
 ```
 
-**Nota:** `theme.css` é importado em `App.tsx`? Verificar novamente.
+**Nota:** `theme.css` Ã© importado em `App.tsx`? Verificar novamente.
 
 ---
 
-## 🟡 ARQUIVOS QUE PRECISAM DE ATENÇÃO ESPECIAL
+## ðŸŸ¡ ARQUIVOS QUE PRECISAM DE ATENÃ‡ÃƒO ESPECIAL
 
-### Dependências Internas entre Componentes UI
+### DependÃªncias Internas entre Componentes UI
 
-Alguns componentes que parecem não ser usados são na verdade dependências de outros:
+Alguns componentes que parecem nÃ£o ser usados sÃ£o na verdade dependÃªncias de outros:
 
-| Componente | Dependências Internas | Ação |
+| Componente | DependÃªncias Internas | AÃ§Ã£o |
 |------------|----------------------|------|
 | `button-group.tsx` | Usa `separator` | Remover junto |
 | `calendar.tsx` | Usa `button` | Remover junto |
@@ -148,7 +148,7 @@ Alguns componentes que parecem não ser usados são na verdade dependências de 
 
 ---
 
-## ✅ ARQUIVOS QUE DEVEM SER MANTIDOS
+## âœ… ARQUIVOS QUE DEVEM SER MANTIDOS
 
 ### Componentes UI em Uso (19)
 - badge, button, card, checkbox, dialog, dropdown-menu, input, label, progress, skeleton, slider, sonner, switch, tabs, textarea, separator, sheet, tooltip
@@ -160,125 +160,118 @@ Alguns componentes que parecem não ser usados são na verdade dependências de 
 - geoEcon/TensionMap.tsx
 - home/HeroSection.tsx
 - interactive/CommentSection.tsx
-- interactive/SurveyForm.tsx
 - layout/Footer.tsx, Header.tsx, Layout.tsx, MarketTicker.tsx, ScrollProgress.tsx, ScrollToTop.tsx
 - news/ArticleContent.tsx, NewsCard.tsx, ReadingProgress.tsx, RelatedArticles.tsx
 
 ### Hooks em Uso (11)
 - economics/useFinnhub.ts
-- useAppSettings.ts, useAuth.ts, useBookmarks.ts, useComments.ts, use-mobile.ts, useReadingHistory.ts, useReadingLimit.ts, useReadingProgress.ts, useScrollProgress.ts, useSurvey.ts
+- useAuth.ts, useBookmarks.ts, useComments.ts, use-mobile.ts, useReadingHistory.ts, useReadingProgress.ts, useScrollProgress.ts
 
 ### Services em Uso (7)
-- adminUsers.ts, aiNews.ts, appSettings.ts, comments/index.ts, contactService.ts, economics/finnhubService.ts, newsManager.ts
 
 ### Configs em Uso (8)
 - app.ts, content.ts, geoecon.ts, market.ts, routes.ts, seo.ts, storage.ts, supabaseLimits.ts
 
 ---
 
-## 📁 ESTRUTURA DE ARQUIVOS APÓS REMOÇÃO
+## ðŸ“ ESTRUTURA DE ARQUIVOS APÃ“S REMOÃ‡ÃƒO
 
 ```
 src/
-├── components/
-│   ├── diagnostics/
-│   │   └── FinnhubTest.tsx
-│   ├── geoEcon/
-│   │   ├── EconomicAgenda.tsx
-│   │   ├── RiskThermometer.tsx
-│   │   └── TensionMap.tsx
-│   ├── home/
-│   │   └── HeroSection.tsx
-│   ├── interactive/
-│   │   ├── CommentSection.tsx
-│   │   └── SurveyForm.tsx
-│   ├── layout/
-│   │   ├── Footer.tsx
-│   │   ├── Header.tsx
-│   │   ├── Layout.tsx
-│   │   ├── MarketTicker.tsx
-│   │   ├── ScrollProgress.tsx
-│   │   └── ScrollToTop.tsx
-│   ├── news/
-│   │   ├── ArticleContent.tsx
-│   │   ├── NewsCard.tsx
-│   │   ├── ReadingProgress.tsx
-│   │   └── RelatedArticles.tsx
-│   └── ui/                    # 19 componentes (reduzido de 54)
-│       ├── badge.tsx
-│       ├── button.tsx
-│       ├── card.tsx
-│       ├── checkbox.tsx
-│       ├── dialog.tsx
-│       ├── dropdown-menu.tsx
-│       ├── input.tsx
-│       ├── label.tsx
-│       ├── progress.tsx
-│       ├── separator.tsx       # Manter (usado internamente)
-│       ├── sheet.tsx           # Manter (usado internamente)
-│       ├── skeleton.tsx
-│       ├── slider.tsx
-│       ├── sonner.tsx
-│       ├── switch.tsx
-│       ├── tabs.tsx
-│       ├── textarea.tsx
-│       ├── tooltip.tsx         # Manter (usado internamente)
-│       └── ... (outros usados)
-├── config/
-│   ├── app.ts
-│   ├── content.ts
-│   ├── geoecon.ts
-│   ├── market.ts
-│   ├── routes.ts
-│   ├── seo.ts
-│   ├── storage.ts
-│   └── supabaseLimits.ts
-├── contexts/
-│   └── AuthContext.tsx
-├── hooks/
-│   ├── economics/
-│   │   └── useFinnhub.ts
-│   ├── useAppSettings.ts
-│   ├── useAuth.ts
-│   ├── useBookmarks.ts
-│   ├── useComments.ts
-│   ├── use-mobile.ts
-│   ├── useReadingHistory.ts
-│   ├── useReadingLimit.ts
-│   ├── useReadingProgress.ts
-│   ├── useScrollProgress.ts
-│   └── useSurvey.ts
-├── lib/
-│   ├── image.ts
-│   ├── logger.ts
-│   ├── supabaseClient.ts
-│   └── utils.ts
-├── pages/
-│   └── ... (26 páginas - todas mantidas)
-├── services/
-│   ├── comments/
-│   │   └── index.ts
-│   ├── economics/
-│   │   └── finnhubService.ts
-│   ├── adminUsers.ts
-│   ├── aiNews.ts
-│   ├── appSettings.ts
-│   ├── contactService.ts
-│   └── newsManager.ts
-└── types/
-    └── index.ts
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ diagnostics/
+â”‚   â”‚   â””â”€â”€ FinnhubTest.tsx
+â”‚   â”œâ”€â”€ geoEcon/
+â”‚   â”‚   â”œâ”€â”€ EconomicAgenda.tsx
+â”‚   â”‚   â”œâ”€â”€ RiskThermometer.tsx
+â”‚   â”‚   â””â”€â”€ TensionMap.tsx
+â”‚   â”œâ”€â”€ home/
+â”‚   â”‚   â””â”€â”€ HeroSection.tsx
+â”‚   â”œâ”€â”€ interactive/
+â”‚   â”‚   â”œâ”€â”€ CommentSection.tsx
+â”‚   â”œâ”€â”€ layout/
+â”‚   â”‚   â”œâ”€â”€ Footer.tsx
+â”‚   â”‚   â”œâ”€â”€ Header.tsx
+â”‚   â”‚   â”œâ”€â”€ Layout.tsx
+â”‚   â”‚   â”œâ”€â”€ MarketTicker.tsx
+â”‚   â”‚   â”œâ”€â”€ ScrollProgress.tsx
+â”‚   â”‚   â””â”€â”€ ScrollToTop.tsx
+â”‚   â”œâ”€â”€ news/
+â”‚   â”‚   â”œâ”€â”€ ArticleContent.tsx
+â”‚   â”‚   â”œâ”€â”€ NewsCard.tsx
+â”‚   â”‚   â”œâ”€â”€ ReadingProgress.tsx
+â”‚   â”‚   â””â”€â”€ RelatedArticles.tsx
+â”‚   â””â”€â”€ ui/                    # 19 componentes (reduzido de 54)
+â”‚       â”œâ”€â”€ badge.tsx
+â”‚       â”œâ”€â”€ button.tsx
+â”‚       â”œâ”€â”€ card.tsx
+â”‚       â”œâ”€â”€ checkbox.tsx
+â”‚       â”œâ”€â”€ dialog.tsx
+â”‚       â”œâ”€â”€ dropdown-menu.tsx
+â”‚       â”œâ”€â”€ input.tsx
+â”‚       â”œâ”€â”€ label.tsx
+â”‚       â”œâ”€â”€ progress.tsx
+â”‚       â”œâ”€â”€ separator.tsx       # Manter (usado internamente)
+â”‚       â”œâ”€â”€ sheet.tsx           # Manter (usado internamente)
+â”‚       â”œâ”€â”€ skeleton.tsx
+â”‚       â”œâ”€â”€ slider.tsx
+â”‚       â”œâ”€â”€ sonner.tsx
+â”‚       â”œâ”€â”€ switch.tsx
+â”‚       â”œâ”€â”€ tabs.tsx
+â”‚       â”œâ”€â”€ textarea.tsx
+â”‚       â”œâ”€â”€ tooltip.tsx         # Manter (usado internamente)
+â”‚       â””â”€â”€ ... (outros usados)
+â”œâ”€â”€ config/
+â”‚   â”œâ”€â”€ app.ts
+â”‚   â”œâ”€â”€ content.ts
+â”‚   â”œâ”€â”€ geoecon.ts
+â”‚   â”œâ”€â”€ market.ts
+â”‚   â”œâ”€â”€ routes.ts
+â”‚   â”œâ”€â”€ seo.ts
+â”‚   â”œâ”€â”€ storage.ts
+â”‚   â””â”€â”€ supabaseLimits.ts
+â”œâ”€â”€ contexts/
+â”‚   â””â”€â”€ AuthContext.tsx
+â”œâ”€â”€ hooks/
+â”‚   â”œâ”€â”€ economics/
+â”‚   â”‚   â””â”€â”€ useFinnhub.ts
+â”‚   â”œâ”€â”€ useAuth.ts
+â”‚   â”œâ”€â”€ useBookmarks.ts
+â”‚   â”œâ”€â”€ useComments.ts
+â”‚   â”œâ”€â”€ use-mobile.ts
+â”‚   â”œâ”€â”€ useReadingHistory.ts
+â”‚   â”œâ”€â”€ useReadingProgress.ts
+â”‚   â”œâ”€â”€ useScrollProgress.ts
+â”œâ”€â”€ lib/
+â”‚   â”œâ”€â”€ image.ts
+â”‚   â”œâ”€â”€ logger.ts
+â”‚   â”œâ”€â”€ supabaseClient.ts
+â”‚   â””â”€â”€ utils.ts
+â”œâ”€â”€ pages/
+â”‚   â””â”€â”€ ... (26 pÃ¡ginas - todas mantidas)
+â”œâ”€â”€ services/
+â”‚   â”œâ”€â”€ comments/
+â”‚   â”‚   â””â”€â”€ index.ts
+â”‚   â”œâ”€â”€ economics/
+â”‚   â”‚   â””â”€â”€ finnhubService.ts
+â”‚   â”œâ”€â”€ adminUsers.ts
+â”‚   â”œâ”€â”€ aiNews.ts
+â”‚   â”œâ”€â”€ contactService.ts
+â”‚   â””â”€â”€ newsManager.ts
+â””â”€â”€ types/
+    â””â”€â”€ index.ts
 ```
 
 ---
 
-## 🎯 PLANO DE AÇÃO RECOMENDADO
+## ðŸŽ¯ PLANO DE AÃ‡ÃƒO RECOMENDADO
 
-### Fase 1: Remoções Seguras (Imediato)
+### Fase 1: RemoÃ§Ãµes Seguras (Imediato)
 ```bash
-# Componentes economics (diretório completo)
+# Componentes economics (diretÃ³rio completo)
 rm -rf src/components/economics/
 
-# Hook e service não usados
+# Hook e service nÃ£o usados
 rm src/components/geoEcon/EconomicComparator.tsx
 rm src/hooks/economics/useTradingEconomics.ts
 rm src/hooks/economics/useWorldBank.ts
@@ -293,9 +286,9 @@ rm src/services/newsService.ts
 rm src/config/secureStorage.ts
 ```
 
-### Fase 2: Remoção de Componentes UI (Avaliar)
+### Fase 2: RemoÃ§Ã£o de Componentes UI (Avaliar)
 ```bash
-# Componentes UI definitivamente não usados (sem dependências)
+# Componentes UI definitivamente nÃ£o usados (sem dependÃªncias)
 rm src/components/ui/accordion.tsx
 rm src/components/ui/alert.tsx
 rm src/components/ui/alert-dialog.tsx
@@ -321,9 +314,9 @@ rm src/components/ui/select.tsx
 rm src/components/ui/spinner.tsx
 ```
 
-### Fase 3: Componentes UI com Dependências (Cuidado)
+### Fase 3: Componentes UI com DependÃªncias (Cuidado)
 ```bash
-# Remover em grupo devido a dependências internas
+# Remover em grupo devido a dependÃªncias internas
 rm src/components/ui/toggle-group.tsx
 rm src/components/ui/toggle.tsx
 
@@ -351,28 +344,29 @@ rm src/components/ui/sheet.tsx
 
 ---
 
-## ⚠️ CONSIDERAÇÕES IMPORTANTES
+## âš ï¸ CONSIDERAÃ‡Ã•ES IMPORTANTES
 
-1. **shadcn/ui:** Os componentes UI são do shadcn/ui. Se no futuro precisar de algum componente removido, pode reinstalar com `npx shadcn add [componente]`
+1. **shadcn/ui:** Os componentes UI sÃ£o do shadcn/ui. Se no futuro precisar de algum componente removido, pode reinstalar com `npx shadcn add [componente]`
 
-2. **TypeScript:** Após remoções, verificar se há erros de tipo em arquivos que importavam os componentes removidos
+2. **TypeScript:** ApÃ³s remoÃ§Ãµes, verificar se hÃ¡ erros de tipo em arquivos que importavam os componentes removidos
 
-3. **Build:** Sempre executar `npm run build` após remoções para garantir que não há erros
+3. **Build:** Sempre executar `npm run build` apÃ³s remoÃ§Ãµes para garantir que nÃ£o hÃ¡ erros
 
-4. **Dependências npm:** Verificar se alguma dependência do package.json só era usada pelos componentes removidos
+4. **DependÃªncias npm:** Verificar se alguma dependÃªncia do package.json sÃ³ era usada pelos componentes removidos
 
 ---
 
-## 📊 IMPACTO ESPERADO
+## ðŸ“Š IMPACTO ESPERADO
 
-| Métrica | Antes | Depois | Redução |
+| MÃ©trica | Antes | Depois | ReduÃ§Ã£o |
 |---------|-------|--------|---------|
-| Arquivos de código | ~150 | ~97 | **35%** |
-| Linhas de código (est.) | ~25.000 | ~15.000 | **40%** |
+| Arquivos de cÃ³digo | ~150 | ~97 | **35%** |
+| Linhas de cÃ³digo (est.) | ~25.000 | ~15.000 | **40%** |
 | Tamanho do bundle | ~X MB | ~X MB | Estimado 15-20% |
 | Tempo de build | ~X s | ~X s | Estimado 10-15% |
 
 ---
 
-**Data de criação:** 2026-02-05  
-**Próxima revisão:** Após implementação das remoções
+**Data de criaÃ§Ã£o:** 2026-02-05  
+**PrÃ³xima revisÃ£o:** ApÃ³s implementaÃ§Ã£o das remoÃ§Ãµes
+

@@ -111,16 +111,11 @@ export const STORAGE_KEYS = {
   // Leitura - SENSÃVEL (sessionStorage)
   readingProgress: 'cin_reading_progress',
   readingHistory: 'cin_reading_history',
-  unlockedArticles: 'cin_unlocked_articles',
   
   // InteraÃ§Ãµes - SENSÃVEL (sessionStorage)
   bookmarks: 'cin_bookmarks',
   likedArticles: 'cin_liked_articles',
   sharedArticles: 'cin_shared_articles',
-  
-  // QuestionÃ¡rio - SENSÃVEL (sessionStorage)
-  surveyData: 'cin_survey_data',
-  surveyCompleted: 'cin_survey_completed',
   
   // NotificaÃ§Ãµes - PÃšBLICO (localStorage)
   notifications: 'cin_notifications',
@@ -191,15 +186,6 @@ export interface Bookmark {
   bookmarkedAt: string;
 }
 
-export interface SurveyData {
-  name: string;
-  age: number;
-  gender: 'M' | 'F' | 'O' | 'N';
-  region: string;
-  interests: string[];
-  completedAt: string;
-}
-
 export interface DailyStats {
   date: string;
   articlesRead: number;
@@ -222,12 +208,9 @@ const SENSITIVE_KEYS: Set<string> = new Set([
   STORAGE_KEYS.userProfile,
   STORAGE_KEYS.readingProgress,
   STORAGE_KEYS.readingHistory,
-  STORAGE_KEYS.unlockedArticles,
   STORAGE_KEYS.bookmarks,
   STORAGE_KEYS.likedArticles,
   STORAGE_KEYS.sharedArticles,
-  STORAGE_KEYS.surveyData,
-  STORAGE_KEYS.surveyCompleted,
   STORAGE_KEYS.adminNews,
   STORAGE_KEYS.adminMetrics,
 ]);
@@ -328,21 +311,6 @@ export const storage = {
     const filtered = history.filter(h => h.articleSlug !== entry.articleSlug);
     storage.set(STORAGE_KEYS.readingHistory, [entry, ...filtered].slice(0, 50));
   },
-  
-  getUnlockedArticles: (): string[] => storage.get(STORAGE_KEYS.unlockedArticles) || [],
-  unlockArticle: (slug: string) => {
-    const unlocked = storage.getUnlockedArticles();
-    if (!unlocked.includes(slug)) {
-      storage.set(STORAGE_KEYS.unlockedArticles, [...unlocked, slug]);
-    }
-  },
-  
-  getSurveyData: (): SurveyData | null => storage.get(STORAGE_KEYS.surveyData),
-  setSurveyData: (data: SurveyData) => {
-    storage.set(STORAGE_KEYS.surveyData, data);
-    storage.set(STORAGE_KEYS.surveyCompleted, true);
-  },
-  hasCompletedSurvey: (): boolean => storage.get(STORAGE_KEYS.surveyCompleted) || false,
   
   getDailyStats: (): DailyStats => {
     const today = new Date().toISOString().split('T')[0];

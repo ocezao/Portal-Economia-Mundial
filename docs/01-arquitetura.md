@@ -1,8 +1,8 @@
-# Arquitetura do Cenario Internacional
+﻿# Arquitetura do Cenario Internacional
 
-## Visão Geral da Arquitetura
+## VisÃ£o Geral da Arquitetura
 
-O CIN possui arquitetura modular dividida em três grandes camadas:
+O CIN possui arquitetura modular dividida em trÃªs grandes camadas:
 
 1. **Frontend** - Next.js (App Router) com dados do Supabase
 2. **Backend** - Supabase (Auth + Postgres + Edge Functions)
@@ -10,125 +10,120 @@ O CIN possui arquitetura modular dividida em três grandes camadas:
 
 ---
 
-## Camadas da Aplicação
+## Camadas da AplicaÃ§Ã£o
 
 ### 1. Presentation Layer (Frontend)
 
 **Componentes de UI** (`/src/components`)
 - `layout/`: Estrutura visual (Header, Footer, Ticker)
-- `news/`: Componentes de notícias (Cards, ArticleContent)
-- `interactive/`: Elementos interativos (SurveyForm)
+- `news/`: Componentes de notÃ­cias (Cards, ArticleContent)
 - `ui/`: Componentes base shadcn/ui
 
-**Páginas** (`/src/app`)
-- Cada rota é uma pasta/arquivo no App Router (file-based)
+**PÃ¡ginas** (`/src/app`)
+- Cada rota Ã© uma pasta/arquivo no App Router (file-based)
 - Layouts compartilhados via `layout.tsx`
 - SEO via `metadata`/`generateMetadata`
 
 ### 2. Business Logic Layer
 
 **Hooks Customizados** (`/src/hooks`)
-- `useAuth`: Gerenciamento de autenticação
-- `useBookmarks`: Favoritos do usuário
+- `useAuth`: Gerenciamento de autenticaÃ§Ã£o
+- `useBookmarks`: Favoritos do usuÃ¡rio
 - `useFinnhub`: Dados de mercado em tempo real
 - `useReadingProgress`: Tracking de leitura
-- `useSurvey`: Questionário de desbloqueio
-- `useReadingLimit`: Controle de limite de leitura
-- `useAppSettings`: Configurações globais do app
 
-**Serviços** (`/src/services`)
+**ServiÃ§os** (`/src/services`)
 - `newsManager.ts`: CRUD de artigos no Supabase
-- `comments/supabaseService.ts`: Comentários no Supabase
-- `adminUsers.ts`: Administração de usuários via Edge Function
-- `aiNews.ts`: Geração de notícias via Edge Function
-- `appSettings.ts`: Configurações globais no banco
+- `comments/supabaseService.ts`: ComentÃ¡rios no Supabase
+- `adminUsers.ts`: AdministraÃ§Ã£o de usuÃ¡rios via Edge Function
+- `aiNews.ts`: GeraÃ§Ã£o de notÃ­cias via Edge Function
 
 ### 3. Data Layer
 
-**Configurações** (`/src/config`)
-- Centralização de todas as configurações
-- Fácil manutenção e modificação
-- Preparado para múltiplos ambientes
+**ConfiguraÃ§Ãµes** (`/src/config`)
+- CentralizaÃ§Ã£o de todas as configuraÃ§Ãµes
+- FÃ¡cil manutenÃ§Ã£o e modificaÃ§Ã£o
+- Preparado para mÃºltiplos ambientes
 
 **Storage** (`/src/config/storage.ts`)
-- Abstração do LocalStorage
+- AbstraÃ§Ã£o do LocalStorage
 - Tipagem forte
-- Métodos específicos por entidade
+- MÃ©todos especÃ­ficos por entidade
 
 **Security** (`/src/lib/security.ts`)
-- `escapeHtml`: Prevenção de XSS
-- `sanitizeFilename`: Sanitização de nomes de arquivo
+- `escapeHtml`: PrevenÃ§Ã£o de XSS
+- `sanitizeFilename`: SanitizaÃ§Ã£o de nomes de arquivo
 - `escapeLikePattern`: Escaping de wildcards SQL para queries LIKE seguras
-- `isValidEmail`: Validação de formato de email
-- `sanitizeText`: Sanitização básica de texto
+- `isValidEmail`: ValidaÃ§Ã£o de formato de email
+- `sanitizeText`: SanitizaÃ§Ã£o bÃ¡sica de texto
 
-> 📖 Ver detalhes em [Guia de Segurança para Desenvolvedores](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md)
+> ðŸ“– Ver detalhes em [Guia de SeguranÃ§a para Desenvolvedores](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md)
 
 ---
 
 ## Analytics Layer (Independente)
 
 A camada de Analytics opera separadamente do sistema principal, garantindo:
-- **Isolamento**: Falhas no analytics não afetam o portal
+- **Isolamento**: Falhas no analytics nÃ£o afetam o portal
 - **Escalabilidade**: Pode ser movida para infraestrutura separada
 - **Privacidade**: Dados pseudonimizados desde a coleta
 
 ### Componentes do Analytics
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENTE (Browser)                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │   Website    │  │  SDK Analytics│  │   localStorage      │  │
-│  │  (React)     │◄─┤  (vanilla JS)│◄─┤   (offline queue)   │  │
-│  └──────────────┘  └──────┬───────┘  └──────────────────────┘  │
-└───────────────────────────┼────────────────────────────────────┘
-                            │ HTTPS
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    COLLECTOR API (Node.js)                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │   Fastify    │  │   Validate   │  │   Deduplication      │  │
-│  │   Server     │──┤    Schema    │──┤   (LRU + DB)         │  │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                            │ Batch INSERT
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    STORAGE (PostgreSQL)                          │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  Tabela: events_raw (particionada por mês)                  ││
-│  │  • UNIQUE INDEX(event_id) por partição                      ││
-│  │  • Índices GIN para JSONB                                   ││
-│  │  • Deduplicação via ON CONFLICT                             ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      DASHBOARD (Metabase)                        │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  • Dashboard Real-time                                      ││
-│  │  • Dashboard Editorial                                      ││
-│  │  • Dashboard Técnico                                        ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                         CLIENTE (Browser)                        â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+â”‚  â”‚   Website    â”‚  â”‚  SDK Analyticsâ”‚  â”‚   localStorage      â”‚  â”‚
+â”‚  â”‚  (React)     â”‚â—„â”€â”¤  (vanilla JS)â”‚â—„â”€â”¤   (offline queue)   â”‚  â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                            â”‚ HTTPS
+                            â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    COLLECTOR API (Node.js)                       â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+â”‚  â”‚   Fastify    â”‚  â”‚   Validate   â”‚  â”‚   Deduplication      â”‚  â”‚
+â”‚  â”‚   Server     â”‚â”€â”€â”¤    Schema    â”‚â”€â”€â”¤   (LRU + DB)         â”‚  â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                            â”‚ Batch INSERT
+                            â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    STORAGE (PostgreSQL)                          â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”‚
+â”‚  â”‚  Tabela: events_raw (particionada por mÃªs)                  â”‚â”‚
+â”‚  â”‚  â€¢ UNIQUE INDEX(event_id) por partiÃ§Ã£o                      â”‚â”‚
+â”‚  â”‚  â€¢ Ãndices GIN para JSONB                                   â”‚â”‚
+â”‚  â”‚  â€¢ DeduplicaÃ§Ã£o via ON CONFLICT                             â”‚â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                            â”‚
+                            â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                      DASHBOARD (Metabase)                        â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”‚
+â”‚  â”‚  â€¢ Dashboard Real-time                                      â”‚â”‚
+â”‚  â”‚  â€¢ Dashboard Editorial                                      â”‚â”‚
+â”‚  â”‚  â€¢ Dashboard TÃ©cnico                                        â”‚â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Endpoints do Collector
 
-| Endpoint | Método | Descrição |
+| Endpoint | MÃ©todo | DescriÃ§Ã£o |
 |----------|--------|-----------|
 | `/health` | GET | Health check do sistema |
 | `/collect` | POST | Recebe eventos do cliente |
 
-### Stack Tecnológico do Analytics
+### Stack TecnolÃ³gico do Analytics
 
 | Componente | Tecnologia | Justificativa |
 |------------|------------|---------------|
 | API | Fastify (Node.js) | Performance, baixo overhead |
 | Database | PostgreSQL 15 | Particionamento nativo, familiaridade |
-| Dashboard | Metabase | Open source, fácil configuração |
+| Dashboard | Metabase | Open source, fÃ¡cil configuraÃ§Ã£o |
 | Deploy | Docker Compose | Simplicidade, portabilidade |
 
 ---
@@ -136,36 +131,36 @@ A camada de Analytics opera separadamente do sistema principal, garantindo:
 ## Edge Functions
 
 ### 1) admin-users
-Responsável por:
-- Criar usuário com senha
+ResponsÃ¡vel por:
+- Criar usuÃ¡rio com senha
 - Atualizar dados
 - Redefinir senha
-- Excluir usuário
+- Excluir usuÃ¡rio
 
 Arquivo: `supabase/functions/admin-users/index.ts`
 
 ### 2) ai-news (REMOVIDO)
-⚠️ **REMOVIDO**: Esta Edge Function foi descontinuada.
-- A funcionalidade de geração de conteúdo via provedor de IA foi removida
-- Para busca de notícias, usar a API GNews diretamente
+âš ï¸ **REMOVIDO**: Esta Edge Function foi descontinuada.
+- A funcionalidade de geraÃ§Ã£o de conteÃºdo via provedor de IA foi removida
+- Para busca de notÃ­cias, usar a API GNews diretamente
 
 ---
 
-## Padrões de Design
+## PadrÃµes de Design
 
-### Componentes Semânticos
-- Uso estrito de tags HTML semânticas
+### Componentes SemÃ¢nticos
+- Uso estrito de tags HTML semÃ¢nticas
 - Proibido uso de `<div>` para layout
 - Acessibilidade (ARIA labels, skip links)
 
 ### Config-Driven Development
 - Nenhum valor hardcoded
-- Todas as configurações em `/config`
-- Facilita manutenção e internacionalização
+- Todas as configuraÃ§Ãµes em `/config`
+- Facilita manutenÃ§Ã£o e internacionalizaÃ§Ã£o
 
 ### Future-Proof Services
 - Interfaces bem definidas
-- Serviços com backend real no Supabase
+- ServiÃ§os com backend real no Supabase
 - DTOs preparados para API real
 
 ---
@@ -174,21 +169,21 @@ Arquivo: `supabase/functions/admin-users/index.ts`
 
 ### Portal (Frontend)
 ```
-Usuário → Componente → Hook → Service → Storage/API
-                ↓
+UsuÃ¡rio â†’ Componente â†’ Hook â†’ Service â†’ Storage/API
+                â†“
             Config
 ```
 
 ### Analytics
 ```
-Browser → SDK → Collector → PostgreSQL → Metabase
-              ↓
-         verify.sh (validação)
+Browser â†’ SDK â†’ Collector â†’ PostgreSQL â†’ Metabase
+              â†“
+         verify.sh (validaÃ§Ã£o)
 ```
 
 ---
 
-## Preparação para Backend
+## PreparaÃ§Ã£o para Backend
 
 ### Services Interface
 
@@ -220,37 +215,37 @@ export async function getArticleBySlug(slug: string): Promise<NewsArticle | null
 
 ## Performance
 
-### Otimizações Implementadas
+### OtimizaÃ§Ãµes Implementadas
 - Lazy loading de imagens
 - Code splitting por rota
 - Debounce em inputs de busca
 - RAF para scroll tracking
 
-### Métricas de Performance
+### MÃ©tricas de Performance
 - First Contentful Paint < 1.5s
 - Time to Interactive < 3s
 - Lighthouse Score > 90
 
 ---
 
-## Segurança
+## SeguranÃ§a
 
 ### Medidas Atuais
-- Sanitização de HTML (conteúdo de artigos)
+- SanitizaÃ§Ã£o de HTML (conteÃºdo de artigos)
 - XSS protection via React
-- CSRF tokens prontos para implementação
+- CSRF tokens prontos para implementaÃ§Ã£o
 - Hash de IPs no analytics (LGPD)
 
-### Futuras Implementações
+### Futuras ImplementaÃ§Ãµes
 - Content Security Policy
 - Rate limiting no collector
 - Input validation no backend
 
 ---
 
-## Validação do Sistema
+## ValidaÃ§Ã£o do Sistema
 
-Para garantir que todo o sistema está funcionando:
+Para garantir que todo o sistema estÃ¡ funcionando:
 
 ```bash
 # Validar analytics
@@ -259,13 +254,14 @@ Para garantir que todo o sistema está funcionando:
 
 Este script verifica:
 1. PostgreSQL healthy
-2. Partições criadas automaticamente
-3. UNIQUE INDEX(event_id) nas partições
+2. PartiÃ§Ãµes criadas automaticamente
+3. UNIQUE INDEX(event_id) nas partiÃ§Ãµes
 4. Collector /health respondendo
 5. POST /collect funcionando
-6. Deduplicação funcionando
+6. DeduplicaÃ§Ã£o funcionando
 
 ---
 
-**Data de criação:** 2024-01-10  
-**Última atualização:** 2026-02-08 (corrigido hooks e atualizado estrutura)
+**Data de criaÃ§Ã£o:** 2024-01-10  
+**Ãšltima atualizaÃ§Ã£o:** 2026-02-08 (corrigido hooks e atualizado estrutura)
+

@@ -1,5 +1,5 @@
-/**
- * Página de Artigo Individual (Server)
+﻿/**
+ * PÃ¡gina de Artigo Individual (Server)
  * Carrega o artigo no servidor para melhorar SEO (title/description/OG + JSON-LD).
  * @date 2026-02-06
  */
@@ -34,7 +34,7 @@ export async function generateMetadata(
 
   if (!article) {
     return {
-      title: 'Artigo não encontrado',
+      title: 'Artigo nÃ£o encontrado',
       robots: { index: false, follow: false },
     };
   }
@@ -122,13 +122,11 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
       tags: article.tags,
     },
     {
-      isAccessibleForFree: false,
-      paywallSelector: '.paywall-content',
       reviewedBy: reviewedBy ?? undefined,
       speakable: true,
       citation: [
         { name: 'Fontes oficiais de mercado' },
-        { name: 'Dados de agências reguladoras' },
+        { name: 'Dados de agÃªncias reguladoras' },
       ],
     },
   );
@@ -141,3 +139,5 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
     </>
   );
 }
+
+

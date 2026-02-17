@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tipos do Admin Dashboard
  */
 
@@ -6,9 +6,8 @@ import type { NewsArticle } from '@/types';
 import type { ScheduledArticle, ArticleFilters } from '@/services/newsManager';
 import type { AdminUser } from '@/services/adminUsers';
 import type { Author } from '@/config/authors';
-import type { AppSettings } from '@/hooks/useAppSettings';
 
-// Interface para usuários do sistema
+// Interface para usuÃ¡rios do sistema
 export type SystemUser = AdminUser;
 
 // Tipos de abas
@@ -30,33 +29,33 @@ export interface DashboardStats {
   };
 }
 
-// Novas métricas reais de analytics
+// Novas mÃ©tricas reais de analytics
 export interface AnalyticsMetrics {
-  // Métricas principais
+  // MÃ©tricas principais
   totalPageViews: number;
   totalUniqueVisitors: number;
   avgSessionDuration: string;
   bounceRate: number;
   
-  // Métricas de conteúdo
+  // MÃ©tricas de conteÃºdo
   totalArticles: number;
   publishedArticles: number;
   breakingNews: number;
   featuredArticles: number;
   scheduledArticles: number;
   
-  // Métricas de engajamento
+  // MÃ©tricas de engajamento
   totalLikes: number;
   totalBookmarks: number;
   totalComments: number;
   totalShares: number;
   
-  // Métricas de usuários
+  // MÃ©tricas de usuÃ¡rios
   totalUsers: number;
   activeUsers: number;
   newUsers: number;
   
-  // Tendências
+  // TendÃªncias
   viewsTrend: { date: string; views: number }[];
   visitorsTrend: { date: string; visitors: number }[];
 }
@@ -93,7 +92,7 @@ export interface RecentActivityItem {
   timestamp: string;
 }
 
-// Estado do formulário de autor
+// Estado do formulÃ¡rio de autor
 export interface AuthorEducationItem {
   institution: string;
   degree: string;
@@ -201,16 +200,12 @@ export interface CalendarViewProps {
 }
 
 export interface SettingsPanelProps {
-  appSettings: AppSettings;
-  isLoading: boolean;
-  isSaving: boolean;
-  onSettingsChange: (settings: AppSettings) => void;
-  onSave: () => void;
   onReset: () => void;
   onAssignPosts: () => void;
   onExport: () => void;
   onCheckScheduled: () => void;
 }
 
-// Re-exportar tipos necessários
-export type { NewsArticle, ScheduledArticle, ArticleFilters, AdminUser, Author, AppSettings };
+// Re-exportar tipos necessÃ¡rios
+export type { NewsArticle, ScheduledArticle, ArticleFilters, AdminUser, Author };
+

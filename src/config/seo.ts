@@ -82,8 +82,6 @@ export const generateArticleJsonLd = (
   tags: string[];
   },
   options?: {
-    isAccessibleForFree?: boolean;
-    paywallSelector?: string;
     reviewedBy?: {
       name: string;
       slug: string;
@@ -129,19 +127,6 @@ export const generateArticleJsonLd = (
       '@id': articleUrl,
     },
   };
-
-  // Paywall / Acesso
-  if (typeof options?.isAccessibleForFree === 'boolean') {
-    jsonLd.isAccessibleForFree = options.isAccessibleForFree;
-
-    if (options.isAccessibleForFree === false) {
-      jsonLd.hasPart = {
-        '@type': 'WebPageElement',
-        isAccessibleForFree: false,
-        cssSelector: options.paywallSelector ?? '.paywall-content',
-      };
-    }
-  }
 
   // ReviewedBy (E-E-A-T signal)
   if (options?.reviewedBy) {

@@ -210,12 +210,9 @@ export default function ConfiguracoesPage() {
       STORAGE_KEYS.allUsers,
       STORAGE_KEYS.readingProgress,
       STORAGE_KEYS.readingHistory,
-      STORAGE_KEYS.unlockedArticles,
       STORAGE_KEYS.bookmarks,
       STORAGE_KEYS.likedArticles,
       STORAGE_KEYS.sharedArticles,
-      STORAGE_KEYS.surveyData,
-      STORAGE_KEYS.surveyCompleted,
       STORAGE_KEYS.adminNews,
       STORAGE_KEYS.adminMetrics,
     ]);

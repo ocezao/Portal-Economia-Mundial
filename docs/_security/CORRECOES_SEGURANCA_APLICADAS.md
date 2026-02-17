@@ -1,16 +1,16 @@
-# ✅ Correções de Segurança Aplicadas
+﻿# âœ… CorreÃ§Ãµes de SeguranÃ§a Aplicadas
 
-> ⚠️ **NOTA HISTÓRICA:** Documento de correções aplicadas em 04/02/2026. Algumas referências de arquivos (como `src/pages/*`) refletem a estrutura anterior à migração para Next.js App Router. Alguns arquivos mencionados podem ter sido movidos para `src/app/` ou removidos em limpezas de código subsequentes.
+> âš ï¸ **NOTA HISTÃ“RICA:** Documento de correÃ§Ãµes aplicadas em 04/02/2026. Algumas referÃªncias de arquivos (como `src/pages/*`) refletem a estrutura anterior Ã  migraÃ§Ã£o para Next.js App Router. Alguns arquivos mencionados podem ter sido movidos para `src/app/` ou removidos em limpezas de cÃ³digo subsequentes.
 
 **Data:** 04/02/2026  
-**Responsável:** Kimi Code CLI  
-**Status:** ✅ CONCLUÍDO (Histórico)
+**ResponsÃ¡vel:** Kimi Code CLI  
+**Status:** âœ… CONCLUÃDO (HistÃ³rico)
 
 ---
 
-## 🛡️ Resumo das Correções
+## ðŸ›¡ï¸ Resumo das CorreÃ§Ãµes
 
-### 1. 🔴 CRÍTICO - Senha Hardcoded Removida
+### 1. ðŸ”´ CRÃTICO - Senha Hardcoded Removida
 **Arquivo:** `collector/src/db/index.ts`
 
 **Antes:**
@@ -28,23 +28,21 @@ if (!password) {
 
 ---
 
-### 2. 🟠 MÉDIO - Console.logs Removidos/Protegidos
+### 2. ðŸŸ  MÃ‰DIO - Console.logs Removidos/Protegidos
 
 #### Arquivos Corrigidos:
 
-| Arquivo | Alterações |
+| Arquivo | AlteraÃ§Ãµes |
 |---------|------------|
-| `src/lib/supabaseClient.ts` | `console.warn` → `logger.warn` |
+| `src/lib/supabaseClient.ts` | `console.warn` â†’ `logger.warn` |
 | `src/lib/logger.ts` | Criado logger seguro (apenas DEV) |
 | `src/config/storage.ts` | `console.error` protegido com `import.meta.env.DEV` |
 | `src/config/secureStorage.ts` | Criado armazenamento seguro |
-| `src/contexts/AuthContext.tsx` | `console.error` → `logger.error` |
-| `src/hooks/useBookmarks.ts` | `console.error` → `logger.error` (4x) |
-| `src/hooks/useReadingLimit.ts` | `console.error` → `logger.error` (3x) |
-| `src/hooks/useReadingHistory.ts` | `console.error` → `logger.error` |
+| `src/contexts/AuthContext.tsx` | `console.error` â†’ `logger.error` |
+| `src/hooks/useBookmarks.ts` | `console.error` â†’ `logger.error` (4x) |
+| `src/hooks/useReadingHistory.ts` | `console.error` â†’ `logger.error` |
 | `src/hooks/useLocalStorage.ts` | `console.error` protegido (2x) |
-| `src/hooks/useAppSettings.ts` | `console.error` protegido (2x) |
-| `src/services/economics/finnhubService.ts` | `console.log/warn/error` → `logger.*` (8x) |
+| `src/services/economics/finnhubService.ts` | `console.log/warn/error` â†’ `logger.*` (8x) |
 | `src/services/economics/tradingEconomicsService.ts` | `console.error` protegido |
 | `src/services/economics/worldBankService.ts` | `console.error/warn` protegido (2x) |
 | `src/pages/AdminDashboard.tsx` | `console.error` protegido (2x) |
@@ -58,89 +56,87 @@ if (!password) {
 
 ---
 
-### 3. 🟡 BAIXO - dangerouslySetInnerHTML Documentados
+### 3. ðŸŸ¡ BAIXO - dangerouslySetInnerHTML Documentados
 
 #### Arquivos Revisados:
 
-| Arquivo | Status | Ação |
+| Arquivo | Status | AÃ§Ã£o |
 |---------|--------|------|
-| `src/pages/Article.tsx` | ✅ Seguro | Adicionado comentário de segurança (JSON-LD) |
-| `src/components/ui/chart.tsx` | ✅ Seguro | Adicionado comentário (CSS dinâmico interno) |
-| `src/components/news/ArticleContent.tsx` | ⚠️ Requer atenção | Adicionado comentário + TODO para sanitização |
-| `src/pages/AdminNewsEdit.tsx` | ⚠️ Requer atenção | Adicionado comentário + TODO para sanitização |
+| `src/pages/Article.tsx` | âœ… Seguro | Adicionado comentÃ¡rio de seguranÃ§a (JSON-LD) |
+| `src/components/ui/chart.tsx` | âœ… Seguro | Adicionado comentÃ¡rio (CSS dinÃ¢mico interno) |
+| `src/components/news/ArticleContent.tsx` | âš ï¸ Requer atenÃ§Ã£o | Adicionado comentÃ¡rio + TODO para sanitizaÃ§Ã£o |
+| `src/pages/AdminNewsEdit.tsx` | âš ï¸ Requer atenÃ§Ã£o | Adicionado comentÃ¡rio + TODO para sanitizaÃ§Ã£o |
 
-**Recomendação futura:** Implementar sanitização com DOMPurify no backend antes de salvar conteúdo HTML.
+**RecomendaÃ§Ã£o futura:** Implementar sanitizaÃ§Ã£o com DOMPurify no backend antes de salvar conteÃºdo HTML.
 
 ---
 
-### 4. 🔧 Outras Correções
+### 4. ðŸ”§ Outras CorreÃ§Ãµes
 
 #### Vite Config (`vite.config.ts`)
-- Kimi plugin agora só carrega em desenvolvimento
+- Kimi plugin agora sÃ³ carrega em desenvolvimento
 
 #### Logger Seguro (`src/lib/logger.ts`)
-- Criado utilitário de logging que só exibe em DEV
-- Em produção, erros são sanitizados antes de logar
+- Criado utilitÃ¡rio de logging que sÃ³ exibe em DEV
+- Em produÃ§Ã£o, erros sÃ£o sanitizados antes de logar
 
 #### Armazenamento Seguro (`src/config/secureStorage.ts`)
 - Criado wrapper para localStorage/sessionStorage
-- Dados sensíveis (auth) usam sessionStorage
-- Dados não-sensíveis usam localStorage
+- Dados sensÃ­veis (auth) usam sessionStorage
+- Dados nÃ£o-sensÃ­veis usam localStorage
 
 ---
 
-## 📊 Status Final
+## ðŸ“Š Status Final
 
 | Categoria | Antes | Depois |
 |-----------|-------|--------|
-| Senhas hardcoded | 1 | 0 ✅ |
-| Console.logs expostos | 35+ | 0 ✅ |
-| dangerouslySetInnerHTML sem documentação | 4 | 4 ✅ |
-| Headers de segurança | - | Configurados em docs |
+| Senhas hardcoded | 1 | 0 âœ… |
+| Console.logs expostos | 35+ | 0 âœ… |
+| dangerouslySetInnerHTML sem documentaÃ§Ã£o | 4 | 4 âœ… |
+| Headers de seguranÃ§a | - | Configurados em docs |
 
 ---
 
-## ⚠️ Erros de Lint Preexistentes
+## âš ï¸ Erros de Lint Preexistentes
 
-O projeto tinha 136 problemas de lint pré-existentes (não relacionados às correções de segurança):
+O projeto tinha 136 problemas de lint prÃ©-existentes (nÃ£o relacionados Ã s correÃ§Ãµes de seguranÃ§a):
 - Uso de `any` no TypeScript
 - Problemas de hooks React
-- Variáveis não utilizadas
+- VariÃ¡veis nÃ£o utilizadas
 - etc.
 
-**Esses erros não afetam a segurança da aplicação.**
+**Esses erros nÃ£o afetam a seguranÃ§a da aplicaÃ§Ã£o.**
 
 ---
 
-## 🚀 Próximos Passos para Deploy
+## ðŸš€ PrÃ³ximos Passos para Deploy
 
-1. ✅ Configurar variáveis de ambiente em produção
-2. ✅ Habilitar HTTPS
-3. ✅ Configurar headers de segurança no nginx/apache
-4. ⏳ Implementar sanitização DOMPurify no backend (para conteúdo HTML)
-5. ⏳ Configurar CSP (Content Security Policy)
+1. âœ… Configurar variÃ¡veis de ambiente em produÃ§Ã£o
+2. âœ… Habilitar HTTPS
+3. âœ… Configurar headers de seguranÃ§a no nginx/apache
+4. â³ Implementar sanitizaÃ§Ã£o DOMPurify no backend (para conteÃºdo HTML)
+5. â³ Configurar CSP (Content Security Policy)
 
 ---
 
-## 📁 Arquivos Criados/Modificados
+## ðŸ“ Arquivos Criados/Modificados
 
 ### Criados:
 - `src/lib/logger.ts` - Logger seguro
 - `src/config/secureStorage.ts` - Armazenamento seguro
-- `docs/audits/AUDITORIA_SEGURANCA.md` - Relatório completo
+- `docs/audits/AUDITORIA_SEGURANCA.md` - RelatÃ³rio completo
 - `docs/ops/DEPLOY_SEGURO.md` - Guia de deploy seguro
 - `docs/CORRECOES_SEGURANCA_APLICADAS.md` - Este arquivo
 
-### Modificados (correções de segurança):
+### Modificados (correÃ§Ãµes de seguranÃ§a):
 - `collector/src/db/index.ts`
 - `src/lib/supabaseClient.ts`
 - `src/config/storage.ts`
 - `src/contexts/AuthContext.tsx`
 - `src/hooks/useBookmarks.ts`
-- `src/hooks/useReadingLimit.ts`
 - `src/hooks/useReadingHistory.ts`
 - `src/hooks/useLocalStorage.ts`
-- `src/hooks/useAppSettings.ts`
 - `src/services/economics/finnhubService.ts`
 - `src/services/economics/tradingEconomicsService.ts`
 - `src/services/economics/worldBankService.ts`
@@ -158,4 +154,5 @@ O projeto tinha 136 problemas de lint pré-existentes (não relacionados às cor
 
 ---
 
-**Todas as correções críticas e médias foram aplicadas com sucesso!** ✅
+**Todas as correÃ§Ãµes crÃ­ticas e mÃ©dias foram aplicadas com sucesso!** âœ…
+

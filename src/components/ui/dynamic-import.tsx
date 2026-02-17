@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Componentes com Dynamic Import otimizados
  * Reduzem o tamanho do bundle inicial
  */
@@ -6,20 +6,11 @@
 import dynamic from 'next/dynamic';
 import { Skeleton } from './skeleton';
 
-// Recharts - Componentes de gráficos (pesados)
+// Recharts - Componentes de grÃ¡ficos (pesados)
 export const DynamicChart = dynamic(
   () => import('recharts').then((mod) => mod.ResponsiveContainer),
   {
     loading: () => <Skeleton className="h-[300px] w-full rounded-lg" />,
-    ssr: false,
-  }
-);
-
-// Survey Form (médio, usado em dialogs)
-export const DynamicSurveyForm = dynamic(
-  () => import('@/components/interactive/SurveyForm').then((mod) => mod.SurveyForm),
-  {
-    loading: () => <Skeleton className="h-[200px] w-full rounded-lg" />,
     ssr: false,
   }
 );
@@ -46,3 +37,4 @@ export const DynamicAdminDashboard = dynamic(
 
 // Intersection Observer Lazy Wrapper
 export { LazyLoad } from '@/hooks/useIntersectionObserver';
+

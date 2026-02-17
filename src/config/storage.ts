@@ -17,6 +17,5 @@ export {
   type ReadingProgress,
   type ReadingHistory,
   type Bookmark,
-  type SurveyData,
   type DailyStats,
 } from '@/lib/storage';
