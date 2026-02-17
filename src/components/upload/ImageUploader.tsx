@@ -75,7 +75,8 @@ export function ImageUploader({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    const isSvgByExtension = file.name.toLowerCase().endsWith('.svg');
+    if (!file.type.startsWith('image/') && !isSvgByExtension) {
       setResult({ success: false, error: 'Por favor, selecione uma imagem válida' });
       return;
     }
@@ -210,7 +211,7 @@ export function ImageUploader({
             Arraste uma imagem ou clique para selecionar
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            JPEG, PNG, WebP, GIF até 10MB
+            JPEG, PNG, WebP, GIF, AVIF ou SVG até 10MB
           </p>
         </div>
       )}

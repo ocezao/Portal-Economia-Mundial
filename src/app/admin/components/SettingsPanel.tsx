@@ -87,8 +87,8 @@ export function SettingsPanel({
 
           <section className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#f8fafc] rounded-lg gap-4">
             <section>
-              <p className="font-medium text-sm">Atribuir posts ao admin</p>
-              <p className="text-xs text-[#6b6b6b]">Define o admin atual como autor de todos os posts</p>
+              <p className="font-medium text-sm">Atribuir posts a perfil profissional</p>
+              <p className="text-xs text-[#6b6b6b]">Vincula todos os posts a um autor ativo cadastrado</p>
             </section>
             <Button variant="outline" onClick={onAssignPosts} className="w-full sm:w-auto">
               <User className="w-4 h-4 mr-2" /> Atribuir

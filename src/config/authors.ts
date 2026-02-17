@@ -20,7 +20,10 @@ export interface Author {
     facebook?: string;
     instagram?: string;
   };
+  website?: string;
+  location?: string;
   expertise: string[];
+  credentials?: string[];
   education: {
     institution: string;
     degree: string;
@@ -32,6 +35,8 @@ export interface Author {
   isActive: boolean;
   factChecker?: boolean;
   editor?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const AUTHORS: Record<string, Author> = {
@@ -52,6 +57,8 @@ Sua abordagem jornalística prioriza o contexto histórico e as implicações de
       twitter: 'anacsilva_jorn',
       linkedin: 'anacarolinasilva',
     },
+    website: 'https://cenariointernacional.com.br/editorial/',
+    location: 'São Paulo, Brasil',
     expertise: [
       'Economia Internacional',
       'Mercados Emergentes',
@@ -75,6 +82,7 @@ Sua abordagem jornalística prioriza o contexto histórico e as implicações de
       'Prêmio Esso de Jornalismo Econômico (2019)',
       'Prêmio CNBC de Melhor Cobertura Internacional (2017)',
     ],
+    credentials: ['Membro da Associação Brasileira de Jornalismo Investigativo (Abraji)'],
     languages: ['Português', 'Inglês', 'Espanhol'],
     joinedAt: '2019-03-15',
     isActive: true,
@@ -98,6 +106,7 @@ Antes de se juntar ao CIN, Carlos trabalhou em mesas de operações de grandes i
       twitter: 'cmendes_econ',
       linkedin: 'carloseduardomendes',
     },
+    location: 'São Paulo, Brasil',
     expertise: [
       'Análise Técnica',
       'Commodities',
@@ -118,6 +127,7 @@ Antes de se juntar ao CIN, Carlos trabalhou em mesas de operações de grandes i
       },
     ],
     awards: ['Prêmio Anbima de Melhor Análise de Mercado (2021)'],
+    credentials: ['Especialização em Finanças Quantitativas (Insper)'],
     languages: ['Português', 'Inglês'],
     joinedAt: '2020-06-01',
     isActive: true,
@@ -140,6 +150,7 @@ Sua cobertura privilegia as implicações das políticas europeias para o Brasil
       twitter: 'mfoliveira_brux',
       linkedin: 'mariafernandaoliveira',
     },
+    location: 'Bruxelas, Bélgica',
     expertise: [
       'Política Europeia',
       'Relações Transatlânticas',
@@ -160,6 +171,7 @@ Sua cobertura privilegia as implicações das políticas europeias para o Brasil
       },
     ],
     awards: ['Prêmio Imprensa Europeia - Câmara de Comércio UE-Brasil (2022)'],
+    credentials: ['Mestrado em Estudos Europeus (ULB)'],
     languages: ['Português', 'Inglês', 'Francês', 'Espanhol'],
     joinedAt: '2021-01-15',
     isActive: true,
@@ -182,6 +194,7 @@ Roberto é membro da International Fact-Checking Network (IFCN) e participa ativ
       twitter: 'rsantos_check',
       linkedin: 'robertosantos',
     },
+    location: 'Recife, Brasil',
     expertise: [
       'Checagem de Fatos',
       'Análise de Fontes',
@@ -204,6 +217,7 @@ Roberto é membro da International Fact-Checking Network (IFCN) e participa ativ
       'Prêmio Comprova de Checagem (2021)',
       'Certificação IFCN - International Fact-Checking Network',
     ],
+    credentials: ['Membro da International Fact-Checking Network (IFCN)'],
     languages: ['Português', 'Inglês'],
     joinedAt: '2020-08-01',
     isActive: true,
@@ -221,15 +235,20 @@ export function getAuthorBySlug(slug: string): Author | undefined {
 
 // Função para gerar JSON-LD de autor
 export function generateAuthorJsonLd(author: Author, siteUrl: string) {
+  const authorUrl = `${siteUrl}/autor/${author.slug}/`;
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
+    '@id': `${authorUrl}#person`,
     name: author.name,
     alternateName: author.shortName,
     jobTitle: author.title,
     description: author.bio,
-    url: `${siteUrl}/autor/${author.slug}/`,
+    url: authorUrl,
     image: `${siteUrl}${author.photo}`,
+    email: author.email,
+    ...(author.location && { homeLocation: { '@type': 'Place', name: author.location } }),
     worksFor: {
       '@type': 'NewsMediaOrganization',
       name: APP_CONFIG.brand.name,
@@ -240,13 +259,47 @@ export function generateAuthorJsonLd(author: Author, siteUrl: string) {
       name: edu.institution,
     })),
     knowsAbout: author.expertise,
+    knowsLanguage: author.languages,
+    ...(author.credentials?.length
+      ? { hasCredential: author.credentials.map((credential) => ({ '@type': 'EducationalOccupationalCredential', name: credential })) }
+      : {}),
     award: author.awards,
     sameAs: [
+      author.website,
       author.social.twitter && `https://twitter.com/${author.social.twitter}`,
       author.social.linkedin && `https://linkedin.com/in/${author.social.linkedin}`,
       author.social.facebook && `https://facebook.com/${author.social.facebook}`,
       author.social.instagram && `https://instagram.com/${author.social.instagram}`,
     ].filter(Boolean),
+  };
+}
+
+export function generateAuthorProfilePageJsonLd(
+  author: Author,
+  siteUrl: string,
+  options?: { recentArticleUrls?: string[] },
+) {
+  const authorUrl = `${siteUrl}/autor/${author.slug}/`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    '@id': `${authorUrl}#profile`,
+    url: authorUrl,
+    name: `${author.name} - ${author.title}`,
+    mainEntity: {
+      '@id': `${authorUrl}#person`,
+    },
+    ...(author.createdAt && { dateCreated: author.createdAt }),
+    ...(author.updatedAt && { dateModified: author.updatedAt }),
+    ...(options?.recentArticleUrls?.length
+      ? {
+          hasPart: options.recentArticleUrls.map((url) => ({
+            '@type': 'NewsArticle',
+            url,
+          })),
+        }
+      : {}),
   };
 }
 

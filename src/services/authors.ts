@@ -21,7 +21,10 @@ type AuthorRow = {
   photo: string;
   email: string;
   social: Record<string, unknown> | null;
+  website: string | null;
+  location: string | null;
   expertise: string[] | null;
+  credentials: string[] | null;
   education: Array<{ institution: string; degree: string; year: string }> | null;
   awards: string[] | null;
   languages: string[] | null;
@@ -29,6 +32,8 @@ type AuthorRow = {
   is_active: boolean | null;
   fact_checker: boolean | null;
   editor: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 const staticAuthors = () => Object.values(AUTHORS);
@@ -43,7 +48,10 @@ const mapAuthorRow = (row: AuthorRow): Author => ({
   photo: row.photo,
   email: row.email,
   social: (row.social ?? {}) as Author['social'],
+  website: row.website ?? undefined,
+  location: row.location ?? undefined,
   expertise: row.expertise ?? [],
+  credentials: row.credentials ?? [],
   education: row.education ?? [],
   awards: row.awards ?? [],
   languages: row.languages ?? [],
@@ -51,6 +59,8 @@ const mapAuthorRow = (row: AuthorRow): Author => ({
   isActive: row.is_active ?? true,
   factChecker: row.fact_checker ?? false,
   editor: row.editor ?? false,
+  createdAt: row.created_at ?? undefined,
+  updatedAt: row.updated_at ?? undefined,
 });
 
 export const getActiveAuthors = cache(async (): Promise<Author[]> => {
@@ -60,9 +70,7 @@ export const getActiveAuthors = cache(async (): Promise<Author[]> => {
 
   const { data, error } = await supabase
     .from('authors')
-    .select(
-      'slug,name,short_name,title,bio,long_bio,photo,email,social,expertise,education,awards,languages,joined_at,is_active,fact_checker,editor',
-    )
+    .select('*')
     .eq('is_active', true)
     .order('editor', { ascending: false })
     .order('fact_checker', { ascending: false })
@@ -84,9 +92,7 @@ export const getAuthorBySlug = cache(async (slug: string): Promise<Author | null
 
   const { data, error } = await supabase
     .from('authors')
-    .select(
-      'slug,name,short_name,title,bio,long_bio,photo,email,social,expertise,education,awards,languages,joined_at,is_active,fact_checker,editor',
-    )
+    .select('*')
     .eq('slug', slug)
     .maybeSingle();
 
@@ -121,4 +127,3 @@ export const getPrimaryFactChecker = cache(async (): Promise<Pick<Author, 'slug'
 
   return { slug: data.slug as string, name: data.name as string };
 });
-

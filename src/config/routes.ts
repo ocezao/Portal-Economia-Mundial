@@ -23,9 +23,9 @@ export const ROUTES = {
   // Área do usuário
   app: {
     root: '/app',
-    perfil: '/app/perfil',
-    preferencias: '/app/preferencias',
-    configuracoes: '/app/configuracoes',
+    perfil: '/perfil',
+    preferencias: '/preferencias',
+    configuracoes: '/configuracoes',
   },
   
   // Admin
@@ -34,7 +34,12 @@ export const ROUTES = {
     noticias: '/admin#noticias',
     novaNoticia: '/admin/noticias/novo',
     editarNoticia: (slug: string) => `/admin/noticias/editar/${slug}`,
+    agendamentos: '/admin/agendamentos',
+    arquivos: '/admin/arquivos',
     usuarios: '/admin/usuarios',
+    autores: '/admin/autores',
+    dashboard: '/admin/dashboard',
+    configuracoes: '/admin/settings',
   },
   
   // Dados Econômicos (Trading Economics)

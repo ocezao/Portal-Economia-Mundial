@@ -21,7 +21,7 @@ export const runtime = 'nodejs';
 
 // Configurações
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml'];
 const MAX_DIMENSION = 4096; // safety limit for resize inputs
 
 // Simple in-memory rate limiter (best-effort).
@@ -101,9 +101,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validações
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    const isSvgByExtension = file.name.toLowerCase().endsWith('.svg');
+    if (!ALLOWED_TYPES.includes(file.type) && !isSvgByExtension) {
       return NextResponse.json(
-        { error: 'Tipo de arquivo não suportado. Use: JPEG, PNG, WebP, GIF, AVIF' },
+        { error: 'Tipo de arquivo não suportado. Use: JPEG, PNG, WebP, GIF, AVIF ou SVG' },
         { status: 400 }
       );
     }
@@ -138,6 +139,60 @@ export async function POST(request: NextRequest) {
     // Converte para buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    const isVector = file.type === 'image/svg+xml' || isSvgByExtension;
+    if (isVector) {
+      const svgText = buffer.toString('utf8');
+      const hasUnsafeSvg =
+        /<script[\s>]/i.test(svgText) ||
+        /\son\w+\s*=/i.test(svgText) ||
+        /javascript:/i.test(svgText) ||
+        /<foreignObject[\s>]/i.test(svgText) ||
+        /<!ENTITY/i.test(svgText);
+
+      if (hasUnsafeSvg) {
+        return NextResponse.json(
+          { error: 'SVG com conteúdo potencialmente inseguro. Remova scripts/eventos e tente novamente.' },
+          { status: 400 }
+        );
+      }
+
+      const filename = `${randomUUID()}.svg`;
+      const storageBucket = process.env.SUPABASE_UPLOAD_BUCKET || 'uploads';
+      const month = new Date().toISOString().slice(0, 7).replace('-', '/');
+      const objectPath = `${month}/${filename}`;
+
+      const { error: uploadError } = await authClient.storage
+        .from(storageBucket)
+        .upload(objectPath, new Blob([new Uint8Array(buffer)], { type: 'image/svg+xml' }), {
+          contentType: 'image/svg+xml',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        return NextResponse.json({ error: 'Erro ao enviar arquivo vetorial para storage' }, { status: 500 });
+      }
+
+      const publicUrl = authClient.storage.from(storageBucket).getPublicUrl(objectPath).data.publicUrl;
+      const sizeKb = `${(buffer.length / 1024).toFixed(2)} KB`;
+
+      return NextResponse.json({
+        success: true,
+        file: {
+          filename,
+          url: publicUrl,
+          originalName: escapeHtml(sanitizeFilename(file.name)),
+          originalSize: sizeKb,
+          processedSize: sizeKb,
+          reduction: '0.0%',
+          format: 'svg',
+          metadata: {
+            removed: false,
+            hadGPS: false,
+          },
+        },
+      });
+    }
 
     // Verifica metadados antes (para logging)
     const originalMetadata = await sharp(buffer).metadata();

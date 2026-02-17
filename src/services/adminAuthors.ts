@@ -19,7 +19,10 @@ type AuthorRow = {
   photo: string;
   email: string;
   social: Author['social'] | null;
+  website: string | null;
+  location: string | null;
   expertise: string[] | null;
+  credentials: string[] | null;
   education: Author['education'] | null;
   awards: string[] | null;
   languages: string[] | null;
@@ -27,6 +30,8 @@ type AuthorRow = {
   is_active: boolean | null;
   fact_checker: boolean | null;
   editor: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 const mapRowToAuthor = (row: AuthorRow): Author => ({
@@ -39,7 +44,10 @@ const mapRowToAuthor = (row: AuthorRow): Author => ({
   photo: row.photo,
   email: row.email,
   social: row.social ?? {},
+  website: row.website ?? undefined,
+  location: row.location ?? undefined,
   expertise: row.expertise ?? [],
+  credentials: row.credentials ?? [],
   education: row.education ?? [],
   awards: row.awards ?? [],
   languages: row.languages ?? [],
@@ -47,6 +55,8 @@ const mapRowToAuthor = (row: AuthorRow): Author => ({
   isActive: row.is_active ?? true,
   factChecker: row.fact_checker ?? false,
   editor: row.editor ?? false,
+  createdAt: row.created_at ?? undefined,
+  updatedAt: row.updated_at ?? undefined,
 });
 
 const mapAuthorToInsertRow = (author: Author) => ({
@@ -59,7 +69,10 @@ const mapAuthorToInsertRow = (author: Author) => ({
   photo: author.photo,
   email: author.email,
   social: author.social ?? {},
+  website: author.website ?? null,
+  location: author.location ?? null,
   expertise: author.expertise ?? [],
+  credentials: author.credentials ?? [],
   education: author.education ?? [],
   awards: author.awards ?? [],
   languages: author.languages ?? [],
@@ -76,9 +89,7 @@ export async function listAdminAuthors(): Promise<Author[]> {
 
   const { data, error } = await supabase
     .from('authors')
-    .select(
-      'slug,name,short_name,title,bio,long_bio,photo,email,social,expertise,education,awards,languages,joined_at,is_active,fact_checker,editor',
-    )
+    .select('*')
     .order('editor', { ascending: false })
     .order('fact_checker', { ascending: false })
     .order('name', { ascending: true });
@@ -118,7 +129,10 @@ export async function updateAdminAuthor(input: { slug: string; updates: Partial<
   if (updates.photo !== undefined) dbUpdates.photo = updates.photo;
   if (updates.email !== undefined) dbUpdates.email = updates.email;
   if (updates.social !== undefined) dbUpdates.social = updates.social;
+  if (updates.website !== undefined) dbUpdates.website = updates.website;
+  if (updates.location !== undefined) dbUpdates.location = updates.location;
   if (updates.expertise !== undefined) dbUpdates.expertise = updates.expertise;
+  if (updates.credentials !== undefined) dbUpdates.credentials = updates.credentials;
   if (updates.education !== undefined) dbUpdates.education = updates.education;
   if (updates.awards !== undefined) dbUpdates.awards = updates.awards;
   if (updates.languages !== undefined) dbUpdates.languages = updates.languages;

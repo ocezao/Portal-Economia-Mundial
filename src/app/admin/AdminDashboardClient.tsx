@@ -378,8 +378,11 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
       longBio: author.longBio,
       photo: author.photo,
       email: author.email,
+      website: author.website ?? '',
+      location: author.location ?? '',
       social: author.social ?? {},
       expertise: (author.expertise ?? []).join(', '),
+      credentials: (author.credentials ?? []).join('\n'),
       awards: (author.awards ?? []).join('\n'),
       languages: (author.languages ?? []).join(', '),
       joinedAt: author.joinedAt ?? '',
@@ -433,6 +436,8 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
       longBio,
       photo: authorFormData.photo.trim(),
       email: authorFormData.email.trim(),
+      website: authorFormData.website.trim() || undefined,
+      location: authorFormData.location.trim() || undefined,
       social: {
         twitter: authorFormData.social.twitter?.trim() || undefined,
         linkedin: authorFormData.social.linkedin?.trim() || undefined,
@@ -440,6 +445,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
         instagram: authorFormData.social.instagram?.trim() || undefined,
       },
       expertise: splitCommaList(authorFormData.expertise),
+      credentials: splitLinesList(authorFormData.credentials),
       education: (authorFormData.education ?? [])
         .map((e) => ({
           institution: e.institution?.trim() ?? '',
@@ -504,19 +510,23 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
   }, [loadData]);
 
   const handleAssignPostsToAdmin = useCallback(async () => {
-    if (!currentUser?.id) {
-      toast.error('Admin nÃ£o identificado');
+    const professionalAuthor =
+      authors.find((author) => author.isActive && author.editor) ??
+      authors.find((author) => author.isActive);
+
+    if (!professionalAuthor) {
+      toast.error('Nenhum perfil profissional ativo encontrado');
       return;
     }
-    if (!confirm('Atribuir todos os posts ao admin atual?')) return;
+    if (!confirm(`Atribuir todos os posts ao perfil profissional "${professionalAuthor.name}"?`)) return;
     try {
-      const count = await assignAllArticlesToAuthor(currentUser.id, currentUser.name || 'Admin CIN');
-      toast.success(`${count} post(s) atribuÃ­dos ao admin atual`);
+      const count = await assignAllArticlesToAuthor(professionalAuthor.slug);
+      toast.success(`${count} post(s) atribuÃ­dos a ${professionalAuthor.name}`);
       await loadData();
     } catch {
-      toast.error('Erro ao atribuir posts ao admin');
+      toast.error('Erro ao atribuir posts ao perfil profissional');
     }
-  }, [currentUser, loadData]);
+  }, [authors, loadData]);
 
   const handleExport = useCallback(async () => {
     const data = {
@@ -907,6 +917,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
                   />
                 </section>
               </section>
+
               <section className="grid grid-cols-2 gap-4">
                 <section>
                   <label className="text-sm font-medium">Nome Curto *</label>
@@ -918,7 +929,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
                   />
                 </section>
                 <section>
-                  <label className="text-sm font-medium">TÃ­tulo/Cargo *</label>
+                  <label className="text-sm font-medium">Titulo/Cargo *</label>
                   <input
                     type="text"
                     value={authorFormData.title}
@@ -927,15 +938,52 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
                   />
                 </section>
               </section>
-              <section>
-                <label className="text-sm font-medium">Email *</label>
-                <input
-                  type="email"
-                  value={authorFormData.email}
-                  onChange={(e) => setAuthorFormData({ ...authorFormData, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
-                />
+
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Email *</label>
+                  <input
+                    type="email"
+                    value={authorFormData.email}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, email: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Website</label>
+                  <input
+                    type="url"
+                    value={authorFormData.website}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, website: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="https://..."
+                  />
+                </section>
               </section>
+
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Foto (caminho em /public) *</label>
+                  <input
+                    type="text"
+                    value={authorFormData.photo}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, photo: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="/images/authors/nome.webp"
+                  />
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Localizacao editorial</label>
+                  <input
+                    type="text"
+                    value={authorFormData.location}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, location: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Sao Paulo, Brasil"
+                  />
+                </section>
+              </section>
+
               <section>
                 <label className="text-sm font-medium">Bio Curta *</label>
                 <textarea
@@ -945,24 +993,226 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
                   rows={2}
                 />
               </section>
+
               <section>
                 <label className="text-sm font-medium">Bio Longa</label>
                 <textarea
                   value={authorFormData.longBio}
                   onChange={(e) => setAuthorFormData({ ...authorFormData, longBio: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
-                  rows={4}
+                  rows={5}
                 />
               </section>
+
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Areas de expertise (separadas por virgula)</label>
+                  <textarea
+                    value={authorFormData.expertise}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, expertise: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                    rows={3}
+                    placeholder="Geopolitica, Economia Internacional, Politica Monetaria"
+                  />
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Idiomas (separados por virgula)</label>
+                  <textarea
+                    value={authorFormData.languages}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, languages: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                    rows={3}
+                    placeholder="Portugues, Ingles, Espanhol"
+                  />
+                </section>
+              </section>
+
               <section>
-                <label className="text-sm font-medium">Foto (caminho em /public) *</label>
-                <input
-                  type="text"
-                  value={authorFormData.photo}
-                  onChange={(e) => setAuthorFormData({ ...authorFormData, photo: e.target.value })}
+                <label className="text-sm font-medium">Credenciais (1 por linha)</label>
+                <textarea
+                  value={authorFormData.credentials}
+                  onChange={(e) => setAuthorFormData({ ...authorFormData, credentials: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
-                  placeholder="/images/authors/nome.webp"
+                  rows={3}
+                  placeholder="Membro IFCN&#10;CFA Charterholder"
                 />
+              </section>
+
+              <section>
+                <label className="text-sm font-medium">Premios e reconhecimentos (1 por linha)</label>
+                <textarea
+                  value={authorFormData.awards}
+                  onChange={(e) => setAuthorFormData({ ...authorFormData, awards: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={3}
+                />
+              </section>
+
+              <section className="space-y-3">
+                <header className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Formacao</h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setAuthorFormData({
+                        ...authorFormData,
+                        education: [...authorFormData.education, { institution: '', degree: '', year: '' }],
+                      })
+                    }
+                  >
+                    Adicionar formacao
+                  </Button>
+                </header>
+                {(authorFormData.education ?? []).map((item, index) => (
+                  <section key={`${item.institution}-${index}`} className="grid grid-cols-12 gap-2">
+                    <input
+                      type="text"
+                      value={item.institution}
+                      onChange={(e) => {
+                        const next = [...authorFormData.education];
+                        next[index] = { ...next[index], institution: e.target.value };
+                        setAuthorFormData({ ...authorFormData, education: next });
+                      }}
+                      className="col-span-5 px-3 py-2 border rounded-md"
+                      placeholder="Instituicao"
+                    />
+                    <input
+                      type="text"
+                      value={item.degree}
+                      onChange={(e) => {
+                        const next = [...authorFormData.education];
+                        next[index] = { ...next[index], degree: e.target.value };
+                        setAuthorFormData({ ...authorFormData, education: next });
+                      }}
+                      className="col-span-4 px-3 py-2 border rounded-md"
+                      placeholder="Curso"
+                    />
+                    <input
+                      type="text"
+                      value={item.year}
+                      onChange={(e) => {
+                        const next = [...authorFormData.education];
+                        next[index] = { ...next[index], year: e.target.value };
+                        setAuthorFormData({ ...authorFormData, education: next });
+                      }}
+                      className="col-span-2 px-3 py-2 border rounded-md"
+                      placeholder="Ano"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="col-span-1 text-[#ef4444]"
+                      onClick={() => {
+                        const next = authorFormData.education.filter((_, i) => i !== index);
+                        setAuthorFormData({ ...authorFormData, education: next });
+                      }}
+                    >
+                      x
+                    </Button>
+                  </section>
+                ))}
+              </section>
+
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Twitter (sem @)</label>
+                  <input
+                    type="text"
+                    value={authorFormData.social.twitter ?? ''}
+                    onChange={(e) =>
+                      setAuthorFormData({
+                        ...authorFormData,
+                        social: { ...authorFormData.social, twitter: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+                <section>
+                  <label className="text-sm font-medium">LinkedIn (slug)</label>
+                  <input
+                    type="text"
+                    value={authorFormData.social.linkedin ?? ''}
+                    onChange={(e) =>
+                      setAuthorFormData({
+                        ...authorFormData,
+                        social: { ...authorFormData.social, linkedin: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+              </section>
+
+              <section className="grid grid-cols-2 gap-4">
+                <section>
+                  <label className="text-sm font-medium">Facebook (slug)</label>
+                  <input
+                    type="text"
+                    value={authorFormData.social.facebook ?? ''}
+                    onChange={(e) =>
+                      setAuthorFormData({
+                        ...authorFormData,
+                        social: { ...authorFormData.social, facebook: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+                <section>
+                  <label className="text-sm font-medium">Instagram (sem @)</label>
+                  <input
+                    type="text"
+                    value={authorFormData.social.instagram ?? ''}
+                    onChange={(e) =>
+                      setAuthorFormData({
+                        ...authorFormData,
+                        social: { ...authorFormData.social, instagram: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+              </section>
+
+              <section className="grid grid-cols-2 gap-4 items-center">
+                <section>
+                  <label className="text-sm font-medium">Data de entrada na equipe</label>
+                  <input
+                    type="date"
+                    value={authorFormData.joinedAt}
+                    onChange={(e) => setAuthorFormData({ ...authorFormData, joinedAt: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </section>
+                <section className="flex flex-wrap gap-4 pt-6">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={authorFormData.isActive}
+                      onChange={(e) => setAuthorFormData({ ...authorFormData, isActive: e.target.checked })}
+                    />
+                    Ativo
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={authorFormData.editor}
+                      onChange={(e) => setAuthorFormData({ ...authorFormData, editor: e.target.checked })}
+                    />
+                    Editor
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={authorFormData.factChecker}
+                      onChange={(e) => setAuthorFormData({ ...authorFormData, factChecker: e.target.checked })}
+                    />
+                    Fact-checker
+                  </label>
+                </section>
               </section>
             </section>
             <DialogFooter>

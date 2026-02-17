@@ -23,8 +23,8 @@ import {
   getArticlesPaginated,
   getArticleStats,
   getScheduledArticles,
-  checkAndPublishScheduled,
 } from '@/services/newsManager';
+import { publishScheduledPostsNow } from '@/services/adminPosts';
 import { listAdminUsers } from '@/services/adminUsers';
 import { listAdminAuthors } from '@/services/adminAuthors';
 import {
@@ -268,7 +268,7 @@ export function useAdminData() {
   // Verificar publicaÃ§Ãµes agendadas
   const checkScheduled = useCallback(async () => {
     try {
-      const published = await checkAndPublishScheduled();
+      const published = await publishScheduledPostsNow();
       if (published > 0 && isMounted.current) {
         toast.success(`${published} artigo(s) agendado(s) publicado(s)!`);
         await loadData();
@@ -400,8 +400,11 @@ export function getInitialAuthorFormState(): AuthorFormState {
     longBio: '',
     photo: '',
     email: '',
+    website: '',
+    location: '',
     social: {},
     expertise: '',
+    credentials: '',
     awards: '',
     languages: '',
     joinedAt: new Date().toISOString().split('T')[0],

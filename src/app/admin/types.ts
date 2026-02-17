@@ -108,6 +108,8 @@ export interface AuthorFormState {
   longBio: string;
   photo: string;
   email: string;
+  website: string;
+  location: string;
   social: {
     twitter?: string;
     linkedin?: string;
@@ -115,6 +117,7 @@ export interface AuthorFormState {
     instagram?: string;
   };
   expertise: string;
+  credentials: string;
   awards: string;
   languages: string;
   joinedAt: string;

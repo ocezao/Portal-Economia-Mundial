@@ -81,6 +81,12 @@ interface SearchResultRow {
   id?: string;
 }
 
+interface AuthorProfileRow {
+  slug: string;
+  name: string;
+  is_active?: boolean | null;
+}
+
 // Type guard para verificar se um valor é um objeto
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -235,15 +241,44 @@ const mapArticleRow = (row: unknown): NewsArticle => {
   };
 };
 
-const getArticleIdBySlug = async (slug: string): Promise<string | null> => {
+const getArticleMetaBySlug = async (
+  slug: string,
+): Promise<{ id: string; authorId: string | null } | null> => {
   const { data, error } = await supabase
     .from('news_articles')
-    .select('id')
+    .select('id,author_id')
     .eq('slug', slug)
     .single();
 
   if (error) return null;
-  return isRecord(data) && typeof data.id === 'string' ? data.id : null;
+  if (!isRecord(data) || typeof data.id !== 'string') return null;
+
+  const authorId = typeof data.author_id === 'string' ? data.author_id : null;
+  return { id: data.id, authorId };
+};
+
+const requireActiveAuthor = async (authorId: string): Promise<AuthorProfileRow> => {
+  const slug = authorId.trim();
+  if (!slug) {
+    throw new Error('Autor profissional obrigatorio');
+  }
+
+  const { data, error } = await supabase
+    .from('authors')
+    .select('slug,name,is_active')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error('Autor profissional invalido');
+  }
+
+  const row = data as AuthorProfileRow;
+  if (row.is_active === false || !row.slug || !row.name) {
+    throw new Error('Autor profissional inativo');
+  }
+
+  return row;
 };
 
 // ==================== QUERIES ====================
@@ -522,6 +557,7 @@ export async function createArticle(
   status: 'draft' | 'scheduled' | 'published' = 'published'
 ): Promise<NewsArticle> {
   const publishedAt = customPublishedAt ?? new Date().toISOString();
+  const authorProfile = await requireActiveAuthor(articleData.authorId);
 
   const { data: inserted, error } = await supabase
     .from('news_articles')
@@ -534,8 +570,8 @@ export async function createArticle(
       content_en: articleData.contentEn ?? null,
       slug: articleData.slug,
       cover_image: articleData.coverImage,
-      author_id: articleData.authorId || null,
-      author_name: articleData.author,
+      author_id: authorProfile.slug,
+      author_name: authorProfile.name,
       status,
       published_at: status === 'draft' ? null : publishedAt,
       reading_time: articleData.readingTime,
@@ -592,10 +628,13 @@ export async function updateArticle(
   slug: string,
   updates: Partial<NewsArticle>
 ): Promise<NewsArticle | null> {
-  const articleId = await getArticleIdBySlug(slug);
-  if (!articleId) return null;
+  const articleMeta = await getArticleMetaBySlug(slug);
+  if (!articleMeta) return null;
+  const articleId = articleMeta.id;
 
   const nextSlug = updates.slug ?? slug;
+  const nextAuthorId = (updates.authorId ?? articleMeta.authorId ?? '').trim();
+  const authorProfile = await requireActiveAuthor(nextAuthorId);
 
   const { data, error } = await supabase
     .from('news_articles')
@@ -608,8 +647,8 @@ export async function updateArticle(
       content_en: updates.contentEn ?? null,
       slug: nextSlug,
       cover_image: updates.coverImage,
-      author_id: updates.authorId || null,
-      author_name: updates.author,
+      author_id: authorProfile.slug,
+      author_name: authorProfile.name,
       published_at: updates.publishedAt,
       reading_time: updates.readingTime,
       is_featured: updates.featured,
@@ -961,13 +1000,14 @@ export async function resetToDefault(): Promise<void> {
 
 export async function assignAllArticlesToAuthor(
   authorId: string,
-  authorName: string
 ): Promise<number> {
+  const authorProfile = await requireActiveAuthor(authorId);
+
   const { data, error } = await supabase
     .from('news_articles')
     .update({
-      author_id: authorId || null,
-      author_name: authorName,
+      author_id: authorProfile.slug,
+      author_name: authorProfile.name,
     })
     .select('id');
 

@@ -1,6 +1,6 @@
-/**
- * Admin - Editar Notícia
- * Formulário completo com editor rich text, upload de imagens, auto-save e agendamento
+﻿/**
+ * Admin - Editar NotÃ­cia
+ * FormulÃ¡rio completo com editor rich text, upload de imagens, auto-save e agendamento
  */
 
 'use client';
@@ -29,7 +29,6 @@ import {
   Trash2,
   Upload,
   Globe,
-  Sparkles,
   FileText,
   Calendar,
   User,
@@ -48,9 +47,9 @@ import {
   getScheduledArticles,
   type ScheduledArticle
 } from '@/services/newsManager';
-import { generateAiNews } from '@/services/aiNews';
+import { listAdminAuthors } from '@/services/adminAuthors';
 import { CONTENT_CONFIG } from '@/config/content';
-import { useAuth } from '@/contexts/AuthContext';
+import type { Author } from '@/config/authors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,16 +85,16 @@ export default function AdminNewsEditPage({ params }: PageProps) {
   const router = useRouter();
   const { slug } = params;
 
-  const { user: currentUser } = useAuth();
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Modo de publicação
+  // Modo de publicaÃ§Ã£o
   const [publishMode, setPublishMode] = useState<'now' | 'schedule'>('now');
   const [scheduledInfo, setScheduledInfo] = useState<ScheduledArticle | null>(null);
+  const [authors, setAuthors] = useState<Author[]>([]);
   
-  // Dados do formulário
+  // Dados do formulÃ¡rio
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -103,6 +102,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     content: '',
     category: 'economia',
     author: '',
+    authorId: '',
     tags: [] as string[],
     tagInput: '',
     coverImage: '',
@@ -123,29 +123,35 @@ export default function AdminNewsEditPage({ params }: PageProps) {
   const [hasChanges, setHasChanges] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
-  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
-  const [showAiConfirm, setShowAiConfirm] = useState(false);
-  const [aiTopicCategory, setAiTopicCategory] = useState<'economia' | 'geopolitica' | 'tecnologia' | 'custom' | ''>('');
-  const [aiTopicText, setAiTopicText] = useState('');
-  const [aiQuestions, setAiQuestions] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carregar dados da notícia existente
+  // Carregar dados da notÃ­cia existente
   useEffect(() => {
     let isMounted = true;
 
     const load = async () => {
       setIsLoading(true);
+      const allAuthors = await listAdminAuthors().catch(() => []);
+      const activeAuthors = (allAuthors ?? []).filter((author) => author.isActive);
+      if (isMounted) {
+        setAuthors(activeAuthors);
+      }
+
       if (slug) {
         const article = await getArticleBySlug(slug, { includeDrafts: true });
         if (article && isMounted) {
+          const selectedAuthor =
+            activeAuthors.find((author) => author.slug === article.authorId) ??
+            activeAuthors.find((author) => author.name === article.author);
+
           setFormData({
             title: article.title,
             slug: article.slug,
             excerpt: article.excerpt,
             content: article.content.replace(/<[^>]*>/g, ''),
             category: article.category,
-            author: article.author,
+            author: selectedAuthor?.name ?? article.author,
+            authorId: selectedAuthor?.slug ?? article.authorId ?? '',
             tags: article.tags,
             tagInput: '',
             coverImage: article.coverImage,
@@ -165,6 +171,10 @@ export default function AdminNewsEditPage({ params }: PageProps) {
         const scheduledList = await getScheduledArticles();
         const scheduled = scheduledList.find(s => s.articleData.slug === slug);
         if (scheduled && isMounted) {
+          const selectedAuthor =
+            activeAuthors.find((author) => author.slug === scheduled.articleData.authorId) ??
+            activeAuthors.find((author) => author.name === scheduled.articleData.author);
+
           setScheduledInfo(scheduled);
           setFormData({
             title: scheduled.articleData.title,
@@ -172,7 +182,8 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             excerpt: scheduled.articleData.excerpt,
             content: scheduled.articleData.content.replace(/<[^>]*>/g, ''),
             category: scheduled.articleData.category,
-            author: scheduled.articleData.author,
+            author: selectedAuthor?.name ?? scheduled.articleData.author,
+            authorId: selectedAuthor?.slug ?? scheduled.articleData.authorId ?? '',
             tags: scheduled.articleData.tags,
             tagInput: '',
             coverImage: scheduled.articleData.coverImage,
@@ -212,7 +223,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     };
   }, [formData, hasChanges]);
 
-  // Alertar ao sair com alterações
+  // Alertar ao sair com alteraÃ§Ãµes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasChanges) {
@@ -255,7 +266,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     const tag = formData.tagInput.trim();
     if (!tag) return;
     if (formData.tags.includes(tag)) {
-      toast.error('Esta tag já existe');
+      toast.error('Esta tag jÃ¡ existe');
       return;
     }
     setFormData(prev => ({
@@ -279,12 +290,12 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione uma imagem válida');
+      toast.error('Por favor, selecione uma imagem vÃ¡lida');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 5MB');
+      toast.error('A imagem deve ter no mÃ¡ximo 5MB');
       return;
     }
     
@@ -313,16 +324,16 @@ export default function AdminNewsEditPage({ params }: PageProps) {
         formattedText = `<strong>${selectedText || 'texto em negrito'}</strong>`;
         break;
       case 'italic':
-        formattedText = `<em>${selectedText || 'texto em itálico'}</em>`;
+        formattedText = `<em>${selectedText || 'texto em itÃ¡lico'}</em>`;
         break;
       case 'h2':
-        formattedText = `<h2>${selectedText || 'Título'}</h2>`;
+        formattedText = `<h2>${selectedText || 'TÃ­tulo'}</h2>`;
         break;
       case 'h3':
-        formattedText = `<h3>${selectedText || 'Subtítulo'}</h3>`;
+        formattedText = `<h3>${selectedText || 'SubtÃ­tulo'}</h3>`;
         break;
       case 'quote':
-        formattedText = `<blockquote>${selectedText || 'Citação'}</blockquote>`;
+        formattedText = `<blockquote>${selectedText || 'CitaÃ§Ã£o'}</blockquote>`;
         break;
       case 'list':
         formattedText = `<ul>\n  <li>${selectedText || 'Item'}</li>\n</ul>`;
@@ -344,71 +355,33 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     }, 0);
   };
 
-  const generateContent = async () => {
-    if (!formData.title) {
-      toast.error('Digite um título primeiro');
-      return;
-    }
-    
-    setIsGeneratingContent(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const generatedExcerpt = `Análise aprofundada sobre ${formData.title.toLowerCase()}. Este artigo explora os principais aspectos e implicações do tema, trazendo dados atualizados e perspectivas de especialistas do setor.`;
-    
-    const generatedContent = `<h2>Contexto e Panorama Atual</h2>
-<p>O cenário atual de ${formData.title.toLowerCase()} apresenta desenvolvimentos significativos que merecem atenção especial. Especialistas acompanham de perto as mudanças e seus possíveis impactos.</p>
-
-<h2>Principais Desenvolvimentos</h2>
-<p>Os últimos acontecimentos demonstram uma aceleração nas mudanças relacionadas ao tema. Autoridades e especialistas têm monitorado a situação com atenção redobrada.</p>
-
-<blockquote>
-"Este é um momento crucial para compreendermos as implicações de longo prazo destas mudanças."
-</blockquote>
-
-<h2>Impacto e Projeções</h2>
-<p>Analistas projetam que os efeitos destes desenvolvimentos se estenderão pelos próximos meses, influenciando diversos setores da economia e sociedade.</p>
-
-<h2>Conclusão</h2>
-<p>O acompanhamento contínuo desta situação é fundamental para compreender as tendências futuras e se preparar adequadamente para os cenários possíveis.</p>`;
-    
-    setFormData(prev => ({
-      ...prev,
-      excerpt: generatedExcerpt,
-      content: generatedContent,
-      seoDescription: generatedExcerpt.slice(0, 160),
-    }));
-    setHasChanges(true);
-    setIsGeneratingContent(false);
-    toast.success('Conteúdo gerado! Revise e ajuste conforme necessário.');
-  };
-
   const validate = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.title.trim()) newErrors.title = 'Título é obrigatório';
-    else if (formData.title.length < 10) newErrors.title = 'Título deve ter pelo menos 10 caracteres';
+    if (!formData.title.trim()) newErrors.title = 'TÃ­tulo Ã© obrigatÃ³rio';
+    else if (formData.title.length < 10) newErrors.title = 'TÃ­tulo deve ter pelo menos 10 caracteres';
     
-    if (!formData.slug.trim()) newErrors.slug = 'Slug é obrigatório';
-    else if (!isSlugAvailable(formData.slug, slug)) newErrors.slug = 'Este slug já está em uso';
+    if (!formData.slug.trim()) newErrors.slug = 'Slug Ã© obrigatÃ³rio';
+    else if (!isSlugAvailable(formData.slug, slug)) newErrors.slug = 'Este slug jÃ¡ estÃ¡ em uso';
     
-    if (!formData.excerpt.trim()) newErrors.excerpt = 'Resumo é obrigatório';
+    if (!formData.excerpt.trim()) newErrors.excerpt = 'Resumo Ã© obrigatÃ³rio';
     else if (formData.excerpt.length < 50) newErrors.excerpt = 'Resumo deve ter pelo menos 50 caracteres';
-    else if (formData.excerpt.length > 300) newErrors.excerpt = 'Resumo deve ter no máximo 300 caracteres';
+    else if (formData.excerpt.length > 300) newErrors.excerpt = 'Resumo deve ter no mÃ¡ximo 300 caracteres';
     
-    if (!formData.content.trim()) newErrors.content = 'Conteúdo é obrigatório';
-    else if (formData.content.length < 200) newErrors.content = 'Conteúdo deve ter pelo menos 200 caracteres';
+    if (!formData.content.trim()) newErrors.content = 'ConteÃºdo Ã© obrigatÃ³rio';
+    else if (formData.content.length < 200) newErrors.content = 'ConteÃºdo deve ter pelo menos 200 caracteres';
     
-    if (!formData.author.trim()) newErrors.author = 'Autor é obrigatório';
+    if (!formData.authorId.trim()) newErrors.author = 'Perfil profissional obrigatório';
     
-    if (!formData.coverImage.trim()) newErrors.coverImage = 'Imagem de capa é obrigatória';
+    if (!formData.coverImage.trim()) newErrors.coverImage = 'Imagem de capa Ã© obrigatÃ³ria';
     
     // Validar agendamento
     if (publishMode === 'schedule') {
       if (!formData.scheduledDate) {
-        newErrors.scheduledDate = 'Data de agendamento é obrigatória';
+        newErrors.scheduledDate = 'Data de agendamento Ã© obrigatÃ³ria';
       }
       if (!formData.scheduledTime) {
-        newErrors.scheduledTime = 'Hora de agendamento é obrigatória';
+        newErrors.scheduledTime = 'Hora de agendamento Ã© obrigatÃ³ria';
       }
       
       if (formData.scheduledDate && formData.scheduledTime) {
@@ -432,14 +405,12 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     setIsSaving(true);
     
     try {
-      const resolvedAuthor =
-        currentUser?.role === 'admin'
-          ? (currentUser.name || 'Admin CIN')
-          : formData.author;
-      const resolvedAuthorId =
-        currentUser?.role === 'admin'
-          ? currentUser.id
-          : formData.author.toLowerCase().replace(/\s+/g, '-');
+      const selectedAuthor = authors.find((author) => author.slug === formData.authorId);
+      if (!selectedAuthor) {
+        toast.error('Selecione um perfil profissional ativo');
+        setIsSaving(false);
+        return;
+      }
 
       const articleData = {
         title: formData.title,
@@ -447,8 +418,8 @@ export default function AdminNewsEditPage({ params }: PageProps) {
         excerpt: formData.excerpt,
         content: formData.content,
         category: formData.category as 'economia' | 'geopolitica' | 'tecnologia',
-        author: resolvedAuthor,
-        authorId: resolvedAuthorId,
+        author: selectedAuthor.name,
+        authorId: selectedAuthor.slug,
         tags: formData.tags,
         coverImage: formData.coverImage,
         featured: formData.featured,
@@ -461,7 +432,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       };
       
       if (publishMode === 'schedule') {
-        // Agendar publicação
+        // Agendar publicaÃ§Ã£o
         if (scheduledInfo) {
           // Atualizar agendamento existente
           await updateArticle(scheduledInfo.articleData.slug, articleData);
@@ -478,7 +449,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             formData.scheduledTime,
             formData.timezone
           );
-          toast.success(`Artigo agendado para ${formData.scheduledDate} às ${formData.scheduledTime}!`);
+          toast.success(`Artigo agendado para ${formData.scheduledDate} Ã s ${formData.scheduledTime}!`);
         }
       } else {
         // Publicar imediatamente
@@ -508,53 +479,6 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       router.push('/admin#noticias');
     }
   };
-
-  const applyAiResult = (data: Awaited<ReturnType<typeof generateAiNews>>) => {
-    const subtitle = data.subtitle?.trim();
-    const subtitleBlock = subtitle ? `<p><strong>${subtitle}</strong></p>\n` : '';
-
-    setFormData(prev => ({
-      ...prev,
-      title: data.title,
-      slug: generateSlug(data.title),
-      excerpt: data.excerpt,
-      content: `${subtitleBlock}${data.contentHtml}`,
-      category: data.category,
-      author: data.author || 'Redação CIN',
-      tags: data.tags ?? [],
-      seoTitle: data.seoTitle || data.title,
-      seoDescription: data.seoDescription || data.excerpt.slice(0, 160),
-    }));
-
-    setHasChanges(true);
-    setActiveTab('content');
-  };
-
-  const handleGenerateAi = async () => {
-    setShowAiConfirm(false);
-    setIsGeneratingContent(true);
-    try {
-      const topic =
-        aiTopicCategory === 'custom'
-          ? aiTopicText.trim()
-          : aiTopicCategory
-            ? `categoria: ${aiTopicCategory}`
-            : aiTopicText.trim();
-
-      const result = await generateAiNews({
-        topic: topic || undefined,
-        category: aiTopicCategory === 'custom' || !aiTopicCategory ? undefined : aiTopicCategory,
-        questions: aiQuestions.trim() || undefined,
-      });
-      applyAiResult(result);
-      toast.success('Notícia gerada com sucesso!');
-    } catch {
-      toast.error('Erro ao gerar notícia');
-    } finally {
-      setIsGeneratingContent(false);
-    }
-  };
-
   const getCategoryColor = (cat: string) => {
     return CONTENT_CONFIG.categories[cat as keyof typeof CONTENT_CONFIG.categories]?.color || '#6b6b6b';
   };
@@ -572,7 +496,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
       dates.push({
-        label: i === 1 ? 'Amanhã' : i === 2 ? 'Depois de amanhã' : date.toLocaleDateString('pt-BR', { weekday: 'long' }),
+        label: i === 1 ? 'AmanhÃ£' : i === 2 ? 'Depois de amanhÃ£' : date.toLocaleDateString('pt-BR', { weekday: 'long' }),
         value: date.toISOString().split('T')[0],
       });
     }
@@ -606,15 +530,15 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             </Button>
             <section>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#111111]">
-                {scheduledInfo ? 'Editar Agendamento' : 'Editar Notícia'}
+                {scheduledInfo ? 'Editar Agendamento' : 'Editar NotÃ­cia'}
               </h1>
               <p className="text-sm text-[#6b6b6b]">
                 {scheduledInfo 
-                  ? `Agendado para: ${formData.scheduledDate} às ${formData.scheduledTime}` 
+                  ? `Agendado para: ${formData.scheduledDate} Ã s ${formData.scheduledTime}` 
                   : `Editando: ${formData.title}`}
                 {lastSaved && (
                   <span className="ml-2 text-xs text-[#6b6b6b]">
-                    • Auto-salvo às {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    â€¢ Auto-salvo Ã s {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </p>
@@ -629,25 +553,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
               <Eye className="w-4 h-4" />
               {showPreview ? 'Editar' : 'Preview'}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowAiConfirm(true)}
-              className="gap-2"
-              disabled={isGeneratingContent}
-            >
-              {isGeneratingContent ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-[#111111]/30 border-t-[#111111] rounded-full animate-spin" />
-                  Gerando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Gerar Notícia (IA)
-                </>
-              )}
-            </Button>
-            <Button 
+<Button 
               onClick={handleSave}
               disabled={isSaving}
               className={`gap-2 ${publishMode === 'schedule' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-[#c40000] hover:bg-[#a00000]'}`}
@@ -691,7 +597,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             </section>
             
             <h1 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-4">
-              {formData.title || 'Título do Artigo'}
+              {formData.title || 'TÃ­tulo do Artigo'}
             </h1>
             
             <section className="flex items-center gap-4 text-sm text-[#6b6b6b] mb-6">
@@ -726,11 +632,11 @@ export default function AdminNewsEditPage({ params }: PageProps) {
               />
             )}
             
-            {/* SECURITY: Preview do conteúdo sanitizado com DOMPurify */}
+            {/* SECURITY: Preview do conteÃºdo sanitizado com DOMPurify */}
             <section 
               className="prose max-w-none prose-headings:text-[#111111] prose-p:text-[#333]"
               dangerouslySetInnerHTML={{ 
-                __html: sanitizeHtml(formData.content || '<p>Conteúdo do artigo...</p>')
+                __html: sanitizeHtml(formData.content || '<p>ConteÃºdo do artigo...</p>')
               }}
             />
           </section>
@@ -739,11 +645,11 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             <TabsList className="grid w-full grid-cols-3 lg:w-fit">
               <TabsTrigger value="content" className="gap-2">
                 <FileText className="w-4 h-4" />
-                Conteúdo
+                ConteÃºdo
               </TabsTrigger>
               <TabsTrigger value="publish" className="gap-2">
                 <Clock className="w-4 h-4" />
-                Publicação
+                PublicaÃ§Ã£o
               </TabsTrigger>
               <TabsTrigger value="seo" className="gap-2">
                 <Globe className="w-4 h-4" />
@@ -755,17 +661,17 @@ export default function AdminNewsEditPage({ params }: PageProps) {
               {/* Coluna Principal */}
               <section className="lg:col-span-2 space-y-6">
                 <TabsContent value="content" className="mt-0 space-y-6">
-                  {/* Título */}
+                  {/* TÃ­tulo */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <fieldset>
                       <Label htmlFor="title" className="text-sm font-medium text-[#111111]">
-                        Título *
+                        TÃ­tulo *
                       </Label>
                       <Input
                         id="title"
                         value={formData.title}
                         onChange={(e) => handleTitleChange(e.target.value)}
-                        placeholder="Digite um título impactante..."
+                        placeholder="Digite um tÃ­tulo impactante..."
                         className={`mt-1.5 text-lg ${errors.title ? 'border-[#ef4444]' : ''}`}
                       />
                       {errors.title ? (
@@ -775,7 +681,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                         </p>
                       ) : (
                         <p className="mt-1 text-xs text-[#6b6b6b]">
-                          {formData.title.length} caracteres • Ideal: 50-60 caracteres
+                          {formData.title.length} caracteres â€¢ Ideal: 50-60 caracteres
                         </p>
                       )}
                     </fieldset>
@@ -815,7 +721,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                         id="excerpt"
                         value={formData.excerpt}
                         onChange={(e) => handleChange('excerpt', e.target.value)}
-                        placeholder="Breve resumo do artigo que será exibido nas listagens..."
+                        placeholder="Breve resumo do artigo que serÃ¡ exibido nas listagens..."
                         rows={3}
                         className={`mt-1.5 resize-none ${errors.excerpt ? 'border-[#ef4444]' : ''}`}
                       />
@@ -832,41 +738,31 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                     </fieldset>
                   </article>
 
-                  {/* Conteúdo */}
+                  {/* ConteÃºdo */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <section className="flex items-center justify-between mb-4">
                       <Label htmlFor="content" className="text-sm font-medium text-[#111111]">
-                        Conteúdo *
+                        ConteÃºdo *
                       </Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={generateContent}
-                        disabled={isGeneratingContent || !formData.title}
-                        className="gap-2"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        {isGeneratingContent ? 'Gerando...' : 'Gerar com IA'}
-                      </Button>
-                    </section>
+</section>
                     
                     {/* Toolbar */}
                     <section className="flex flex-wrap gap-1 p-2 bg-[#f8fafc] rounded-t-lg border border-[#e5e5e5] border-b-0">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h2')} className="h-8 w-8 p-0" title="Título H2">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h2')} className="h-8 w-8 p-0" title="TÃ­tulo H2">
                         <Heading1 className="w-4 h-4" />
                       </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h3')} className="h-8 w-8 p-0" title="Subtítulo H3">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h3')} className="h-8 w-8 p-0" title="SubtÃ­tulo H3">
                         <Heading2 className="w-4 h-4" />
                       </Button>
                       <section className="w-px h-6 bg-[#e5e5e5] mx-1 self-center" />
                       <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('bold')} className="h-8 w-8 p-0" title="Negrito">
                         <Bold className="w-4 h-4" />
                       </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('italic')} className="h-8 w-8 p-0" title="Itálico">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('italic')} className="h-8 w-8 p-0" title="ItÃ¡lico">
                         <Italic className="w-4 h-4" />
                       </Button>
                       <section className="w-px h-6 bg-[#e5e5e5] mx-1 self-center" />
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('quote')} className="h-8 w-8 p-0" title="Citação">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('quote')} className="h-8 w-8 p-0" title="CitaÃ§Ã£o">
                         <Quote className="w-4 h-4" />
                       </Button>
                       <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('list')} className="h-8 w-8 p-0" title="Lista">
@@ -882,7 +778,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                       id="content"
                       value={formData.content}
                       onChange={(e) => handleChange('content', e.target.value)}
-                      placeholder="Escreva o conteúdo completo do artigo aqui..."
+                      placeholder="Escreva o conteÃºdo completo do artigo aqui..."
                       rows={20}
                       className={`resize-none rounded-t-none ${errors.content ? 'border-[#ef4444]' : ''}`}
                     />
@@ -896,7 +792,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                         <span />
                       )}
                       <p className="text-xs text-[#6b6b6b]">
-                        {formData.content.length} caracteres • 
+                        {formData.content.length} caracteres â€¢ 
                         Tempo de leitura estimado: {Math.ceil(formData.content.split(/\s+/).length / 200)} min
                       </p>
                     </section>
@@ -904,7 +800,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                 </TabsContent>
 
                 <TabsContent value="publish" className="mt-0 space-y-6">
-                  {/* Modo de Publicação */}
+                  {/* Modo de PublicaÃ§Ã£o */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <header className="flex items-center gap-3 mb-4">
                       <section className="p-2 bg-blue-100 rounded-lg">
@@ -912,7 +808,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                       </section>
                       <section>
                         <h2 className="text-lg font-semibold text-[#111111]">Quando Publicar?</h2>
-                        <p className="text-xs text-[#6b6b6b]">Escolha quando o artigo será publicado</p>
+                        <p className="text-xs text-[#6b6b6b]">Escolha quando o artigo serÃ¡ publicado</p>
                       </section>
                     </header>
                     
@@ -931,7 +827,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                           <span className={`text-sm font-medium ${publishMode === 'now' ? 'text-[#c40000]' : 'text-[#111111]'}`}>
                             Publicar Agora
                           </span>
-                          <span className="text-xs text-[#6b6b6b]">Disponível imediatamente</span>
+                          <span className="text-xs text-[#6b6b6b]">DisponÃ­vel imediatamente</span>
                         </button>
                         
                         <button
@@ -983,7 +879,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                           </section>
                           
                           <fieldset>
-                            <Label className="text-sm text-[#111111]">Fuso Horário</Label>
+                            <Label className="text-sm text-[#111111]">Fuso HorÃ¡rio</Label>
                             <select
                               value={formData.timezone}
                               onChange={(e) => handleChange('timezone', e.target.value)}
@@ -997,9 +893,9 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                             </select>
                           </fieldset>
                           
-                          {/* Sugestões rápidas */}
+                          {/* SugestÃµes rÃ¡pidas */}
                           <section>
-                            <p className="text-xs text-[#6b6b6b] mb-2">Sugestões rápidas:</p>
+                            <p className="text-xs text-[#6b6b6b] mb-2">SugestÃµes rÃ¡pidas:</p>
                             <section className="flex flex-wrap gap-2">
                               {getSuggestedDates().map((date) => (
                                 <button
@@ -1020,7 +916,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                           {formData.scheduledDate && formData.scheduledTime && (
                             <section className="p-3 bg-white rounded-lg border border-blue-200">
                               <p className="text-sm text-blue-800">
-                                <strong>Será publicado em:</strong><br />
+                                <strong>SerÃ¡ publicado em:</strong><br />
                                 {new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleString('pt-BR', {
                                   weekday: 'long',
                                   year: 'numeric',
@@ -1037,14 +933,14 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                     </section>
                   </article>
 
-                  {/* Configurações */}
+                  {/* ConfiguraÃ§Ãµes */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <header className="flex items-center gap-3 mb-4">
                       <section className="p-2 bg-[#fef2f2] rounded-lg">
                         <Type className="w-5 h-5 text-[#c40000]" />
                       </section>
                       <section>
-                        <h2 className="text-lg font-semibold text-[#111111]">Configurações de Publicação</h2>
+                        <h2 className="text-lg font-semibold text-[#111111]">ConfiguraÃ§Ãµes de PublicaÃ§Ã£o</h2>
                       </section>
                     </header>
 
@@ -1052,7 +948,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                       <section className="flex items-center justify-between p-3 bg-[#f8fafc] rounded-lg">
                         <section>
                           <p className="text-sm font-medium text-[#111111]">Destacar na home</p>
-                          <p className="text-xs text-[#6b6b6b]">Aparece em destaque na página inicial</p>
+                          <p className="text-xs text-[#6b6b6b]">Aparece em destaque na pÃ¡gina inicial</p>
                         </section>
                         <Switch
                           checked={formData.featured}
@@ -1078,18 +974,18 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <header className="flex items-center gap-2 mb-4">
                       <Globe className="w-5 h-5 text-[#c40000]" />
-                      <h2 className="text-lg font-semibold text-[#111111]">Otimização para Buscas (SEO)</h2>
+                      <h2 className="text-lg font-semibold text-[#111111]">OtimizaÃ§Ã£o para Buscas (SEO)</h2>
                     </header>
 
                     <fieldset className="mb-4">
                       <Label htmlFor="seoTitle" className="text-sm font-medium text-[#111111]">
-                        Título SEO
+                        TÃ­tulo SEO
                       </Label>
                       <Input
                         id="seoTitle"
                         value={formData.seoTitle}
                         onChange={(e) => handleChange('seoTitle', e.target.value)}
-                        placeholder="Título otimizado para SEO"
+                        placeholder="TÃ­tulo otimizado para SEO"
                         className="mt-1.5"
                       />
                       <p className="mt-1 text-xs text-[#6b6b6b]">
@@ -1099,13 +995,13 @@ export default function AdminNewsEditPage({ params }: PageProps) {
 
                     <fieldset>
                       <Label htmlFor="seoDescription" className="text-sm font-medium text-[#111111]">
-                        Descrição SEO (Meta Description)
+                        DescriÃ§Ã£o SEO (Meta Description)
                       </Label>
                       <Textarea
                         id="seoDescription"
                         value={formData.seoDescription}
                         onChange={(e) => handleChange('seoDescription', e.target.value)}
-                        placeholder="Descrição que aparecerá nos resultados de busca..."
+                        placeholder="DescriÃ§Ã£o que aparecerÃ¡ nos resultados de busca..."
                         rows={3}
                         className="mt-1.5 resize-none"
                       />
@@ -1118,13 +1014,13 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                       <p className="text-xs text-[#6b6b6b] mb-2">Preview nos resultados de busca:</p>
                       <section className="max-w-[600px]">
                         <p className="text-sm text-[#1a0dab] truncate">
-                          {formData.seoTitle || formData.title || 'Título do Artigo'}
+                          {formData.seoTitle || formData.title || 'TÃ­tulo do Artigo'}
                         </p>
                         <p className="text-xs text-[#006621]">
                           cenariointernacional.com.br/noticias/{formData.slug || 'url-do-artigo'}
                         </p>
                         <p className="text-sm text-[#545454] line-clamp-2">
-                          {formData.seoDescription || formData.excerpt || 'Descrição do artigo...'}
+                          {formData.seoDescription || formData.excerpt || 'DescriÃ§Ã£o do artigo...'}
                         </p>
                       </section>
                     </section>
@@ -1166,10 +1062,10 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                     
                     <ul className="space-y-2 mt-4">
                       {[
-                        { label: 'Título', value: !!formData.title },
+                        { label: 'TÃ­tulo', value: !!formData.title },
                         { label: 'Slug', value: !!formData.slug },
                         { label: 'Resumo', value: !!formData.excerpt },
-                        { label: 'Conteúdo', value: !!formData.content },
+                        { label: 'ConteÃºdo', value: !!formData.content },
                         { label: 'Autor', value: !!formData.author },
                         { label: 'Imagem de capa', value: !!formData.coverImage },
                       ].map((item) => (
@@ -1251,7 +1147,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                     >
                       <Upload className="w-8 h-8 text-[#6b6b6b]" />
                       <span className="text-sm text-[#6b6b6b]">Clique para fazer upload</span>
-                      <span className="text-xs text-[#6b6b6b]">JPG, PNG até 5MB</span>
+                      <span className="text-xs text-[#6b6b6b]">JPG, PNG atÃ© 5MB</span>
                     </button>
                   )}
                   {errors.coverImage && (
@@ -1269,7 +1165,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                     <h2 className="text-lg font-semibold text-[#111111]">Tags</h2>
                   </header>
                   
-                  {/* Tags Rápidas / Sugeridas */}
+                  {/* Tags RÃ¡pidas / Sugeridas */}
                   <section className="mb-4">
                     <p className="text-xs text-[#6b6b6b] mb-2">Tags sugeridas:</p>
                     <div className="flex flex-wrap gap-2">
@@ -1278,25 +1174,25 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          const specialTag = 'Publicação Patrocinada';
+                          const specialTag = 'PublicaÃ§Ã£o Patrocinada';
                           if (!formData.tags.includes(specialTag)) {
                             setFormData(prev => ({ ...prev, tags: [...prev.tags, specialTag] }));
                             setHasChanges(true);
-                            toast.success('Tag "Publicação Patrocinada" adicionada');
+                            toast.success('Tag "PublicaÃ§Ã£o Patrocinada" adicionada');
                           } else {
-                            toast.error('Esta tag já existe');
+                            toast.error('Esta tag jÃ¡ existe');
                           }
                         }}
                         className={`text-xs rounded-full ${
-                          formData.tags.includes('Publicação Patrocinada')
+                          formData.tags.includes('PublicaÃ§Ã£o Patrocinada')
                             ? 'bg-[#fef2f2] border-[#c40000] text-[#c40000]'
                             : 'border-[#e6e1d8] hover:border-[#c40000] hover:text-[#c40000]'
                         }`}
                       >
-                        💎 Publicação Patrocinada
+                        ðŸ’Ž PublicaÃ§Ã£o Patrocinada
                       </Button>
                       
-                      {['Destaque', 'Urgente', 'Análise', 'Opinião'].map((quickTag) => (
+                      {['Destaque', 'Urgente', 'AnÃ¡lise', 'OpiniÃ£o'].map((quickTag) => (
                         <Button
                           key={quickTag}
                           type="button"
@@ -1307,7 +1203,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                               setFormData(prev => ({ ...prev, tags: [...prev.tags, quickTag] }));
                               setHasChanges(true);
                             } else {
-                              toast.error('Esta tag já existe');
+                              toast.error('Esta tag jÃ¡ existe');
                             }
                           }}
                           className={`text-xs rounded-full ${
@@ -1342,7 +1238,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                           key={tag} 
                           variant="secondary"
                           className={`gap-1 cursor-pointer hover:bg-[#fef2f2] ${
-                            tag === 'Publicação Patrocinada' 
+                            tag === 'PublicaÃ§Ã£o Patrocinada' 
                               ? 'bg-[#fef2f2] text-[#c40000] border border-[#c40000]' 
                               : ''
                           }`}
@@ -1361,19 +1257,28 @@ export default function AdminNewsEditPage({ params }: PageProps) {
 
                 {/* Autor */}
                 <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-[#111111] mb-4">Autor *</h2>
-                  <Input
-                    value={currentUser?.role === 'admin' ? (currentUser.name || formData.author) : formData.author}
-                    onChange={(e) => handleChange('author', e.target.value)}
-                    placeholder="Nome do autor"
-                    disabled={currentUser?.role === 'admin'}
-                    className={errors.author ? 'border-[#ef4444]' : ''}
-                  />
-                  {currentUser?.role === 'admin' && (
-                    <p className="mt-1 text-xs text-[#6b6b6b]">
-                      O autor será preenchido automaticamente com o admin logado.
-                    </p>
-                  )}
+                  <h2 className="text-lg font-semibold text-[#111111] mb-4">Perfil Profissional *</h2>
+                  <select
+                    value={formData.authorId}
+                    onChange={(e) => {
+                      const selected = authors.find((author) => author.slug === e.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        authorId: e.target.value,
+                        author: selected?.name ?? '',
+                      }));
+                      setHasChanges(true);
+                      if (errors.author) setErrors((prev) => ({ ...prev, author: '' }));
+                    }}
+                    className={`w-full px-3 py-2.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#c40000] ${errors.author ? 'border-[#ef4444]' : 'border-[#e5e5e5]'}`}
+                  >
+                    <option value="">Selecione um perfil</option>
+                    {authors.filter((author) => author.isActive).map((author) => (
+                      <option key={author.slug} value={author.slug}>
+                        {author.name} - {author.title}
+                      </option>
+                    ))}
+                  </select>
                   {errors.author && (
                     <p className="mt-1 text-xs text-[#ef4444]">{errors.author}</p>
                   )}
@@ -1383,13 +1288,13 @@ export default function AdminNewsEditPage({ params }: PageProps) {
           </Tabs>
         )}
 
-        {/* Dialog de Confirmação de Saída */}
+        {/* Dialog de ConfirmaÃ§Ã£o de SaÃ­da */}
         <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Sair sem salvar?</DialogTitle>
               <DialogDescription>
-                Você tem alterações não salvas. Deseja realmente sair?
+                VocÃª tem alteraÃ§Ãµes nÃ£o salvas. Deseja realmente sair?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -1405,63 +1310,8 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Dialog IA */}
-        <Dialog open={showAiConfirm} onOpenChange={setShowAiConfirm}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Gerar notícia com IA</DialogTitle>
-              <DialogDescription>
-                A IA vai pesquisar as notícias mais relevantes das últimas 48h e gerar todo o texto.
-                Isso substituirá o conteúdo atual do formulário. Continuar?
-              </DialogDescription>
-            </DialogHeader>
-            <section className="space-y-4 py-2">
-              <fieldset>
-                <Label>Tema principal</Label>
-                <select
-                  value={aiTopicCategory}
-                  onChange={(e) => setAiTopicCategory(e.target.value as 'economia' | 'geopolitica' | 'tecnologia' | 'custom' | '')}
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="">Sem preferência</option>
-                  <option value="economia">Economia</option>
-                  <option value="geopolitica">Geopolítica</option>
-                  <option value="tecnologia">Tecnologia</option>
-                  <option value="custom">Outro (escrever abaixo)</option>
-                </select>
-              </fieldset>
-              {(aiTopicCategory === 'custom' || aiTopicCategory === '') && (
-                <fieldset>
-                  <Label>O que pesquisar</Label>
-                  <Input
-                    value={aiTopicText}
-                    onChange={(e) => setAiTopicText(e.target.value)}
-                    placeholder="Ex: juros nos EUA, petróleo, China x Taiwan..."
-                  />
-                </fieldset>
-              )}
-              <fieldset>
-                <Label>Perguntas para a IA</Label>
-                <Textarea
-                  value={aiQuestions}
-                  onChange={(e) => setAiQuestions(e.target.value)}
-                  placeholder="Ex: qual impacto no Brasil? quem ganhou/perdeu?"
-                  rows={4}
-                />
-              </fieldset>
-            </section>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setShowAiConfirm(false)} className="w-full sm:w-auto">
-                Cancelar
-              </Button>
-              <Button onClick={handleGenerateAi} className="bg-[#c40000] hover:bg-[#a00000] w-full sm:w-auto">
-                Gerar agora
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </main>
     </>
   );
 }
+
