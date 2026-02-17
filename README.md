@@ -58,7 +58,9 @@ A construção foi guiada por 4 pilares:
 
 - Área admin para gestão operacional
 - APIs de administração de usuários
+- Página de arquivos enviados (`/admin/arquivos`) com upload/listagem/exclusão
 - Upload/processamento de imagens com validações
+- Publicação de posts agendados via API admin
 
 ### Observabilidade e Robustez
 
@@ -105,6 +107,8 @@ A construção foi guiada por 4 pilares:
 Todas implementadas em `src/app/api`:
 
 - `POST /api/admin-users`
+- `GET|DELETE /api/admin-files`
+- `POST /api/admin-posts`
 - `POST /api/career-applications`
 - `POST /api/contact-messages`
 - `GET|HEAD /api/health`
@@ -152,6 +156,7 @@ NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_UPLOAD_BUCKET=
 
 SMTP_HOST=
 SMTP_PORT=

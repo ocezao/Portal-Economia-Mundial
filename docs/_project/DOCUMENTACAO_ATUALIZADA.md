@@ -21,7 +21,7 @@ Documentação completa das correções de segurança aplicadas:
 ---
 
 ### 2. GUIA_SEGURANCA_DESENVOLVEDORES.md
-**Local:** `docs/GUIA_SEGURANCA_DESENVOLVEDORES.md`
+**Local:** `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
 
 Guia completo de boas práticas de segurança:
 - Como usar o módulo security.ts
@@ -124,7 +124,7 @@ Status real baseado em análise de arquivos:
 
 ### Módulo de Segurança
 - **Arquivo:** `src/lib/security.ts`
-- **Documentação:** `docs/GUIA_SEGURANCA_DESENVOLVEDORES.md`
+- **Documentação:** `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
 - **Funções:** escapeHtml, sanitizeFilename, escapeLikePattern
 
 ### Correções Aplicadas

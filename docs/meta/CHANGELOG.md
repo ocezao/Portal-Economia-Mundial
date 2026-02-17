@@ -28,7 +28,8 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
   - Guia de instalaÃ§Ã£o em `mcp-server/INSTALL.md`
   - Script de setup automÃ¡tico `mcp-server/setup.sh`
 - **E-E-A-T Signals** - Sinais de autoridade e credibilidade para SEO:
-  - PÃ¡ginas de autores individuais (`/autor/[slug]`) com schema.org Person
+  - PÃ¡ginas de autores individuais (`/autor/[slug]`) com schema.org `Person` + `ProfilePage` (transparÃªncia editorial)
+  - Campos de transparÃªncia no autor: `website`, `location`, `credentials` (migraÃ§Ã£o: `supabase/migrations/20260217_add_author_transparency_fields.sql`)
   - PÃ¡gina Editorial (`/editorial`) com policies (ethics, masthead, corrections)
   - Badges de verificaÃ§Ã£o (FactCheckBadge component)
   - Schema ReviewedBy nos artigos

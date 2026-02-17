@@ -32,11 +32,11 @@ O CIN possui arquitetura modular dividida em trÃªs grandes camadas:
 - `useFinnhub`: Dados de mercado em tempo real
 - `useReadingProgress`: Tracking de leitura
 
-**ServiÃ§os** (`/src/services`)
-- `newsManager.ts`: CRUD de artigos no Supabase
-- `comments/supabaseService.ts`: ComentÃ¡rios no Supabase
-- `adminUsers.ts`: AdministraÃ§Ã£o de usuÃ¡rios via Edge Function
-- `aiNews.ts`: GeraÃ§Ã£o de notÃ­cias via Edge Function
+**Servicos** (`/src/services`)
+- `newsManager.ts`: CRUD de artigos no Supabase (inclui regras para vincular posts a um autor/profissional)
+- `comments/supabaseService.ts`: Comentarios no Supabase
+- `adminUsers.ts`: Administracao de usuarios (admin)
+- `adminPosts.ts`: Operacoes admin de posts (ex: publicar agendados)
 
 ### 3. Data Layer
 

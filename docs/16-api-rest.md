@@ -1,25 +1,25 @@
-# Documenta??o da API REST - Cenario Internacional
+# Documentacao da API REST - Cenario Internacional
 
 Este documento descreve as API Routes atualmente existentes no projeto Next.js.
 
 ## Base URL
 
 - Desenvolvimento: `http://localhost:5173`
-- Produ??o: dom?nio configurado em `NEXT_PUBLIC_SITE_URL`
+- Producao: dominio configurado em `NEXT_PUBLIC_SITE_URL`
 
-As rotas ficam sob o prefixo `/api` (n?o existe vers?o `/v1` no app atual).
+As rotas ficam sob o prefixo `/api` (nao existe versao `/v1` no app atual).
 
 ## Endpoints implementados
 
 ### `POST /api/admin-users`
 
-Gerenciamento administrativo de usu?rios (proxy para Supabase Admin API).
+Gerenciamento administrativo de usuarios (proxy para Supabase Admin API).
 
-- Auth: obrigat?ria via `Authorization: Bearer <token>`
-- Permiss?o: usu?rio com `role=admin` em `profiles`
+- Auth: obrigatoria via `Authorization: Bearer <token>`
+- Permissao: usuario com `role=admin` em `profiles`
 - Body: JSON com `action`
 
-A??es suportadas:
+Acoes suportadas:
 - `list_users`
 - `create_user`
 - `update_user`
@@ -28,12 +28,43 @@ A??es suportadas:
 
 Arquivo: `src/app/api/admin-users/route.ts`
 
+### `GET|DELETE /api/admin-files`
+
+Listagem e exclusao de arquivos enviados para o Supabase Storage (admin-only).
+
+- Auth: obrigatoria via `Authorization: Bearer <access_token>` (token do Supabase)
+- Permissao: usuario com `role=admin` em `profiles`
+- Bucket: `SUPABASE_UPLOAD_BUCKET` (default: `uploads`)
+
+`GET /api/admin-files`
+- Retorna `{ ok, bucket, files[] }`
+- `files[]` inclui `name`, `path`, `size`, `contentType`, `updatedAt`, `publicUrl`, `isVector`
+
+`DELETE /api/admin-files`
+- Body: JSON `{ "path": "yyyy/mm/arquivo.ext" }`
+- Retorna `{ ok, path }`
+
+Arquivo: `src/app/api/admin-files/route.ts`
+
+### `POST /api/admin-posts`
+
+Operacoes administrativas relacionadas a posts (admin-only).
+
+- Auth: obrigatoria via `Authorization: Bearer <access_token>` (token do Supabase)
+- Permissao: usuario com `role=admin` em `profiles`
+- Body: JSON com `action`
+
+Acoes suportadas:
+- `publish_scheduled`: publica posts com `status=scheduled` e `published_at <= now`
+
+Arquivo: `src/app/api/admin-posts/route.ts`
+
 ### `POST /api/career-applications`
 
 Registra candidatura em `career_applications` e dispara emails (ack + inbox interna) quando SMTP estiver configurado.
 
 Campos principais:
-- `name`, `email`, `role`, `coverLetter` (obrigat?rios)
+- `name`, `email`, `role`, `coverLetter` (obrigatorios)
 - `phone`, `location`, `linkedinUrl`, `portfolioUrl`, `resumeUrl`, `userId` (opcionais)
 
 Arquivo: `src/app/api/career-applications/route.ts`
@@ -43,28 +74,28 @@ Arquivo: `src/app/api/career-applications/route.ts`
 Registra mensagem em `contact_messages` e dispara emails (ack + inbox interna) quando SMTP estiver configurado.
 
 Campos principais:
-- `name`, `email`, `subject`, `category`, `message` (obrigat?rios)
+- `name`, `email`, `subject`, `category`, `message` (obrigatorios)
 - `phone`, `userId` (opcionais)
 
 Arquivo: `src/app/api/contact-messages/route.ts`
 
 ### `GET|HEAD /api/health`
 
-Health check de aplica??o.
+Health check de aplicacao.
 
 Verifica:
-- uptime e mem?ria
+- uptime e memoria
 - conectividade com Supabase
 
 Arquivo: `src/app/api/health/route.ts`
 
 ### `POST /api/newsletter/subscribe`
 
-Cria/atualiza inscri??o de newsletter com double opt-in.
+Cria/atualiza inscricao de newsletter com double opt-in.
 
 Comportamento:
 - cria lead `pending` em `leads`
-- gera token de confirma??o (24h)
+- gera token de confirmacao (24h)
 - envia email com link para `/api/newsletter/confirm`
 - envia alerta interno para inbox configurada
 - se `BUTTONDOWN_API_KEY` existir, faz tentativa adicional no Buttondown (opcional)
@@ -73,25 +104,25 @@ Arquivo: `src/app/api/newsletter/subscribe/route.ts`
 
 ### `GET /api/newsletter/confirm`
 
-Confirma inscri??o por token.
+Confirma inscricao por token.
 
 Comportamento:
 - valida token UUID
-- valida expira??o
+- valida expiracao
 - ativa lead (`status=active`)
 - limpa token
-- envia email de boas-vindas + alerta interno (n?o bloqueante)
+- envia email de boas-vindas + alerta interno (nao bloqueante)
 
 Arquivo: `src/app/api/newsletter/confirm/route.ts`
 
 ### `POST /api/telemetry/error`
 
-Recebe erros de frontend para persist?ncia em `app_errors`.
+Recebe erros de frontend para persistencia em `app_errors`.
 
-Caracter?sticas:
+Caracteristicas:
 - rate limit in-memory por IP
 - limite de payload
-- sanitiza??o/truncamento de campos
+- sanitizacao/truncamento de campos
 
 Arquivo: `src/app/api/telemetry/error/route.ts`
 
@@ -99,26 +130,28 @@ Arquivo: `src/app/api/telemetry/error/route.ts`
 
 Upload/processamento de imagem para Supabase Storage.
 
-Caracter?sticas:
-- auth obrigat?ria (admin)
+Caracteristicas:
+- auth obrigatoria (admin)
 - rate limit in-memory por IP
-- valida??o de tipo e tamanho
-- processamento com Sharp (webp, resize, metadata)
+- validacao de tipo e tamanho
+- processamento com Sharp para imagens raster (webp, resize, metadata)
+- suporte a vetores (SVG): armazenado como `.svg` sem conversao via Sharp, com validacoes basicas de seguranca
+- objeto salvo com path `yyyy/mm/<uuid>.(webp|svg)`
 
 Arquivo: `src/app/api/upload/route.ts`
 
 ## Erros e status codes
 
-Padr?o geral observado:
+Padrao geral observado:
 - `200` sucesso
-- `400` payload inv?lido
-- `401` n?o autenticado
-- `403` sem permiss?o
+- `400` payload invalido
+- `401` nao autenticado
+- `403` sem permissao
 - `429` rate limit
 - `500` erro interno
-- `503` depend?ncia/config indispon?vel
+- `503` dependencia/config indisponivel
 
-## Vari?veis de ambiente relevantes
+## Variaveis de ambiente relevantes
 
 - Supabase
   - `NEXT_PUBLIC_SUPABASE_URL`
@@ -135,6 +168,6 @@ Padr?o geral observado:
 
 ## Fora de escopo deste documento
 
-- APIs do servi?o `collector/` (analytics separado)
+- APIs do servico `collector/` (analytics separado)
 - Endpoints de MCP (`mcp-server/`)
-- Supabase Edge Functions (diret?rio `supabase/functions`)
+- Supabase Edge Functions (diretorio `supabase/functions`)

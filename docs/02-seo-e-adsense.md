@@ -1,16 +1,16 @@
-# SEO e Google AdSense
+﻿# SEO e Google AdSense
 
-## Estratégia SEO
+## EstratÃ©gia SEO
 
 ### On-Page SEO
 
-#### Meta Tags Dinâmicas
-Cada página pública deve definir `canonical`, OpenGraph e Twitter via `metadata`/`generateMetadata` (Next.js App Router). Rotas internas e rotas finas devem usar `noindex`.
+#### Meta Tags DinÃ¢micas
+Cada pÃ¡gina pÃºblica deve definir `canonical`, OpenGraph e Twitter via `metadata`/`generateMetadata` (Next.js App Router). Rotas internas e rotas finas devem usar `noindex`.
 
 ```tsx
 // Home
-title: "Cenario Internacional - Notícias que movem o mundo"
-description: "Portal de notícias especializado em geopolítica, economia global e tecnologia..."
+title: "Cenario Internacional - NotÃ­cias que movem o mundo"
+description: "Portal de notÃ­cias especializado em geopolÃ­tica, economia global e tecnologia..."
 
 // Artigo
 title: "{article.title} - Cenario Internacional"
@@ -18,14 +18,14 @@ description: {article.excerpt}
 keywords: {article.tags.join(', ')}
 ```
 
-Boas práticas aplicadas no projeto:
-- Canonical por rota (evita duplicação). Ex: paginação usa `?page=` no canonical apenas quando `page > 1`.
-- Busca (`/busca`) é `noindex` (página fina de resultados internos), mas mantém OG/Twitter para previews consistentes.
-- Rotas internas (admin/app/auth/perfil/etc) são `noindex` via layouts de rota.
+Boas prÃ¡ticas aplicadas no projeto:
+- Canonical por rota (evita duplicaÃ§Ã£o). Ex: paginaÃ§Ã£o usa `?page=` no canonical apenas quando `page > 1`.
+- Busca (`/busca`) Ã© `noindex` (pÃ¡gina fina de resultados internos), mas mantÃ©m OG/Twitter para previews consistentes.
+- Rotas internas (admin/app/auth/perfil/etc) sÃ£o `noindex` via layouts de rota.
 
 #### Open Graph
-- `og:title`: Título da página
-- `og:description`: Descrição
+- `og:title`: TÃ­tulo da pÃ¡gina
+- `og:description`: DescriÃ§Ã£o
 - `og:image`: Imagem de capa (1200x630)
 - `og:type`: website | article
 - `og:locale`: pt_BR
@@ -48,7 +48,7 @@ Boas práticas aplicadas no projeto:
 }
 ```
 
-#### Article (Básico)
+#### Article (BÃ¡sico)
 ```json
 {
   "@context": "https://schema.org",
@@ -61,14 +61,14 @@ Boas práticas aplicadas no projeto:
 }
 ```
 
-#### Article Avançado (Competitivo)
-Para igualar grandes portais (Infomoney, Estadão), adicione:
+#### Article AvanÃ§ado (Competitivo)
+Para igualar grandes portais (Infomoney, EstadÃ£o), adicione:
 
 ```json
 {
   "@context": "https://schema.org",
   "@type": "NewsArticle",
-  "headline": "Título do Artigo",
+  "headline": "TÃ­tulo do Artigo",
   "description": "Resumo/lead do artigo",
   "image": "https://seusite.com/imagem.webp",
   "datePublished": "2026-02-08T10:00:00Z",
@@ -83,7 +83,7 @@ Para igualar grandes portais (Infomoney, Estadão), adicione:
   "reviewedBy": {
     "@type": "Person",
     "name": "Nome do Revisor",
-    "jobTitle": "Chefe de Redação"
+    "jobTitle": "Chefe de RedaÃ§Ã£o"
   },
   "publisher": {
     "@type": "NewsMediaOrganization",
@@ -91,7 +91,7 @@ Para igualar grandes portais (Infomoney, Estadão), adicione:
     "logo": "https://seusite.com/logo.webp"
   },
   "articleSection": "Economia",
-  "articleBody": "Conteúdo completo do artigo...",
+  "articleBody": "ConteÃºdo completo do artigo...",
   "wordCount": 1200,
   "speakable": {
     "@type": "SpeakableSpecification",
@@ -104,24 +104,33 @@ Para igualar grandes portais (Infomoney, Estadão), adicione:
 }
 ```
 
-**Benefícios dos campos avançados:**
+**BenefÃ­cios dos campos avanÃ§ados:**
 - `reviewedBy`: Mostra "Revisado por" no Google (credibilidade)
 - `speakable`: Permite Google Assistant ler o artigo em voz alta
-- `articleSection`: Melhora categorização no Google Discover
+- `articleSection`: Melhora categorizaÃ§Ã£o no Google Discover
 - `wordCount`: Sinal de qualidade para algoritmo
 
-Observação de coerência:
+#### PÃ¡gina de Autor (Person + ProfilePage)
+O projeto tem pÃ¡ginas de autor em `/autor/[slug]` com dois JSON-LD:
+- `Person`: identidade, funÃ§Ã£o, educaÃ§Ã£o, prÃªmios, redes sociais, worksFor e sinais de expertise.
+- `ProfilePage`: sinal explÃ­cito de pÃ¡gina de perfil + artigos recentes (melhora E-E-A-T).
+
+ImplementaÃ§Ã£o:
+- FunÃ§Ãµes: `src/config/authors.ts` (`generateAuthorJsonLd`, `generateAuthorProfilePageJsonLd`)
+- PÃ¡gina: `src/app/autor/[slug]/page.tsx` (injeta ambos via componente `JsonLd`)
+
+ObservaÃ§Ã£o de coerÃªncia:
 - Em JSON-LD, URLs e imagens devem ser absolutas (o projeto agora normaliza isso em `src/config/seo.ts`).
 - Listagens usam `BreadcrumbList` + `ItemList` (com `item` em `ListItem`) para ficar alinhado ao schema.
 - Validar sempre no [Rich Results Test](https://search.google.com/test/rich-results)
 
-### Otimizações Técnicas
+### OtimizaÃ§Ãµes TÃ©cnicas
 
 #### Performance
 - Imagens em WebP
 - Lazy loading
-- Preload de fontes críticas
-- Compressão de assets
+- Preload de fontes crÃ­ticas
+- CompressÃ£o de assets
 
 #### Mobile
 - Design responsivo
@@ -132,11 +141,11 @@ Observação de coerência:
 - Skip links
 - ARIA labels
 - Contraste adequado
-- Navegação por teclado
+- NavegaÃ§Ã£o por teclado
 
 ## Google AdSense
 
-### Posições Recomendadas
+### PosiÃ§Ãµes Recomendadas
 
 #### 1. Header (Above the Fold)
 ```tsx
@@ -165,10 +174,10 @@ Observação de coerência:
 </aside>
 ```
 
-### Observação importante
-Os espaços de anúncio **não devem aparecer vazios**. Inserimos blocos de atenção (briefing, newsletter e enquete) na Home para manter o usuário engajado. Os anúncios devem ser renderizados apenas quando o AdSense estiver ativo.
+### ObservaÃ§Ã£o importante
+Os espaÃ§os de anÃºncio **nÃ£o devem aparecer vazios**. Inserimos blocos de atenÃ§Ã£o (briefing, newsletter e enquete) na Home para manter o usuÃ¡rio engajado. Os anÃºncios devem ser renderizados apenas quando o AdSense estiver ativo.
 
-### Implementação
+### ImplementaÃ§Ã£o
 
 1. **Criar conta AdSense**
 2. **Adicionar script no index.html**
@@ -195,22 +204,22 @@ export function AdUnit({ slot, format }: AdUnitProps) {
 }
 ```
 
-### Políticas do AdSense
+### PolÃ­ticas do AdSense
 
-✅ **Permitido**
-- Até 3 anúncios por página
-- Anúncios em artigos
-- Anúncios em sidebar
+âœ… **Permitido**
+- AtÃ© 3 anÃºncios por pÃ¡gina
+- AnÃºncios em artigos
+- AnÃºncios em sidebar
 
-❌ **Proibido**
-- Anúncios que imitam conteúdo
+âŒ **Proibido**
+- AnÃºncios que imitam conteÃºdo
 - Cliques incentivados
-- Conteúdo sensacionalista excessivo
+- ConteÃºdo sensacionalista excessivo
 
 ## Sitemap e Robots
 
 ### Sitemap.xml
-O projeto usa sitemap "portal-grade" com **sitemap index** e partições:
+O projeto usa sitemap "portal-grade" com **sitemap index** e partiÃ§Ãµes:
 - Index: `/sitemap.xml` (`src/app/sitemap.xml/route.ts`)
 - Child sitemaps:
   - `/sitemaps/static.xml` (`src/app/sitemaps/static.xml/route.ts`)
@@ -226,31 +235,31 @@ Allow: /
 Sitemap: https://portaleconomicomundial.com/sitemap.xml
 ```
 
-Implementação real:
+ImplementaÃ§Ã£o real:
 - `robots` em Next App Router: `src/app/robots.ts`
-- Bloqueia rotas internas e reduz crawl de parâmetros de tracking (`utm_`, `gclid`, `fbclid`, etc).
+- Bloqueia rotas internas e reduz crawl de parÃ¢metros de tracking (`utm_`, `gclid`, `fbclid`, etc).
 
-## Métricas de Acompanhamento
+## MÃ©tricas de Acompanhamento
 
 ### Google Analytics 4
 - Page views
-- Tempo na página
+- Tempo na pÃ¡gina
 - Bounce rate
 - Scroll depth
 
 ### Search Console
-- Impressões
+- ImpressÃµes
 - CTR
-- Posições médias
+- PosiÃ§Ãµes mÃ©dias
 - Palavras-chave
 
 ## Checklist de SEO
 
-- [ ] Title único por página
+- [ ] Title Ãºnico por pÃ¡gina
 - [ ] Meta description (150-160 chars)
-- [ ] H1 único por página
+- [ ] H1 Ãºnico por pÃ¡gina
 - [ ] Imagens com alt text
-- [ ] URLs amigáveis
+- [ ] URLs amigÃ¡veis
 - [ ] Internal linking
 - [ ] Mobile-friendly
 - [ ] PageSpeed > 90
@@ -258,4 +267,4 @@ Implementação real:
 - [ ] Sitemap.xml
 - [ ] Robots.txt
 - [ ] JSON-LD
-- [ ] `NEXT_PUBLIC_SITE_URL` definido em produção (canonical/sitemap/host corretos)
+- [ ] `NEXT_PUBLIC_SITE_URL` definido em produÃ§Ã£o (canonical/sitemap/host corretos)

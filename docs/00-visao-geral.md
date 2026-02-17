@@ -95,7 +95,14 @@ O **Cenario Internacional (CIN)** Ã© um portal de notÃ­cias profissional esp
 - IntegraÃ§Ã£o direta com API de notÃ­cias
 - (Funcionalidade de geraÃ§Ã£o de IA removida)
 
-### 6. Analytics First-Party (Novo)
+### 6. Upload de Midia (Admin)
+- Upload e processamento via `POST /api/upload`
+  - Raster: converte para WebP automaticamente
+  - Vetor: aceita SVG e armazena como `.svg` (com validacoes basicas)
+- Gestao de arquivos enviados no painel: `/admin/arquivos`
+  - Lista/Busca/Filtra, copia URL publica e exclui arquivos (`GET|DELETE /api/admin-files`)
+
+### 7. Analytics First-Party (Novo)
 - Sistema 100% first-party, sem Google Analytics
 - Coleta de eventos: page_view, article_read, scroll_depth
 - DeduplicaÃ§Ã£o automÃ¡tica de eventos

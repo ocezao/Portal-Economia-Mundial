@@ -85,6 +85,16 @@ Guia rápido de navegação para toda a documentação do projeto.
 
 ---
 
+## 🛠️ Admin e Editorial
+
+Rotas administrativas (UI):
+- `/admin/noticias`: criar/editar/publicar/agendar posts
+- `/admin/autores`: criar/editar perfis de autor (E-E-A-T: `website`, `location`, `credentials`, formacao, idiomas, redes, badges)
+
+Referências técnicas:
+- Edge Function: `supabase/functions/admin-authors/index.ts`
+- Migração: `supabase/migrations/20260217_add_author_transparency_fields.sql`
+
 ## 🚀 Deploy e DevOps
 
 | Documento | Descrição | Público |
@@ -95,7 +105,7 @@ Guia rápido de navegação para toda a documentação do projeto.
 | [docs/ops/DEPLOY_SEGURO.md](../ops/DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy | DevOps |
 | [docs/17-cicd-pipeline.md](../17-cicd-pipeline.md) | CI/CD Pipeline | DevOps |
 | [docs/14-deploy.md](../14-deploy.md) | Deploy do analytics | DevOps |
-| [docs/21-image-processing.md](../21-image-processing.md) | Processamento de imagens | DevOps |
+| [docs/21-image-processing.md](../21-image-processing.md) | Uploads e processamento de imagens (WebP + SVG) | DevOps/Admin |
 
 ### Checklist Deploy Produção
 Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do progresso.
@@ -232,10 +242,10 @@ Progresso atual: **(ver doc)** - este índice não é a fonte de verdade do prog
 | LGPD/Cookies | [docs/05-lgpd-compliance.md](../05-lgpd-compliance.md) |
 | SEO/AdSense | [docs/02-seo-e-adsense.md](../02-seo-e-adsense.md) |
 | Analytics | [docs/04-analytics-first-party.md](../04-analytics-first-party.md) |
-| Processamento Imagens | [docs/21-image-processing.md](../21-image-processing.md) |
+| Uploads/Imagens | [docs/21-image-processing.md](../21-image-processing.md) |
 
 ---
 
-**Última atualização:** 08/02/2026 (Atualizacao SEO portal-grade + docs)
+**Última atualização:** 17/02/2026 (perfis de autor + admin autores + docs alinhadas com codigo)
 
 

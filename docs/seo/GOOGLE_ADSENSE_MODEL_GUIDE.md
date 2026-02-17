@@ -1,42 +1,42 @@
-# 🏆 Guia: Tornando o CIN um Modelo para Google AdSense
+﻿# ðŸ† Guia: Tornando o CIN um Modelo para Google AdSense
 
-## 📊 Diagnóstico Atual do Projeto
+## ðŸ“Š DiagnÃ³stico Atual do Projeto
 
-### ✅ Pontos Fortes (Já Implementados)
+### âœ… Pontos Fortes (JÃ¡ Implementados)
 
 | Aspecto | Status | Detalhes |
 |---------|--------|----------|
-| **SEO Técnico** | ⭐⭐⭐⭐⭐ | Meta tags dinâmicas, JSON-LD completo, sitemap |
-| **Performance** | ⭐⭐⭐⭐ | Next.js App Router, lazy loading, otimizações |
-| **Conteúdo** | ⭐⭐⭐⭐⭐ | Estrutura jornalística profissional |
-| **Analytics** | ⭐⭐⭐⭐⭐ | First-party, LGPD-compliant, sem Google Analytics |
-| **Acessibilidade** | ⭐⭐⭐⭐ | Semântica HTML, ARIA labels, contraste |
-| **Segurança** | ⭐⭐⭐⭐ | Sanitização, XSS protection, headers |
+| **SEO TÃ©cnico** | â­â­â­â­â­ | Meta tags dinÃ¢micas, JSON-LD completo, sitemap |
+| **Performance** | â­â­â­â­ | Next.js App Router, lazy loading, otimizaÃ§Ãµes |
+| **ConteÃºdo** | â­â­â­â­â­ | Estrutura jornalÃ­stica profissional |
+| **Analytics** | â­â­â­â­â­ | First-party, LGPD-compliant, sem Google Analytics |
+| **Acessibilidade** | â­â­â­â­ | SemÃ¢ntica HTML, ARIA labels, contraste |
+| **SeguranÃ§a** | â­â­â­â­ | SanitizaÃ§Ã£o, XSS protection, headers |
 
-### ⚠️ Áreas de Melhoria para AdSense
+### âš ï¸ Ãreas de Melhoria para AdSense
 
 | Aspecto | Prioridade | Impacto AdSense |
 |---------|------------|-----------------|
-| Core Web Vitals | 🔴 Alta | Afeta ranking e RPM |
-| Ad Layout/UX | 🔴 Alta | Afeta viewability e CTR |
-| E-E-A-T Signals | 🟡 Média | Afeta qualificação do site |
-| Cookie Consent | 🔴 Alta | Obrigatório para AdSense UE/BR |
-| Content Policy | 🟡 Média | Conformidade com políticas |
+| Core Web Vitals | ðŸ”´ Alta | Afeta ranking e RPM |
+| Ad Layout/UX | ðŸ”´ Alta | Afeta viewability e CTR |
+| E-E-A-T Signals | ðŸŸ¡ MÃ©dia | Afeta qualificaÃ§Ã£o do site |
+| Cookie Consent | ðŸ”´ Alta | ObrigatÃ³rio para AdSense UE/BR |
+| Content Policy | ðŸŸ¡ MÃ©dia | Conformidade com polÃ­ticas |
 
 ---
 
-## 🎯 Estratégia de Implementação
+## ðŸŽ¯ EstratÃ©gia de ImplementaÃ§Ã£o
 
-### FASE 1: Core Web Vitals (Obrigatório)
+### FASE 1: Core Web Vitals (ObrigatÃ³rio)
 
 #### 1.1 LCP (Largest Contentful Paint) < 2.5s
 
 **Problemas atuais identificados:**
 - Imagens de capa sem prioridade de carregamento
 - Fontes do Google Fonts sem preload
-- Hero section bloqueia renderização
+- Hero section bloqueia renderizaÃ§Ã£o
 
-**Implementações necessárias:**
+**ImplementaÃ§Ãµes necessÃ¡rias:**
 
 ```tsx
 // src/app/layout.tsx - Adicionar preload de fontes
@@ -48,7 +48,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* Preload fonts críticas */}
+        {/* Preload fonts crÃ­ticas */}
         <link 
           rel="preload" 
           href="/fonts/inter-var.woff2" 
@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
           type="font/woff2" 
           crossOrigin="anonymous" 
         />
-        {/* Preconnect para domínios externos */}
+        {/* Preconnect para domÃ­nios externos */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
@@ -67,7 +67,7 @@ export default function RootLayout({ children }) {
 ```
 
 ```tsx
-// src/components/news/NewsCard.tsx - Otimização de imagens
+// src/components/news/NewsCard.tsx - OtimizaÃ§Ã£o de imagens
 import Image from 'next/image';
 
 export function NewsCard({ article, priority = false }) {
@@ -92,9 +92,9 @@ export function NewsCard({ article, priority = false }) {
 
 **Problemas:**
 - Event handlers pesados no main thread
-- Re-renders desnecessários em componentes interativos
+- Re-renders desnecessÃ¡rios em componentes interativos
 
-**Soluções:**
+**SoluÃ§Ãµes:**
 
 ```tsx
 // hooks/useOptimizedInteractions.ts
@@ -106,7 +106,7 @@ export function useOptimizedNavigation() {
   const prefetchTimeout = useRef<NodeJS.Timeout>();
 
   const handleNavigation = useCallback((href: string) => {
-    // Prefetch na intenção de hover
+    // Prefetch na intenÃ§Ã£o de hover
     if (prefetchTimeout.current) {
       clearTimeout(prefetchTimeout.current);
     }
@@ -123,11 +123,11 @@ export function useOptimizedNavigation() {
 #### 1.3 CLS (Cumulative Layout Shift) < 0.1
 
 **Problemas:**
-- Anúncios que carregam sem dimensões definidas
-- Imagens sem width/height explícitos
+- AnÃºncios que carregam sem dimensÃµes definidas
+- Imagens sem width/height explÃ­citos
 - Fontes que causam FOIT/FOUT
 
-**Solução para AdSense:**
+**SoluÃ§Ã£o para AdSense:**
 
 ```tsx
 // components/ads/AdUnitOptimized.tsx
@@ -200,12 +200,12 @@ export function AdUnitOptimized({ slot, format, className }: AdUnitProps) {
 
 ---
 
-### FASE 2: Estratégia de Anúncios (AdSense)
+### FASE 2: EstratÃ©gia de AnÃºncios (AdSense)
 
-#### 2.1 Posições Otimizadas (Baseadas em Heatmaps)
+#### 2.1 PosiÃ§Ãµes Otimizadas (Baseadas em Heatmaps)
 
 ```tsx
-// src/app/page.tsx - Estrutura com slots de anúncio
+// src/app/page.tsx - Estrutura com slots de anÃºncio
 import { AdUnitOptimized } from '@/components/ads/AdUnitOptimized';
 
 export default function HomePage() {
@@ -227,7 +227,7 @@ export default function HomePage() {
 
       <HeroSection />
 
-      {/* AD 2: Após hero - In-feed */}
+      {/* AD 2: ApÃ³s hero - In-feed */}
       <section className="my-6">
         <AdUnitOptimized slot="2345678901" format="auto" />
       </section>
@@ -243,7 +243,7 @@ export default function HomePage() {
 }
 ```
 
-#### 2.2 Lazy Loading de Anúncios
+#### 2.2 Lazy Loading de AnÃºncios
 
 ```tsx
 // components/ads/AdUnitLazy.tsx
@@ -264,7 +264,7 @@ export function AdUnitLazy({ slot, format }) {
         }
       },
       { 
-        rootMargin: '100px', // Pré-carrega 100px antes de entrar na viewport
+        rootMargin: '100px', // PrÃ©-carrega 100px antes de entrar na viewport
         threshold: 0 
       }
     );
@@ -278,7 +278,7 @@ export function AdUnitLazy({ slot, format }) {
 
   useEffect(() => {
     if (isVisible && !isAdLoaded && typeof window !== 'undefined') {
-      // Delay para não competir com conteúdo crítico
+      // Delay para nÃ£o competir com conteÃºdo crÃ­tico
       const timer = setTimeout(() => {
         if (window.adsbygoogle) {
           window.adsbygoogle.push({});
@@ -312,62 +312,66 @@ export function AdUnitLazy({ slot, format }) {
 
 ### FASE 3: Sinais E-E-A-T (Experience, Expertise, Authoritativeness, Trust)
 
-#### 3.1 Páginas de Autor Aprimoradas
+#### 3.1 PÃ¡ginas de Autor Aprimoradas
 
 ```tsx
 // src/app/autor/[slug]/page.tsx
 import type { Metadata } from 'next';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { generateAuthorJsonLd, generateAuthorProfilePageJsonLd } from '@/config/authors';
+import { getSiteUrl } from '@/lib/siteUrl';
 
 export async function generateMetadata({ params }): Promise<Metadata> {
   const author = await getAuthorBySlug(params.slug);
+  const siteUrl = getSiteUrl();
+  const url = `${siteUrl}/autor/${author.slug}/`;
   
   return {
-    title: `${author.name} - Jornalista | Cenario Internacional`,
+    title: `${author.name} - ${author.title} | Cenario Internacional`,
     description: author.bio,
-    authors: [{ name: author.name }],
+    authors: [{ name: author.name, url }],
+    alternates: { canonical: url },
     openGraph: {
       type: 'profile',
-      images: [author.photo],
+      url,
+      images: [`${siteUrl}${author.photo}`],
     },
   };
 }
 
-// JSON-LD para Author
-const authorJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: author.name,
-  jobTitle: 'Jornalista',
-  worksFor: {
-    '@type': 'NewsMediaOrganization',
-    name: 'Cenario Internacional',
-  },
-  alumniOf: author.education?.map(edu => ({
-    '@type': 'CollegeOrUniversity',
-    name: edu.institution,
-  })),
-  award: author.awards,
-  sameAs: [
-    author.social.twitter,
-    author.social.linkedin,
-  ].filter(Boolean),
-};
+// JSON-LD (implementaÃ§Ã£o real no projeto)
+const authorJsonLd = generateAuthorJsonLd(author, siteUrl); // Person
+const authorProfileJsonLd = generateAuthorProfilePageJsonLd(author, siteUrl, {
+  recentArticleUrls: articles.map((a) => `${siteUrl}/noticias/${a.slug}/`),
+}); // ProfilePage
+
+return (
+  <>
+    <JsonLd id="jsonld-author" data={authorJsonLd} />
+    <JsonLd id="jsonld-author-profile" data={authorProfileJsonLd} />
+  </>
+);
 ```
 
-#### 3.2 About Us / Página Editorial
+Sinais editoriais recomendados (e editÃ¡veis pelo admin em `/admin/autores`):
+- `website`, `location`, `credentials` (transparÃªncia/E-E-A-T)
+- flags: `editor`, `factChecker`, `isActive`
+- formaÃ§Ã£o, prÃªmios, idiomas, Ã¡reas de expertise, redes sociais, data de ingresso (`joinedAt`)
+
+#### 3.2 About Us / PÃ¡gina Editorial
 
 ```tsx
 // src/app/editorial/page.tsx
 export const metadata = {
   title: 'Nossa Editorial - Cenario Internacional',
-  description: 'Conheça nossa equipe editorial, princípios jornalísticos e processo de checagem de fatos.',
+  description: 'ConheÃ§a nossa equipe editorial, princÃ­pios jornalÃ­sticos e processo de checagem de fatos.',
 };
 
 // Schema.org para EditorialPolicy
 const editorialJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: 'Política Editorial',
+  name: 'PolÃ­tica Editorial',
   about: {
     '@type': 'NewsMediaOrganization',
     name: 'Cenario Internacional',
@@ -442,15 +446,15 @@ export function CookieBanner() {
   return (
     <div 
       role="dialog"
-      aria-label="Configurações de cookies"
+      aria-label="ConfiguraÃ§Ãµes de cookies"
       className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50"
     >
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="text-sm">
           <p className="font-medium">Valorizamos sua privacidade</p>
           <p className="text-muted">
-            Usamos cookies para melhorar sua experiência e exibir anúncios relevantes. 
-            Consulte nossa <a href="/privacidade" className="underline">Política de Privacidade</a>.
+            Usamos cookies para melhorar sua experiÃªncia e exibir anÃºncios relevantes. 
+            Consulte nossa <a href="/privacidade" className="underline">PolÃ­tica de Privacidade</a>.
           </p>
         </div>
         <div className="flex gap-2">
@@ -475,7 +479,7 @@ export function CookieBanner() {
 
 ---
 
-### FASE 5: Otimizações de Conteúdo
+### FASE 5: OtimizaÃ§Ãµes de ConteÃºdo
 
 #### 5.1 Article Schema Aprimorado
 
@@ -536,7 +540,7 @@ export function FactCheckBadge({ status }) {
     opinion: {
       color: 'bg-yellow-100 text-yellow-800',
       icon: MessageSquare,
-      label: 'Opinião',
+      label: 'OpiniÃ£o',
     },
   };
 
@@ -554,19 +558,19 @@ export function FactCheckBadge({ status }) {
 
 ---
 
-## 📋 Checklist de Implementação
+## ðŸ“‹ Checklist de ImplementaÃ§Ã£o
 
 ### Sprint 1: Fundamentos (1-2 semanas)
 - [ ] Implementar preload de fontes e imagens
-- [ ] Adicionar dimensões fixas para anúncios
+- [ ] Adicionar dimensÃµes fixas para anÃºncios
 - [ ] Criar componente CookieBanner LGPD-compliant
 - [ ] Configurar lazy loading para ads abaixo do fold
 
 ### Sprint 2: E-E-A-T (2-3 semanas)
-- [ ] Criar páginas de autor otimizadas
+- [ ] Criar pÃ¡ginas de autor otimizadas
 - [ ] Implementar schema ReviewedBy
-- [ ] Adicionar badges de verificação
-- [ ] Criar página editorial com policies
+- [ ] Adicionar badges de verificaÃ§Ã£o
+- [ ] Criar pÃ¡gina editorial com policies
 
 ### Sprint 3: Performance (1-2 semanas)
 - [ ] Otimizar LCP (imagens, fonts)
@@ -574,7 +578,7 @@ export function FactCheckBadge({ status }) {
 - [ ] Eliminar CLS (ad containers)
 - [ ] Implementar service worker para cache
 
-### Sprint 4: Monetização (1 semana)
+### Sprint 4: MonetizaÃ§Ã£o (1 semana)
 - [ ] Configurar AdSense account
 - [ ] Implementar slots otimizados
 - [ ] Configurar lazy loading inteligente
@@ -582,9 +586,9 @@ export function FactCheckBadge({ status }) {
 
 ---
 
-## 🎯 KPIs de Sucesso
+## ðŸŽ¯ KPIs de Sucesso
 
-| Métrica | Antes | Meta | Ferramenta |
+| MÃ©trica | Antes | Meta | Ferramenta |
 |---------|-------|------|------------|
 | LCP | ~3.5s | <2.5s | PageSpeed Insights |
 | CLS | ~0.15 | <0.1 | PageSpeed Insights |
@@ -595,7 +599,7 @@ export function FactCheckBadge({ status }) {
 
 ---
 
-## 📚 Recursos Adicionais
+## ðŸ“š Recursos Adicionais
 
 - [Google AdSense Best Practices](https://support.google.com/adsense/answer/17904)
 - [Web Vitals para Publishers](https://web.dev/vitals/)
@@ -605,5 +609,5 @@ export function FactCheckBadge({ status }) {
 ---
 
 **Documento criado em:** 2026-02-06  
-**Versão:** 1.0  
-**Status:** Implementação recomendada
+**VersÃ£o:** 1.0  
+**Status:** ImplementaÃ§Ã£o recomendada

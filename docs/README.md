@@ -53,6 +53,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | # | Documento | Descrição |
 |---|-----------|-----------|
 | 16 | [API REST](./16-api-rest.md) | Especificação OpenAPI, endpoints e integração |
+| 21 | [Uploads e Processamento de Imagens](./21-image-processing.md) | Upload via API, conversao WebP e suporte a SVG (admin) |
 | FINNHUB | [Finnhub - Guia Completo](./product/FINNHUB-GUIA-COMPLETO.md) | Integração completa com Finnhub API |
 
 ### CI/CD e DevOps
@@ -154,6 +155,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 - ✅ **RELATORIO_CODIGO_MORTO.md** - Relatório de código morto
 - ✅ **RESUMO_LIMPEZA_FINAL.md** - Resumo da limpeza
 - ✅ **PLANO_CONSOLIDACAO_DOCUMENTACAO.md** - Plano de consolidação
+- ✅ **Admin Arquivos + Upload SVG/WebP** - `/admin/arquivos` + `GET|DELETE /api/admin-files` + `POST /api/upload`
 - 🗑️ Removidos: FINNHUB_SETUP.md, FINNHUB_INTEGRACAO.md, FINNHUB_ENDPOINTS_ANALISE.md (consolidados)
 - 🗑️ Removidos: 08-changelog.md (consolidado em CHANGELOG.md)
 - 🗑️ Removido: TRADING_ECONOMICS_SETUP.md (código removido)
@@ -169,5 +171,5 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 ---
 
-**Última atualização:** 16/02/2026
+**Última atualização:** 17/02/2026
 
