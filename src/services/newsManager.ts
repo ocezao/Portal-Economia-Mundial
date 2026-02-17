@@ -437,12 +437,30 @@ export async function getLatestArticles(limit = 10): Promise<NewsArticle[]> {
 export async function getRelatedArticles(
   currentSlug: string,
   category: string,
+  tags: string[] = [],
   limit = 4
 ): Promise<NewsArticle[]> {
   if (!isSupabaseConfigured) return [];
 
   const items = await getArticlesByCategory(category);
-  return items.filter((a) => a.slug !== currentSlug).slice(0, limit);
+  const tagSet = new Set(tags.map((t) => t.toLowerCase().trim()).filter(Boolean));
+
+  const scored = items
+    .filter((a) => a.slug !== currentSlug)
+    .map((a) => {
+      const shared = (a.tags ?? []).reduce((acc, t) => {
+        const key = t.toLowerCase().trim();
+        return key && tagSet.has(key) ? acc + 1 : acc;
+      }, 0);
+      return { article: a, score: shared };
+    })
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.article.publishedAt).getTime() - new Date(a.article.publishedAt).getTime();
+    })
+    .map((x) => x.article);
+
+  return scored.slice(0, limit);
 }
 
 export async function getTrendingArticles(limit = 5): Promise<NewsArticle[]> {

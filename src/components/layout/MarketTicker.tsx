@@ -1,7 +1,9 @@
-/**
+﻿/**
  * Ticker de Mercado Financeiro
- * Scroll infinito com cotações em tempo real da Finnhub API
+ * Scroll infinito com cotaÃ§Ãµes em tempo real da Finnhub API
  */
+
+'use client';
 
 import { memo, useMemo, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
@@ -23,7 +25,7 @@ export const MarketTicker = memo(function MarketTicker() {
   // (React will throw in production if hooks order changes between renders.)
   const tickerData = useMemo(() => [...data, ...data], [data]);
 
-  // useCallback para formatação de números
+  // useCallback para formataÃ§Ã£o de nÃºmeros
   const formatPrice = useCallback((price: number | undefined, currency: string): string => {
     if (price === undefined || !Number.isFinite(price)) {
       return '--';
@@ -85,13 +87,13 @@ export const MarketTicker = memo(function MarketTicker() {
     return (
       <aside 
         className="bg-[#111111] text-white overflow-hidden h-10 flex items-center justify-center"
-        aria-label="Erro ao carregar cotações"
+        aria-label="Erro ao carregar cotaÃ§Ãµes"
         data-testid="market-ticker"
         data-state="error"
       >
         <span className="flex items-center gap-2 text-sm text-[#9b9b9b]">
           <AlertCircle className="w-4 h-4" />
-          Dados de mercado indisponíveis no momento
+          Dados de mercado indisponÃ­veis no momento
         </span>
       </aside>
     );
@@ -102,7 +104,7 @@ export const MarketTicker = memo(function MarketTicker() {
     return (
       <aside 
         className="bg-[#111111] text-white overflow-hidden h-10 flex items-center"
-        aria-label="Carregando cotações"
+        aria-label="Carregando cotaÃ§Ãµes"
         data-testid="market-ticker"
         data-state="loading"
       >
@@ -122,7 +124,7 @@ export const MarketTicker = memo(function MarketTicker() {
   return (
     <aside 
       className="bg-[#111111] text-white overflow-hidden h-10 flex items-center"
-      aria-label="Cotações de mercado em tempo real"
+      aria-label="CotaÃ§Ãµes de mercado em tempo real"
       data-testid="market-ticker"
       data-state="loaded"
     >

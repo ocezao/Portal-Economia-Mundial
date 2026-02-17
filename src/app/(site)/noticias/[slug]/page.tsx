@@ -17,6 +17,7 @@ import { getActiveAuthors, getPrimaryFactChecker } from '@/services/authors';
 import { getArticleBySlug, getRedirectTargetSlug } from '@/services/newsManager';
 
 import NoticiaPageClient from './NoticiaPageClient';
+import type { Author } from '@/config/authors';
 
 export const revalidate = 60; // 1 min
 
@@ -105,8 +106,24 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
     (article.authorId && authors.find((a) => a.slug === article.authorId)?.slug) ??
     authors.find((a) => a.name === article.author || article.author.includes(a.name))?.slug;
 
+  const authorProfile: Author | null = authorSlug ? (authors.find((a) => a.slug === authorSlug) ?? null) : null;
+
+  const authorImageUrl = authorProfile
+    ? (authorProfile.photo.startsWith('http') ? authorProfile.photo : `${siteUrl}${authorProfile.photo}`)
+    : undefined;
+
+  const authorSameAs = authorProfile
+    ? [
+        authorProfile.website,
+        authorProfile.social?.twitter ? `https://twitter.com/${authorProfile.social.twitter}` : undefined,
+        authorProfile.social?.linkedin ? `https://linkedin.com/in/${authorProfile.social.linkedin}` : undefined,
+      ].filter((v): v is string => Boolean(v))
+    : [];
+
   // Buscar fact-checker para reviewedBy
   const reviewedBy = await getPrimaryFactChecker();
+
+  const wordCount = article.content ? article.content.trim().split(/\s+/).filter(Boolean).length : undefined;
 
   const articleJsonLd = generateArticleJsonLd(
     {
@@ -118,12 +135,17 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
       updatedAt: article.updatedAt,
       author: article.author,
       authorSlug,
+      authorImageUrl,
+      authorSameAs,
       category: categoryName,
       tags: article.tags,
+      wordCount,
+      inLanguage: 'pt-BR',
     },
     {
       reviewedBy: reviewedBy ?? undefined,
       speakable: true,
+      isAccessibleForFree: true,
       citation: [
         { name: 'Fontes oficiais de mercado' },
         { name: 'Dados de agÃªncias reguladoras' },
@@ -135,7 +157,7 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
     <>
       <JsonLd id="jsonld-breadcrumb" data={breadcrumbJsonLd} />
       <JsonLd id="jsonld-article" data={articleJsonLd} />
-      <NoticiaPageClient article={article} reviewedBy={reviewedBy} />
+      <NoticiaPageClient article={article} reviewedBy={reviewedBy} authorProfile={authorProfile ?? undefined} />
     </>
   );
 }

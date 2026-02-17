@@ -3,15 +3,10 @@ import type { Metadata, Viewport } from 'next';
 import '../index.css';
 
 import { Providers } from './providers';
-import { AdSenseScript } from '@/components/ads/AdSenseScript';
-import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
-import { OneSignalInit } from '@/components/push/OneSignalInit';
 import { APP_CONFIG } from '@/config/app';
 import { SEO_CONFIG } from '@/config/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { getSiteUrl } from '@/lib/siteUrl';
-import { Layout } from '@/components/layout/Layout';
-import { CookieBanner } from '@/components/consent/CookieBanner';
 
 const siteUrl = getSiteUrl();
 
@@ -110,11 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-white text-[#111111] antialiased">
         <Providers>
-          <ServiceWorkerRegistration />
-          <OneSignalInit />
-          <AdSenseScript />
-          <Layout>{children}</Layout>
-          <CookieBanner />
+          {children}
         </Providers>
       </body>
     </html>

@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Artigos Relacionados
- * Recomendações baseadas na categoria atual
+ * RecomendaÃ§Ãµes baseadas na categoria atual
  */
 
 'use client';
@@ -27,7 +27,7 @@ const RelatedArticleCard = memo(function RelatedArticleCard({
   article
 }: RelatedArticleCardProps) {
 
-  // useMemo para formatação da data
+  // useMemo para formataÃ§Ã£o da data
   const formattedDate = useMemo(() => 
     new Date(article.publishedAt).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -81,10 +81,15 @@ export const RelatedArticles = memo(function RelatedArticles({
     let isMounted = true;
     const load = async () => {
       try {
-        const data = await getRelatedArticles(currentArticle.slug, currentArticle.category, limit);
+        const data = await getRelatedArticles(
+          currentArticle.slug,
+          currentArticle.category,
+          currentArticle.tags ?? [],
+          limit
+        );
         if (isMounted) setRelated(data);
       } catch {
-        // Erro silenciado em produção - não logamos em dev intencionalmente
+        // Erro silenciado em produÃ§Ã£o - nÃ£o logamos em dev intencionalmente
       }
     };
 

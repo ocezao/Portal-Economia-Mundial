@@ -78,8 +78,12 @@ export const generateArticleJsonLd = (
   updatedAt: string;
   author: string;
   authorSlug?: string;
+  authorImageUrl?: string;
+  authorSameAs?: string[];
   category: string;
   tags: string[];
+  wordCount?: number;
+  inLanguage?: string;
   },
   options?: {
     reviewedBy?: {
@@ -88,6 +92,7 @@ export const generateArticleJsonLd = (
     };
     speakable?: boolean;
     citation?: Array<{ name: string; url?: string }>;
+    isAccessibleForFree?: boolean;
   }
 ) => {
   const imageUrl = article.coverImage
@@ -102,17 +107,22 @@ export const generateArticleJsonLd = (
     headline: article.title,
     description: article.excerpt,
     image: imageUrl,
+    thumbnailUrl: imageUrl,
     datePublished: article.publishedAt,
     dateModified: article.updatedAt,
+    inLanguage: article.inLanguage ?? 'pt-BR',
+    isAccessibleForFree: options?.isAccessibleForFree ?? true,
     author: {
       '@type': 'Person',
       name: article.author,
       ...(article.authorSlug && {
         url: `${siteUrl}/autor/${article.authorSlug}/`,
       }),
+      ...(article.authorImageUrl && { image: article.authorImageUrl }),
+      ...(article.authorSameAs && article.authorSameAs.length > 0 && { sameAs: article.authorSameAs }),
     },
     publisher: {
-      '@type': 'Organization',
+      '@type': 'NewsMediaOrganization',
       name: APP_CONFIG.brand.name,
       logo: {
         '@type': 'ImageObject',
@@ -127,6 +137,10 @@ export const generateArticleJsonLd = (
       '@id': articleUrl,
     },
   };
+
+  if (typeof article.wordCount === 'number' && Number.isFinite(article.wordCount) && article.wordCount > 0) {
+    jsonLd.wordCount = Math.round(article.wordCount);
+  }
 
   // ReviewedBy (E-E-A-T signal)
   if (options?.reviewedBy) {

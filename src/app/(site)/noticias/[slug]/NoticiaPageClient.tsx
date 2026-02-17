@@ -17,9 +17,8 @@ import {
   Linkedin,
   Link as LinkIcon,
   AlertTriangle,
-  TrendingUp,
-  BookOpen,
-  FileText,
+  ShieldCheck,
+  ExternalLink,
   Gem,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,16 +29,24 @@ import { ReadingProgress } from '@/components/news/ReadingProgress';
 import { ArticleContent } from '@/components/news/ArticleContent';
 import { RelatedArticles } from '@/components/news/RelatedArticles';
 import { CommentSection } from '@/components/interactive/CommentSection';
+import { AdUnit } from '@/components/ads/AdUnit';
 import { CONTENT_CONFIG } from '@/config/content';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import type { NewsArticle } from '@/types';
+import type { Author } from '@/config/authors';
 
 interface NoticiaPageClientProps {
   article: NewsArticle;
   reviewedBy?: { name: string; slug: string } | null;
+  authorProfile?: Author;
 };
 
-export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageClientProps) {
+const ADSENSE_SLOT_ARTICLE_INLINE =
+  process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE_INLINE || process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;
+const ADSENSE_SLOT_ARTICLE_BOTTOM =
+  process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE_BOTTOM || process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;
+
+export default function NoticiaPageClient({ article, reviewedBy, authorProfile }: NoticiaPageClientProps) {
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(article.slug);
 
@@ -60,30 +67,8 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
     year: 'numeric',
   });
 
-  // Mock data para mÃ³dulos contextuais
-  const contexto = article.excerpt;
-
-  const impacto = [
-    'Mercados financeiros reagem com volatilidade aumentada',
-    'PolÃ­tica monetÃ¡ria pode sofrer ajustes nos prÃ³ximos meses',
-    'Investidores devem monitorar indicadores de perto',
-  ];
-
-  const timeline = [
-    { date: article.publishedAt, evento: 'PublicaÃ§Ã£o original' },
-    { date: article.updatedAt, evento: 'AtualizaÃ§Ã£o com novos dados' },
-  ];
-
-  const termosChave = article.tags.slice(0, 5).map((tag) => ({
-    termo: tag,
-    definicao: `Termo relacionado a ${category.name.toLowerCase()} mencionado neste artigo.`,
-  }));
-
-  const fontes = [
-    'AgÃªncias de notÃ­cias internacionais',
-    'RelatÃ³rios oficiais de instituiÃ§Ãµes financeiras',
-    'AnÃ¡lises de especialistas do setor',
-  ];
+  const authorUrl = authorProfile ? `/autor/${authorProfile.slug}/` : (article.authorId ? `/autor/${article.authorId}/` : undefined);
+  const topicTags = (article.tags ?? []).filter(Boolean).slice(0, 8);
 
   const handleShare = (platform: string) => {
     const url =
@@ -211,7 +196,13 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               <section className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-[#6b6b6b] border-y border-[#e5e5e5] py-4">
                 <span className="flex items-center gap-1.5 sm:gap-2">
                   <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  {article.author}
+                  {authorUrl ? (
+                    <Link href={authorUrl} className="hover:text-[#c40000] hover:underline">
+                      {article.author}
+                    </Link>
+                  ) : (
+                    <span>{article.author}</span>
+                  )}
                 </span>
                 <span className="flex items-center gap-1.5 sm:gap-2">
                   <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -240,6 +231,36 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
                 className="object-cover"
               />
             </figure>
+
+            {/* Ad (inline, abaixo da imagem para não competir com LCP) */}
+            <aside className="my-8" aria-label="Publicidade">
+              <div className="max-w-[720px] mx-auto">
+                <AdUnit slot={ADSENSE_SLOT_ARTICLE_INLINE} format="auto" className="mx-auto" />
+              </div>
+            </aside>
+
+            {/* Tópicos e interlinking (sem conteúdo inventado) */}
+            {topicTags.length > 0 && (
+              <aside className="mb-8 p-4 sm:p-6 bg-[#f8fafc] border border-[#e5e5e5] rounded-lg">
+                <header className="flex items-center justify-between gap-3 mb-3">
+                  <h2 className="text-sm font-bold text-[#111111] uppercase tracking-wider">Tópicos</h2>
+                  <Link href={`/categoria/${article.category}/`} className="text-sm text-[#c40000] hover:underline">
+                    Mais em {category.name}
+                  </Link>
+                </header>
+                <div className="flex flex-wrap gap-2">
+                  {topicTags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/busca/?q=${encodeURIComponent(tag)}`}
+                      className="px-3 py-1.5 bg-white text-[#374151] text-sm rounded-full border border-[#e5e5e5] hover:border-[#c40000] hover:text-[#c40000] transition-colors"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              </aside>
+            )}
 
             {/* Actions */}
             <section className="flex items-center justify-between mb-8 pb-8 border-b border-[#e5e5e5]">
@@ -275,84 +296,40 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               </nav>
             </section>
 
-            {/* MÃ³dulo: Contexto */}
-            <aside className="mb-8 p-4 sm:p-6 bg-[#f8fafc] border-l-4 border-[#c40000] rounded-r-lg">
-              <header className="flex items-center gap-2 mb-3">
-                <BookOpen className="w-5 h-5 text-[#c40000]" />
-                <h2 className="text-lg font-bold text-[#111111]">Contexto</h2>
-              </header>
-              <p className="text-sm sm:text-base text-[#6b6b6b] leading-relaxed">{contexto}</p>
-            </aside>
-
             {/* ConteÃºdo Principal */}
             <ArticleContent article={article} />
 
-            {/* MÃ³dulo: Impacto */}
-            <aside className="my-8 p-4 sm:p-6 bg-[#fefce8] border border-[#fde047] rounded-lg">
-              <header className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-5 h-5 text-[#ca8a04]" />
-                <h2 className="text-lg font-bold text-[#111111]">Impacto</h2>
-              </header>
-              <ul className="space-y-2">
-                {impacto.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm sm:text-base text-[#713f12]">
-                    <span className="text-[#ca8a04] mt-1">â€¢</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            {/* Ad (near-end) */}
+            <aside className="my-10" aria-label="Publicidade">
+              <div className="max-w-[720px] mx-auto">
+                <AdUnit slot={ADSENSE_SLOT_ARTICLE_BOTTOM} format="auto" className="mx-auto" />
+              </div>
             </aside>
 
-            {/* MÃ³dulo: Linha do Tempo */}
-            <aside className="my-8">
-              <h2 className="text-lg font-bold text-[#111111] mb-4">Linha do Tempo</h2>
-              <ul className="space-y-3">
-                {timeline.map((item, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <time
-                      dateTime={item.date}
-                      className="text-xs sm:text-sm text-[#6b6b6b] min-w-[100px] sm:min-w-[140px]"
-                    >
-                      {new Date(item.date).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </time>
-                    <span className="text-sm sm:text-base text-[#111111]">{item.evento}</span>
-                  </li>
-                ))}
-              </ul>
-            </aside>
-
-            {/* MÃ³dulo: Termos-chave */}
-            <aside className="my-8">
-              <h2 className="text-lg font-bold text-[#111111] mb-4">Termos-chave</h2>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {termosChave.map((item, index) => (
-                  <section key={index} className="p-3 bg-[#f5f5f5] rounded-lg">
-                    <dt className="font-semibold text-[#111111] text-sm">{item.termo}</dt>
-                    <dd className="text-xs text-[#6b6b6b] mt-1">{item.definicao}</dd>
-                  </section>
-                ))}
-              </dl>
-            </aside>
-
-            {/* MÃ³dulo: Fontes */}
-            <aside className="my-8 p-4 bg-[#f8fafc] rounded-lg">
-              <header className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-[#6b6b6b]" />
-                <h2 className="text-sm font-semibold text-[#111111]">Fontes</h2>
-              </header>
-              <ul className="space-y-1">
-                {fontes.map((fonte, index) => (
-                  <li key={index} className="text-xs text-[#6b6b6b]">
-                    â€¢ {fonte}
-                  </li>
-                ))}
-              </ul>
-            </aside>
+            {/* Sinal de confiança: sobre o autor */}
+            {authorUrl && (
+              <aside className="my-10 p-6 bg-[#111111] text-white rounded-lg">
+                <header className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs text-white/70 uppercase tracking-wider mb-1">Sobre o autor</p>
+                    <h2 className="text-lg font-bold">{article.author}</h2>
+                    <p className="text-sm text-white/70">
+                      Transparência editorial, credenciais e publicações recentes no perfil.
+                    </p>
+                  </div>
+                  <Link
+                    href={authorUrl}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded bg-white/10 hover:bg-white/15 transition-colors text-sm"
+                  >
+                    Ver perfil <ExternalLink className="w-4 h-4" />
+                  </Link>
+                </header>
+                <p className="mt-4 text-xs text-white/60 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  Conteúdo editorial. Não constitui recomendação individual de investimento.
+                </p>
+              </aside>
+            )}
 
             {/* Tags */}
             <footer className="mt-8 pt-8 border-t border-[#e5e5e5]">
@@ -360,9 +337,12 @@ export default function NoticiaPageClient({ article, reviewedBy }: NoticiaPageCl
               <ul className="flex flex-wrap gap-2">
                 {article.tags.map((tag) => (
                   <li key={tag}>
-                    <span className="px-3 py-1 bg-[#f5f5f5] text-xs sm:text-sm text-[#6b6b6b] rounded-full">
+                    <Link
+                      href={`/busca/?q=${encodeURIComponent(tag)}`}
+                      className="inline-block px-3 py-1 bg-[#f5f5f5] text-xs sm:text-sm text-[#6b6b6b] rounded-full hover:text-[#c40000] hover:bg-white border border-transparent hover:border-[#c40000] transition-colors"
+                    >
                       {tag}
-                    </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
