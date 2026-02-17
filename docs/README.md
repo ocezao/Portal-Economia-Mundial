@@ -68,6 +68,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | 18 | [Tradução Automática](./18-traducao-automatica.md) | Removido do app (mantido apenas para referência) |
 | 20 | [Contato e Carreiras](./product/CONTACT_FORMS_SETUP.md) | Setup dos formulários e tabelas (Supabase) |
 | 28 | [Email Hostinger SMTP](./28-email-hostinger-smtp.md) | Fluxos de email automatico, endpoints e smoke test |
+| 29 | [Plano Rumo ao 10 (Gratis)](./29-plano-rumo-10-gratuito.md) | Plano exaustivo de evolucao para nivel dos grandes players com foco em ferramentas gratuitas |
 
 ### 🤖 Integração com IA (MCP)
 

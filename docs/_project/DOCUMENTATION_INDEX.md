@@ -90,6 +90,7 @@ Guia rápido de navegação para toda a documentação do projeto.
 | Documento | Descrição | Público |
 |-----------|-----------|---------|
 | **[docs/22-deploy-producao-checklist.md](../22-deploy-producao-checklist.md)** | **🆕 Checklist completo produção** | DevOps |
+| [docs/29-plano-rumo-10-gratuito.md](../29-plano-rumo-10-gratuito.md) | Plano mestre para evolucao ate nivel 10 com stack gratuita | Lideranca/Produto/DevOps |
 | [docs/06-deploy-hostinger.md](../06-deploy-hostinger.md) | Deploy no Hostinger | DevOps |
 | [docs/ops/DEPLOY_SEGURO.md](../ops/DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy | DevOps |
 | [docs/17-cicd-pipeline.md](../17-cicd-pipeline.md) | CI/CD Pipeline | DevOps |
