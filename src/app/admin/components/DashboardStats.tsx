@@ -36,6 +36,7 @@ import {
   Calendar,
   ChevronDown as ChevronDownIcon,
   X,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -487,6 +488,29 @@ export function DashboardStats({
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Botão do Metabase */}
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-4 sm:p-6 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+              Métricas Avançadas
+            </h2>
+            <p className="text-white/80 text-sm mt-1">
+              Acesse o dashboard completo com métricas em tempo real, análises detalhadas e relatórios personalizados.
+            </p>
+          </div>
+          <a
+            href="https://metabase.cenariointernacional.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-white text-purple-700 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors whitespace-nowrap"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span>Abrir Metabase</span>
+          </a>
+        </div>
+      </div>
+
       {/* Header com ações - Responsivo */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
