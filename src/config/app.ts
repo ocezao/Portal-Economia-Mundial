@@ -17,6 +17,13 @@ export const APP_CONFIG = {
     email: 'contato@cenariointernacional.com.br',
     phone: '+55 11 3000-0000',
     address: 'Sao Paulo, SP - Brasil',
+    social: {
+      twitter: '@cenariointernacional',
+      facebook: 'cenario.internacional',
+      instagram: 'cenario.internacional',
+      linkedin: 'company/cenario-internacional',
+      youtube: 'CenarioInternacional',
+    },
   },
 
   features: {
