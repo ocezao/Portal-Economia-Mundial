@@ -102,6 +102,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* JSON-LD Structured Data */}
         <JsonLd id="jsonld-organization" data={SEO_CONFIG.jsonLd.organization} />
         <JsonLd id="jsonld-website" data={SEO_CONFIG.jsonLd.website} />
+        
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6096980902806551"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-screen bg-white text-[#111111] antialiased">
         <Providers>
