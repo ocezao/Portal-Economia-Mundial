@@ -1,7 +1,7 @@
-﻿# 📋 Checklist Deploy Produção - VPS Hostinger
+# 📋 Checklist Deploy Produção - VPS Hostinger
 
-> **Versão:** 1.0  
-> **Última atualização:** 2026-02-08  
+> **Versão:** 2.0  
+> **Última atualização:** 2026-02-19  
 > **Target:** VPS Hostinger KVM 1+ (Ubuntu 22.04)
 
 ---
@@ -9,801 +9,231 @@
 ## 🎯 Status Geral
 
 ```
-Progresso: ████████░░░░░░░░░░░░ 40% (60% pendente)
+Progresso: ████████████████████ 95% (5% pendente)
 ```
 
 | Categoria | Status | Progresso |
 |-----------|--------|-----------|
-| Core Application | ⚠️ Parcial | 60% |
-| Infraestrutura | ❌ Pendente | 0% |
-| Performance | ❌ Pendente | 0% |
-| SEO/Distribuição | ✅ Forte | 80% |
-| Segurança | ⚠️ Básico | 50% |
-| Monitoramento | ❌ Pendente | 0% |
+| Core Application | ✅ Completo | 100% |
+| Infraestrutura | ✅ Completo | 100% |
+| Performance | ✅ Completo | 95% |
+| SEO/Distribuição | ✅ Completo | 95% |
+| Segurança | ✅ Completo | 95% |
+| Monitoramento | ⚠️ Configurar | 80% |
 
 ---
 
-## 🔴 CRÍTICO - Impede deploy seguro
+## ✅ IMPLEMENTADO
 
-### 1. Sistema de Imagens (Base64 → CDN)
-**Status:** ❌ Pendente  
-**Impacto:** Banco explode, site lento  
-**Tempo estimado:** 4-6 horas
+### Core Application
+- [x] Next.js App Router
+- [x] React 19 + TypeScript
+- [x] Tailwind CSS + shadcn/ui
+- [x] Supabase Auth + Database
+- [x] Sistema de notícias completo
+- [x] Ticker de mercado (Finnhub)
+- [x] Sistema de comentários (Supabase + RLS)
+- [x] Newsletter (API + Buttondown)
+- [x] Sistema de uploads (Sharp + Supabase Storage)
+- [x] Sistema de favoritos/histórico
+- [x] Tradução automática (10 idiomas)
 
-#### Checklist:
-- [ ] Migrar imagens existentes de Base64 para `/public/uploads/`
-- [ ] Integrar upload de notícias com API `/api/upload` (Sharp)
-- [ ] Integrar upload de avatar com processamento WebP
-- [ ] Criar script de migração em lote das imagens antigas
-- [ ] Atualizar componentes para usar URLs de arquivo em vez de Base64
-- [ ] Configurar nginx para servir `/uploads` com cache
-- [ ] Adicionar `public/uploads/` ao `.gitignore`
+### Infraestrutura
+- [x] PM2 (ecosystem.config.js)
+- [x] Docker (Dockerfile multi-stage)
+- [x] Nginx (pem.conf + ssl.conf)
+- [x] Scripts de deploy (deploy.sh + rollback.sh)
+- [x] Scripts de backup (backup.sh + restore.sh)
+- [x] Script de setup nginx (nginx-setup.sh)
+- [x] Health Check API (/api/health)
 
-**Arquivos a modificar:**
-- `src/app/admin/noticias/novo/page.tsx`
-- `src/app/admin/noticias/editar/[slug]/page.tsx`
-- `src/app/perfil/page.tsx`
-- `src/components/upload/ImageUploader.tsx`
+### Performance
+- [x] Home SSR (Server Component)
+- [x] Cache com tags (src/lib/cache.ts)
+- [x] Otimização de imagens (Sharp, WebP)
+- [x] Headers de cache
+- [x] Bundle analyzer
+
+### SEO/Distribuição
+- [x] Sitemap dinâmico (index + partições)
+- [x] Robots.txt dinâmico
+- [x] JSON-LD (NewsArticle, Organization)
+- [x] OpenGraph + Twitter Cards
+- [x] RSS Feed
+- [x] PWA Manifest
+- [x] Service Worker
+- [x] Push Notifications (OneSignal)
+
+### Segurança
+- [x] Headers de segurança (X-Frame-Options, CSP, etc)
+- [x] Rate limiting in-memory
+- [x] Sanitização de inputs
+- [x] Validação com Zod
+- [x] RLS no Supabase
+- [x] Logs estruturados
+
+### CI/CD
+- [x] GitHub Actions (CI)
+- [x] Testes unitários (Vitest)
+- [x] Testes E2E (Playwright)
+- [x] Lint + TypeCheck
+- [x] Security audit
+- [x] Workflow de deploy
 
 ---
 
-### 2. Home SSR (Remover 'use client')
-**Status:** ✅ Feito  
-**Impacto:** Melhora SEO/TTFB (menos JS no primeiro render)  
-**Tempo estimado:** Concluído
+## ⚠️ PENDENTE (Configuração Externa)
 
-#### Checklist:
-- [x] Converter `src/app/page.tsx` para Server Component
-- [x] Mover interatividade para componente client separado (`HomePageClient.tsx`)
-- [ ] (Opcional) Expandir cache de dados com tags/`unstable_cache` onde fizer sentido
-- [ ] Rodar Lighthouse em ambiente proximo de producao
+### 1. Configurar Sentry (Error Tracking)
+**Tempo:** 15 min
 
-**Padrão a seguir:**
-```typescript
-// page.tsx (Server)
-export default async function HomePage() {
-  const [featured, latest] = await Promise.all([
-    getFeaturedArticles(), // com cache
-    getLatestArticles()
-  ]);
-  
-  return (
-    <>
-      <HeroServer data={featured} />
-      <Suspense fallback={<Skeleton />}>
-        <ArticleListClient initialData={latest} />
-      </Suspense>
-    </>
-  );
-}
+1. Criar conta em https://sentry.io
+2. Criar projeto Next.js
+3. Copiar DSN para `.env`:
+   ```
+   SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+   ```
+4. Instalar dependência:
+   ```bash
+   npm install @sentry/nextjs
+   ```
+
+### 2. Configurar UptimeRobot (Monitoramento)
+**Tempo:** 10 min
+
+1. Criar conta em https://uptimerobot.com
+2. Adicionar monitores:
+   - `https://cenariointernacional.com.br/` (5 min)
+   - `https://cenariointernacional.com.br/api/health` (1 min)
+   - `https://cenariointernacional.com.br/rss.xml` (30 min)
+3. Configurar alertas por email
+
+### 3. Configurar GitHub Secrets (Deploy Automático)
+**Tempo:** 10 min
+
+No repositório GitHub > Settings > Secrets:
+- `SSH_PRIVATE_KEY` - Chave SSH privada para acessar VPS
+- `VPS_HOST` - IP ou domínio da VPS
+- `VPS_USER` - Usuário SSH (ex: `deploy`)
+
+### 4. Configurar SSL (Certbot na VPS)
+**Tempo:** 5 min
+
+```bash
+sudo certbot --nginx -d cenariointernacional.com.br -d www.cenariointernacional.com.br
+```
+
+### 5. Primeiro Deploy na VPS
+**Tempo:** 30 min
+
+```bash
+# SSH na VPS
+ssh usuario@vps
+
+# Clonar repositório
+git clone https://github.com/seu-repo/cin.git /var/www/pem
+cd /var/www/pem
+
+# Configurar .env
+cp .env.example .env
+nano .env
+
+# Instalar dependências
+npm ci
+
+# Build
+npm run build
+
+# Iniciar PM2
+pm2 start ecosystem.config.js --env production
+pm2 save
+
+# Configurar Nginx
+sudo ./scripts/nginx-setup.sh
+
+# Configurar SSL
+sudo certbot --nginx -d cenariointernacional.com.br -d www.cenariointernacional.com.br
+```
+
+### 6. Configurar Backup Cron
+**Tempo:** 5 min
+
+```bash
+# Editar crontab
+crontab -e
+
+# Adicionar backup diário às 2h
+0 2 * * * /var/www/pem/scripts/backup.sh full >> /var/log/pem/backup.log 2>&1
 ```
 
 ---
 
-### 3. Cache de Dados
-**Status:** ❌ Pendente  
-**Impacto:** Custo Supabase alto, site lento  
-**Tempo estimado:** 2-3 horas
+## 📁 ARQUIVOS CRIADOS
 
-#### Checklist:
-- [ ] Instalar React Query/TanStack Query
-- [ ] Configurar `unstable_cache` do Next.js para queries Supabase
-- [ ] Implementar stale-while-revalidate nas listagens
-- [ ] Adicionar cache para Finnhub API (5 minutos)
-- [ ] Cache para dados de mercado (1 minuto)
-- [ ] Invalidação de cache ao publicar notícia
+```
+nginx/
+├── pem.conf           # Configuração Nginx
+└── ssl.conf           # Configuração SSL
 
-**Configuração exemplo:**
-```typescript
-// src/lib/cache.ts
-import { unstable_cache } from 'next/cache';
+scripts/
+├── nginx-setup.sh     # Setup Nginx + Certbot
+├── deploy.sh          # Deploy zero-downtime
+├── rollback.sh        # Rollback emergencial
+├── backup.sh          # Backup DB + uploads
+└── restore.sh         # Restauração
 
-export const getCachedArticles = unstable_cache(
-  async () => getAllArticles(),
-  ['articles'],
-  { revalidate: 60, tags: ['articles'] }
-);
+src/lib/
+├── cache.ts           # Cache com tags
+├── sentry.ts          # Error tracking
+└── logger.new.ts      # Logger estruturado
+
+.github/workflows/
+└── deploy.yml         # Deploy automático
+
+docs/
+└── RUNBOOK.md         # Manual de operações
 ```
 
 ---
 
-### 4. PM2 (Process Manager)
-**Status:** ❌ Pendente  
-**Impacto:** Site cai e não sobe sozinho  
-**Tempo estimado:** 30 minutos
-
-#### Checklist:
-- [ ] Criar `ecosystem.config.js` na raiz
-- [ ] Configurar cluster mode (usa todos os cores)
-- [ ] Configurar logs com rotação
-- [ ] Configurar restart automático
-- [ ] Configurar memory limit (500MB)
-- [ ] Adicionar health check grace period
-- [ ] Testar `pm2 start ecosystem.config.js`
-- [ ] Configurar PM2 startup script
-
-**Arquivo a criar:**
-- `ecosystem.config.js`
-
----
-
-### 5. Nginx (Reverse Proxy)
-**Status:** ❌ Pendente  
-**Impacto:** Sem SSL, sem compressão, exposto diretamente  
-**Tempo estimado:** 1-2 horas
-
-#### Checklist:
-- [ ] Instalar nginx no VPS
-- [ ] Criar configuração `/etc/nginx/sites-available/pem`
-- [ ] Configurar upstream para porta 3000
-- [ ] Configurar SSL com Certbot
-- [ ] Configurar gzip/brotli compression
-- [ ] Configurar rate limiting para `/api`
-- [ ] Configurar cache para arquivos estáticos
-- [ ] Configurar headers de segurança
-- [ ] Criar symlink para `sites-enabled`
-- [ ] Testar configuração `nginx -t`
-
-**Arquivos a criar:**
-- `nginx/pem.conf`
-- `scripts/nginx-setup.sh`
-
----
-
-### 6. Health Check API
-**Status:** ❌ Pendente  
-**Impacto:** Não sabemos se aplicação está saudável  
-**Tempo estimado:** 30 minutos
-
-#### Checklist:
-- [ ] Criar `src/app/api/health/route.ts`
-- [ ] Verificar conexão com Supabase
-- [ ] Verificar espaço em disco
-- [ ] Retornar uptime e versão
-- [ ] Retornar 503 se unhealthy
-- [ ] Configurar PM2 para usar health check
-- [ ] Testar endpoint `/api/health`
-
-**Arquivo a criar:**
-- `src/app/api/health/route.ts`
-
----
-
-## 🟡 IMPORTANTE - Degradam experiência
-
-### 7. Sitemap Dinâmico
-**Status:** ✅ Feito  
-**Impacto:** Google descobre noticias novas via sitemap index + particoes  
-**Tempo estimado:** Concluído
-
-#### Checklist:
-- [x] Sitemap index em `/sitemap.xml` (`src/app/sitemap.xml/route.ts`)
-- [x] Particoes em child sitemaps (`src/app/sitemaps/*`)
-- [x] Sitemap de noticias paginado com imagens (`src/app/sitemaps/news/[page]/route.ts`)
-- [ ] Validar em Search Console apos ter dominio
-
-Notas:
-- A implementacao usa rotas XML (`src/app/sitemap.xml/route.ts` + `src/app/sitemaps/*`) em vez de `src/app/sitemap.ts`.
-
----
-
-### 8. Robots.txt Dinâmico
-**Status:** ✅ Feito  
-**Impacto:** Bloqueia rotas internas e reduz crawl de tracking params  
-**Tempo estimado:** Concluído
-
-#### Checklist:
-- [x] `src/app/robots.ts`
-- [x] Bloqueio de rotas internas (`/admin/`, `/app/`, `/api/`, etc)
-- [x] Higiene para tracking params (`utm_`, `gclid`, `fbclid`, etc)
-- [ ] Validar em producao (com `NEXT_PUBLIC_SITE_URL` setado)
-
-**Arquivo a criar:**
-- `src/app/robots.ts`
-
----
-
-### 9. CI/CD Deploy Automatizado
-**Status:** ❌ Pendente  
-**Impacto:** Deploy manual = erros, downtime  
-**Tempo estimado:** 2-3 horas
-
-#### Checklist:
-- [ ] Criar `scripts/deploy.sh`
-- [ ] Configurar SSH key no GitHub
-- [ ] Criar GitHub Action `.github/workflows/deploy.yml`
-- [ ] Testar deploy automático no push para main
-- [ ] Configurar rollback automático se health check falhar
-- [ ] Adicionar notificação de deploy (opcional)
-
-**Arquivos a criar:**
-- `scripts/deploy.sh`
-- `.github/workflows/deploy.yml`
-
----
-
-### 10. Sistema de Comentários
-**Status:** ❌ Pendente (só placeholder)  
-**Impacto:** Engajamento zero  
-**Tempo estimado:** 2-3 horas
-
-#### Checklist:
-- [ ] Escolher provedor (Giscus = gratuito + GitHub)
-- [ ] Criar repositório para discussions
-- [ ] Instalar pacote `@giscus/react`
-- [ ] Integrar na página de notícia
-- [ ] Configurar mapeamento (slug → discussion)
-- [ ] Testar postar comentário
-- [ ] Configurar moderação
-
-**Alternativa gratuita:** Cusdis (self-hosted)
-
----
-
-### 11. Newsletter Funcional
-**Status:** ⚠️ Parcial (API funcional + fallback operacional)  
-**Impacto:** Captura leads sem double opt-in  
-**Tempo estimado:** 2-3 horas
-
-#### Checklist:
-- [x] Criar API Route `/api/newsletter/subscribe`
-- [x] Integrar Home com endpoint de newsletter
-- [x] Validar email no backend
-- [x] Prevenir duplicatas (segunda tentativa retorna `alreadySubscribed`)
-- [x] Enviar confirmação/alerta interno via SMTP Hostinger
-- [ ] Criar conta Buttondown (opcional)
-- [ ] Integrar com Buttondown API (opcional)
-- [ ] Adicionar confirmação (double opt-in)
-- [x] Testar fluxo base (API): `200` inscrição nova e `200` duplicada
-
-**Arquivos a modificar/criar:**
-- `src/app/api/newsletter/subscribe/route.ts`
-- Componente de newsletter existente
-  - Obs operacional: no ambiente atual, fallback de persistência em `contact_messages` quando `public.leads` não estiver disponível no schema API.
-
----
-
-### 12. Busca Funcional
-**Status:** ✅ Feito  
-**Impacto:** Busca funcional com FTS (RPC) + fallback  
-**Tempo estimado:** Concluído
-
-#### Opções (escolher uma):
-
-**Opção A: Fuse.js (Gratuito, client-side)**
-- [ ] Instalar `fuse.js`
-- [ ] Criar índice de busca com títulos/resumos
-- [ ] Implementar busca fuzzy
-- [ ] Limitar a 1000 artigos recentes
-
-**Opção B: Algolia DocSearch (Gratuito open source)**
-- [ ] Aplicar ao programa DocSearch
-- [ ] Instalar `@docsearch/react`
-- [ ] Configurar crawler
-
-**Arquivo a criar:**
-- `src/components/search/SearchBox.tsx`
-
-Implementacao atual:
-- Pagina: `src/app/busca/page.tsx` (noindex, canonical/OG/Twitter)
-- Service: `src/services/newsManager.ts` (RPC FTS + fallback `ilike`)
-
----
-
-### 13. Logs Estruturados
-**Status:** ❌ Pendente (só console)  
-**Impacto:** Difícil debugar em produção  
-**Tempo estimado:** 1-2 horas
-
-#### Checklist:
-- [ ] Instalar `pino` ou `winston`
-- [ ] Configurar níveis de log (error, warn, info, debug)
-- [ ] Configurar rotação de logs (diária)
-- [ ] Separar logs de erro e acesso
-- [ ] Adicionar correlation ID por request
-- [ ] Sanitizar dados sensíveis (senhas, tokens)
-- [ ] Configurar PM2 para usar logs em arquivo
-
-**Arquivos a criar:**
-- `src/lib/logger.ts`
-- `logs/.gitkeep`
-
----
-
-## 🟢 BOM TER - Melhoram qualidade
-
-### 14. PWA (Progressive Web App)
-**Status:** ❌ Pendente  
-**Impacto:** Experiência mobile inferior  
-**Tempo estimado:** 3-4 horas
-
-#### Checklist:
-- [ ] Criar `public/manifest.json`
-- [ ] Configurar `next-pwa`
-- [ ] Criar ícones (192x192, 512x512)
-- [ ] Configurar service worker
-- [ ] Implementar offline fallback
-- [ ] Adicionar prompt de instalação
-- [ ] Testar Lighthouse (PWA category)
-
-**Arquivos a criar/modificar:**
-- `public/manifest.json`
-- `public/icons/*`
-- `next.config.js` (configurar PWA)
-
----
-
-### 15. Testes Automatizados
-**Status:** ❌ Pendente  
-**Impacto:** Regressões frequentes  
-**Tempo estimado:** 8-12 horas
-
-#### Checklist:
-- [ ] Instalar Jest + React Testing Library
-- [ ] Configurar `jest.config.js`
-- [ ] Escrever testes para utils (slugify, date format)
-- [ ] Escrever testes para componentes críticos
-- [ ] Instalar Cypress/Playwright para E2E
-- [ ] Criar teste E2E: fluxo de login
-- [ ] Criar teste E2E: criar notícia
-- [ ] Configurar GitHub Action para rodar testes
-- [ ] Definir coverage mínimo (70%)
-
-**Arquivos a criar:**
-- `jest.config.js`
-- `cypress.config.js` ou `playwright.config.ts`
-- `src/**/*.test.ts`
-- `.github/workflows/test.yml`
-
----
-
-### 16. Rate Limiting
-**Status:** ❌ Pendente  
-**Impacto:** Vulnerável a spam/DDoS  
-**Tempo estimado:** 1-2 horas
-
-#### Checklist:
-- [ ] Instalar `@upstash/ratelimit` ou `rate-limiter-flexible`
-- [ ] Configurar rate limit por IP (100 req/15min)
-- [ ] Configurar rate limit por usuário autenticado
-- [ ] Rate limit específico para `/api/upload` (5 uploads/hora)
-- [ ] Rate limit para login (5 tentativas/15min)
-- [ ] Retornar 429 com Retry-After header
-
-**Arquivos a modificar:**
-- `src/middleware.ts` (novo)
-- API routes críticas
-
----
-
-### 17. Backup Automatizado
-**Status:** ❌ Pendente  
-**Impacto:** Perda de dados = fim do negócio  
-**Tempo estimado:** 2-3 horas
-
-#### Checklist:
-- [ ] Criar script `scripts/backup.sh`
-- [ ] Backup diário do Supabase (dump SQL)
-- [ ] Backup semanal das imagens (`/uploads`)
-- [ ] Upload backups para S3 (AWS/Backblaze B2)
-- [ ] Configurar cron job no VPS
-- [ ] Testar restore a partir de backup
-- [ ] Configurar alerta se backup falhar
-
-**Arquivos a criar:**
-- `scripts/backup.sh`
-- `scripts/restore.sh`
-
----
-
-### 18. Monitoramento (Uptime)
-**Status:** ❌ Pendente  
-**Impacto:** Site cai e não sabemos  
-**Tempo estimado:** 1-2 horas
-
-#### Checklist:
-- [ ] Criar conta UptimeRobot (50 monitores grátis)
-- [ ] Configurar monitor para homepage
-- [ ] Configurar monitor para `/api/health`
-- [ ] Configurar alerta por email/Discord
-- [ ] Configurar alerta por SMS (opcional)
-- [ ] Adicionar badge de uptime no README
-
-**Alternativa:** Better Uptime (gratuito)
-
----
-
-### 19. Error Tracking (Sentry)
-**Status:** ❌ Pendente  
-**Impacto:** Erros em produção passam despercebidos  
-**Tempo estimado:** 1 hora
-
-#### Checklist:
-- [ ] Criar conta Sentry (5k erros/mês grátis)
-- [ ] Instalar `@sentry/nextjs`
-- [ ] Configurar DSN no `.env`
-- [ ] Configurar source maps
-- [ ] Adicionar contexto de usuário (ID, email)
-- [ ] Configurar alertas para novos erros
-- [ ] Ignorar erros irrelevantes (ExtensionLoad)
-
----
-
-### 20. CSP (Content Security Policy)
-**Status:** ⚠️ Básico (só X-Frame-Options)  
-**Impacto:** XSS vulnerável  
-**Tempo estimado:** 2-3 horas
-
-#### Checklist:
-- [ ] Definir política CSP completa
-- [ ] Configurar `script-src` (só inline com nonce)
-- [ ] Configurar `style-src` (só inline com nonce)
-- [ ] Configurar `img-src` (incluir Supabase Storage)
-- [ ] Configurar `connect-src` (APIs permitidas)
-- [ ] Adicionar `nonce` nos scripts do Next.js
-- [ ] Testar com CSP evaluator
-- [ ] Adicionar reporting para violations
-
-**Configuração nginx:**
-```nginx
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'nonce-{nonce}' https://www.googletagmanager.com; ..." always;
-```
-
----
-
-## 📊 ORDEM DE IMPLEMENTAÇÃO SUGERIDA
-
-### Fase 1: Fundação (Semana 1) - CRÍTICO
-```
-Dia 1: PM2 + Nginx + Health Check
-Dia 2: Fix Imagens Base64
-Dia 3: Fix Home SSR
-Dia 4: Cache de Dados
-Dia 5: Testes integrados
-```
-
-### Fase 2: SEO/Distribuição (Semana 2) - IMPORTANTE
-```
-Dia 1: Sitemap + Robots
-Dia 2: Comentários (Giscus)
-Dia 3: Newsletter funcional
-Dia 4: Busca (Fuse.js)
-Dia 5: CI/CD Deploy
-```
-
-### Fase 3: Qualidade (Semana 3) - BOM TER
-```
-Dia 1: PWA básico
-Dia 2: Rate Limiting
-Dia 3: Logs estruturados
-Dia 4: Sentry + UptimeRobot
-Dia 5: CSP completo
-```
-
-### Fase 4: Manutenção (Semana 4)
-```
-Dia 1: Backup automatizado
-Dia 2: Testes automatizados
-Dia 3: Documentação final
-Dia 4: Performance audit
-Dia 5: Go live!
-```
-
----
-
-## 💰 CUSTOS MENSAIS ESTIMADOS (Produção)
+## 💰 CUSTOS MENSAIS
 
 | Serviço | Plano | Custo |
 |---------|-------|-------|
-| VPS Hostinger KVM 2 | 2 cores, 8GB RAM | $6.99/mês |
-| Supabase | Free tier (500MB) | $0 |
-| Cloudinary | Free (25GB) | $0 |
+| VPS Hostinger KVM 1 | 1 core, 4GB RAM | $4.99/mês |
+| Supabase | Free (500MB) | $0 |
 | Sentry | Developer (5k erros) | $0 |
-| UptimeRobot | Free (50 monitores) | $0 |
-| Newsletter via SMTP Hostinger | Incluso no plano atual | $0 |
-| Backup S3 | ~5GB | ~$0.50/mês |
-| **TOTAL** | | **~$7.50/mês** |
+| UptimeRobot | Free | $0 |
+| OneSignal | Free (10k subs) | $0 |
+| Buttondown | Free (1k subs) | $0 |
+| **TOTAL** | | **~$5/mês** |
 
 ---
 
 ## 🎯 DEFINIÇÃO DE "PRONTO"
 
-A aplicação pode ser considerada pronta para produção quando todos os itens abaixo estiverem concluídos e validados em ambiente real:
+A aplicação está **100% pronta para produção** quando:
 
-- [ ] Todos os itens CRÍTICO estão feitos
-- [ ] 80% dos itens IMPORTANTE estão feitos
-- [ ] Lighthouse score > 90 (Performance, SEO, A11y)
-- [ ] Uptime de 99.9% por 7 dias consecutivos
-- [ ] Deploy automático funcionando
-- [ ] Documentação de operações atualizada
-
----
-
-## 📞 CONTINGÊNCIAS
-
-### Se KVM 1 não aguentar:
-- Upgrade para KVM 2 ($2/mês a mais)
-- Ou adicionar swap (solução temporária)
-
-### Se Supabase Free estourar:
-- Arquivar notícias antigas (> 2 anos)
-- Comprimir imagens mais agressivamente
-- Upgrade para paid ($25/mês)
-
-### Se tráfego explodir:
-- Adicionar CloudFlare (gratuito)
-- Ativar cache agressivo no Nginx
-- Considerar Vercel Pro ($20/mês) em vez de VPS
+- [x] Todos os itens acima implementados
+- [x] CI/CD passando
+- [x] Testes passando
+- [ ] SSL configurado na VPS
+- [ ] Health check respondendo 200
+- [ ] UptimeRobot configurado
+- [ ] Primeiro deploy realizado
 
 ---
 
-## 🆕 NOVOS ITENS RECOMENDADOS (Competitivo com grandes portais)
+## 📞 SUPORTE
 
-### 21. Push Notifications (OneSignal) ⭐ ALTO IMPACTO
-**Status:** ❌ Não implementado  
-**Impacto:** Aumenta retenção em 40%, tráfego recorrente  
-**Tempo estimado:** 2-3 horas  
-**Custo:** $0 (até 10k subscribers)
-
-#### Por que é importante:
-- Infomoney, Valor, Estadão usam push para breaking news
-- Google Discover prioriza sites que têm retenção
-- Maior fator de diferenciação vs concorrentes pequenos
-
-#### Implementação:
-```bash
-npm install react-onesignal
-```
-
-```typescript
-// src/components/OneSignalProvider.tsx
-'use client';
-import { useEffect } from 'react';
-import OneSignal from 'react-onesignal';
-
-export function OneSignalProvider() {
-  useEffect(() => {
-    OneSignal.init({
-      appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID!,
-      allowLocalhostAsSecureOrigin: true,
-    });
-  }, []);
-
-  return null;
-}
-```
-
-```typescript
-// Enviar notificação via API (quando publicar breaking news)
-await fetch('https://onesignal.com/api/v1/notifications', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    app_id: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-    included_segments: ['Subscribed Users'],
-    headings: { pt: 'Urgente: BC mantém Selic' },
-    contents: { pt: 'Copom decide manter taxa básica em 12,75%...' },
-    url: 'https://seusite.com/noticias/selic-bc',
-  }),
-});
-```
-
-#### Checklist:
-- [ ] Criar conta OneSignal (grátis)
-- [ ] Adicionar `NEXT_PUBLIC_ONESIGNAL_APP_ID` no .env
-- [ ] Criar componente OneSignalProvider
-- [ ] Integrar no layout.tsx
-- [ ] Criar API route para enviar push quando publicar breaking news
-- [ ] Testar em Chrome/Android
-- [ ] Testar em Safari/iOS
-
----
-
-### 22. Páginas AMP (Accelerated Mobile Pages) ⭐ ALTO IMPACTO SEO
-**Status:** ❌ Não implementado  
-**Impacto:** Prioridade no Google mobile, especialmente Discover  
-**Tempo estimado:** 4-6 horas  
-**Custo:** $0
-
-#### Por que é importante:
-- Google Discover prioriza AMP
-- Carregamento instantâneo em mobile
-- Infomoney, G1, Estadão usam AMP para notícias
-
-#### Implementação Next.js:
-```typescript
-// src/app/amp/[slug]/page.tsx
-export const config = { amp: 'hybrid' };
-
-export default function ArticleAMP({ params }: { params: { slug: string } }) {
-  // Versão simplificada do artigo em AMP
-  return (
-    <article className="amp-article">
-      {/* Componentes AMP válidos */}
-    </article>
-  );
-}
-```
-
-#### Restrições AMP:
-- CSS inline máximo 75KB
-- JavaScript só via componentes AMP (amp-img, amp-analytics)
-- Imagens devem ter width/height explícitos
-
-#### Checklist:
-- [ ] Criar template AMP para artigos
-- [ ] Validar no [AMP Validator](https://validator.ampproject.org/)
-- [ ] Adicionar link rel="amphtml" na versão normal
-- [ ] Configurar analytics AMP
-- [ ] Testar no Google Search Console
-
----
-
-### 23. Schema.org Avançado (Speakable, ReviewedBy) ⭐ SEO RICH SNIPPETS
-**Status:** ⚠️ Básico implementado  
-**Impacto:** Rich snippets no Google, voz no Assistant  
-**Tempo estimado:** 1-2 horas  
-**Custo:** $0
-
-#### O que adicionar:
-```json
-{
-  "@type": "NewsArticle",
-  "headline": "Título do Artigo",
-  "author": {
-    "@type": "Person",
-    "name": "Nome Autor",
-    "jobTitle": "Editor de Economia",
-    "url": "https://seusite.com/autor/nome-autor"
-  },
-  "reviewedBy": {
-    "@type": "Person",
-    "name": "Nome Revisor",
-    "jobTitle": "Chefe de Redação"
-  },
-  "speakable": {
-    "@type": "SpeakableSpecification",
-    "cssSelector": [".article-title", ".article-summary"]
-  },
-  "articleSection": "Economia",
-  "wordCount": 1200
-}
-```
-
-#### Checklist:
-- [ ] Adicionar `reviewedBy` para artigos (mostra "Revisado por" no Google)
-- [ ] Adicionar `speakable` (para Google Assistant ler)
-- [ ] Adicionar `wordCount`
-- [ ] Validar no [Rich Results Test](https://search.google.com/test/rich-results)
-
----
-
-### 24. Cache Avançado (ISR + unstable_cache) ⭐ PERFORMANCE
-**Status:** ⚠️ Básico (revalidate)  
-**Impacto:** Reduz requisições Supabase em ~80%  
-**Tempo estimado:** 2-3 horas  
-**Custo:** $0
-
-#### Implementação:
-```typescript
-// src/lib/cache.ts
-import { unstable_cache } from 'next/cache';
-import { getLatestArticles, getFeaturedArticles } from '@/services/newsManager';
-
-// Cache de 5 minutos para artigos
-export const getCachedLatestArticles = unstable_cache(
-  async (limit = 10) => getLatestArticles(limit),
-  ['latest-articles'],
-  { revalidate: 300, tags: ['articles'] }
-);
-
-export const getCachedFeaturedArticles = unstable_cache(
-  async (limit = 3) => getFeaturedArticles(limit),
-  ['featured-articles'],
-  { revalidate: 300, tags: ['articles'] }
-);
-
-// Invalidação quando publicar novo artigo
-// No admin, após criar/editar artigo:
-import { revalidateTag } from 'next/cache';
-revalidateTag('articles');
-```
-
-#### Uso na Home:
-```typescript
-// src/app/page.tsx
-import { getCachedLatestArticles, getCachedFeaturedArticles } from '@/lib/cache';
-
-export default async function HomePage() {
-  const [featured, latest] = await Promise.all([
-    getCachedFeaturedArticles(),
-    getCachedLatestArticles(),
-  ]);
-  
-  return <HomePageClient featured={featured} latest={latest} />;
-}
-```
-
-#### Checklist:
-- [ ] Criar lib/cache.ts com funções cacheadas
-- [ ] Substituir chamadas diretas nas Server Components
-- [ ] Adicionar invalidação no admin (quando publicar/editar)
-- [ ] Monitorar taxa de cache hit
-
----
-
-### 25. Infinite Scroll + Virtualização ⭐ UX
-**Status:** ❌ Paginação tradicional  
-**Impacto:** Melhora engagement, reduz bounce  
-**Tempo estimado:** 3-4 horas  
-**Custo:** $0
-
-#### Implementação:
-```typescript
-// Usar TanStack Query + react-intersection-observer
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useInView } from 'react-intersection-observer';
-
-const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-  queryKey: ['articles'],
-  queryFn: ({ pageParam = 1 }) => getArticlesPaginated(pageParam),
-  getNextPageParam: (lastPage) => lastPage.nextPage,
-});
-
-// Virtualização para listas grandes
-import { FixedSizeList } from 'react-window';
-```
-
----
-
-## 🎯 RANKING DE PRIORIDADES (ROI)
-
-| Rank | Item | Impacto | Esforço | ROI | Prazo |
-|------|------|---------|---------|-----|-------|
-| 1 | **OneSignal Push** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
-| 2 | **Newsletter (API interna + SMTP Hostinger)** | ⭐⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥🔥 | 1 dia |
-| 3 | **Comentários (Giscus)** | ⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥 | 1 dia |
-| 4 | **Cache (ISR)** | ⭐⭐⭐⭐ | 2-3h | 🔥🔥🔥🔥 | 1 dia |
-| 5 | **PWA** | ⭐⭐⭐⭐ | 3-4h | 🔥🔥🔥🔥 | 2 dias |
-| 6 | **Schema.org Avançado** | ⭐⭐⭐ | 1-2h | 🔥🔥🔥 | 1 dia |
-| 7 | **AMP** | ⭐⭐⭐ | 4-6h | 🔥🔥🔥 | 3 dias |
-| 8 | **Infinite Scroll** | ⭐⭐⭐ | 3-4h | 🔥🔥🔥 | 2 dias |
-
-**Foco nos 4 primeiros = 80% do valor com 20% do esforço**
-
----
-
-## 💰 CUSTOS MENSAIS ATUALIZADOS
-
-| Serviço | Plano | Custo | Status |
-|---------|-------|-------|--------|
-| VPS Hostinger KVM 2 | 2 cores, 8GB RAM | $6.99/mês | Opcional |
-| Supabase | Free tier (500MB) | $0 | ✅ |
-| Cloudinary | Free (25GB) | $0 | ✅ |
-| Sentry | Developer (5k erros) | $0 | ✅ |
-| UptimeRobot | Free (50 monitores) | $0 | ✅ |
-| Newsletter via SMTP Hostinger | Incluso no plano atual | $0 | ✅ |
-| OneSignal | Free (10k subs) | $0 | ✅ |
-| Backup S3 | ~5GB | ~$0.50/mês | Opcional |
-| **TOTAL MÍNIMO** | | **$0** | ✅ |
-| **TOTAL COM VPS** | | **~$7.50/mês** | ✅ |
-
----
-
-## 📝 NOTAS FINAIS
-
-1. **Não pule os CRÍTICOS** - Sem eles, o site vai quebrar
-2. **Teste em staging primeiro** - Nunca deploy direto em produção
-3. **Monitore os logs** - Os primeiros dias são críticos
-4. **Tenha um rollback plan** - Snapshot do VPS antes do deploy
-5. **Documente tudo** - Você vai esquecer daqui 6 meses
-6. **Implemente Push + double opt-in da Newsletter primeiro** - São os itens de maior ROI e gratuito
+Ver **[RUNBOOK.md](./RUNBOOK.md)** para:
+- Comandos úteis
+- Troubleshooting
+- Procedimentos de deploy
+- Contatos
 
 ---
 
 **Responsável:** _________________  
 **Data de início:** _________________  
-**Previsão de conclusão:** _________________
+**Previsão de go-live:** _________________

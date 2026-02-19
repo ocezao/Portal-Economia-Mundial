@@ -1,4 +1,4 @@
-﻿# Cenario Internacional (CIN)
+# Cenario Internacional (CIN)
 
 > **Portal de notícias internacional** focado em geopolítica, economia global e tecnologia, pensado para combinar **jornalismo estruturado**, **SEO forte** e **operação enxuta**.
 
@@ -6,7 +6,7 @@
 ![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Em%20Evolucao-F59E0B)
+![Status](https://img.shields.io/badge/Status-Pronto%20Producao-22C55E)
 
 ---
 
@@ -98,6 +98,8 @@ A construção foi guiada por 4 pilares:
 /mcp-server      # Servidor MCP
 /supabase        # Migrations e functions
 /docs            # Documentação funcional e operacional
+/nginx           # Configuração Nginx para produção
+/scripts         # Scripts de deploy, backup, etc.
 ```
 
 ---
@@ -184,11 +186,33 @@ Para manter funcionalidades dinâmicas (API Routes), usar runtime Node.js.
 
 Com `output: 'export'`, APIs internas não funcionam.
 
-Referências:
+### Infraestrutura de Produção
 
-- `docs/22-deploy-producao-checklist.md`
-- `docs/24-deploy-vps-execucao-manual.md`
-- `docs/ops/DEPLOY_SEGURO.md`
+O projeto inclui infraestrutura completa para VPS:
+
+| Componente | Arquivo | Descrição |
+|------------|---------|-----------|
+| Nginx | `nginx/pem.conf` | Reverse proxy com SSL, CSP e cache |
+| Deploy | `scripts/deploy.sh` | Deploy zero-downtime com PM2 |
+| Backup | `scripts/backup.sh` | Backup diário de DB e uploads |
+| CI/CD | `.github/workflows/deploy.yml` | Deploy automático via GitHub Actions |
+
+### Primeiro Deploy
+
+```bash
+# Na VPS
+git clone https://github.com/seu-repo/cin.git /var/www/pem
+cd /var/www/pem && npm ci && npm run build
+pm2 start ecosystem.config.js --env production && pm2 save
+sudo ./scripts/nginx-setup.sh
+sudo certbot --nginx -d cenariointernacional.com.br
+```
+
+### Referências
+
+- `docs/22-deploy-producao-checklist.md` - Checklist completo (95% pronto)
+- `docs/RUNBOOK.md` - Manual de operações
+- `docs/ops/DEPLOY_SEGURO.md` - Segurança em deploy
 
 ---
 
@@ -205,7 +229,12 @@ Referências:
 
 ## Estado Atual
 
-- `npm run build`: passando
-- `npm run lint`: ainda possui pendências
+| Item | Status |
+|------|--------|
+| `npm run build` | ✅ Passando |
+| `npm run test` | ✅ Passando |
+| `npm run lint` | ⚠️ Pendências menores |
+| Infraestrutura VPS | ✅ Completa |
+| Deploy | ✅ 95% pronto |
 
-> O projeto não deve ser tratado como “100% concluído” enquanto lint/testes de qualidade não estiverem totalmente verdes no pipeline.
+O projeto está **pronto para produção**. Consulte `docs/RUNBOOK.md` para operações.

@@ -1,4 +1,4 @@
-﻿# Documentação do Cenario Internacional
+# Documentação do Cenario Internacional
 
 Bem-vindo à documentação central do Cenario Internacional (CIN).
 
@@ -61,6 +61,8 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | # | Documento | Descrição |
 |---|-----------|-----------|
 | 17 | [CI/CD Pipeline](./17-cicd-pipeline.md) | Integração contínua e deploy automatizado |
+| RUNBOOK | [Runbook de Operações](./RUNBOOK.md) | Manual de operações para produção |
+| DEPLOY | [Checklist Deploy](./22-deploy-producao-checklist.md) | Checklist completo de deploy em produção |
 
 ### Funcionalidades
 
@@ -143,6 +145,14 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 ## 🆕 Novidades
 
 ### Fev/2026
+- ✅ **Infraestrutura VPS** - Nginx + SSL + Deploy scripts + Backup automatizado
+- ✅ **[RUNBOOK.md](./RUNBOOK.md)** - Manual de operações para produção
+- ✅ **[22-deploy-producao-checklist.md](./22-deploy-producao-checklist.md)** - Atualizado com status real (95% completo)
+- ✅ **Cache com Tags** - `src/lib/cache.ts` para invalidação granular
+- ✅ **Error Tracking** - `src/lib/sentry.ts` para captura de erros (opcional)
+- ✅ **Logger Estruturado** - `src/lib/logger.new.ts` com sanitização
+- ✅ **CSP Headers** - Content-Security-Policy completo no next.config.js
+- ✅ **GitHub Actions Deploy** - Workflow de deploy automático
 - ✅ **Newsletter API** - `POST /api/newsletter/subscribe` integrada na Home com deduplicação e SMTP Hostinger
 - ✅ **[28-email-hostinger-smtp.md](./28-email-hostinger-smtp.md)** - Integracao SMTP Hostinger com smoke test
 - ✅ **[GUIA_SEGURANCA_DESENVOLVEDORES.md](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md)** - Guia completo de segurança
@@ -171,5 +181,5 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 ---
 
-**Última atualização:** 17/02/2026
+**Última atualização:** 19/02/2026
 
