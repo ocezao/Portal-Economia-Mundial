@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Admin Dashboard - Painel Administrativo Completo
  * 100% Responsivo - Mobile First
  * Refatorado: Componentes divididos para melhor manutenibilidade
@@ -659,15 +659,6 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
         <div className="space-y-4">
           {activeTab === 'dashboard' && (
             <DashboardStats
-              metrics={analyticsMetrics}
-              topContent={topContent}
-              trafficSources={trafficSources}
-              deviceStats={deviceStats}
-              recentActivity={recentActivity}
-              isLoading={isAnalyticsLoading}
-              onRefresh={refreshAnalytics}
-              onDateRangeChange={setDateRange}
-              currentDateRange={dateRange}
               onNewArticle={() => router.push('/admin/noticias/novo')}
               onViewArticles={() => goToTab('noticias')}
               onViewCalendar={() => goToTab('agendamentos')}

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Hook para gerenciamento de dados do Admin
  * Agora com mÃ©tricas reais de analytics
  */
@@ -232,10 +232,11 @@ export function useAdminData() {
       if (isMounted.current) {
         setUsers(data ?? []);
       }
-    } catch {
+    } catch (err) {
       if (isMounted.current) {
         setUsers([]);
-        toast.error('Erro ao carregar usuÃ¡rios');
+        const message = err instanceof Error ? err.message : 'Erro desconhecido';
+        toast.error(`Erro ao carregar usuários: ${message}`);
       }
     }
   }, []);
@@ -247,10 +248,11 @@ export function useAdminData() {
       if (isMounted.current) {
         setAuthors(data ?? []);
       }
-    } catch {
+    } catch (err) {
       if (isMounted.current) {
         setAuthors([]);
-        toast.error('Erro ao carregar autores');
+        const message = err instanceof Error ? err.message : 'Erro desconhecido';
+        toast.error(`Erro ao carregar perfis profissionais: ${message}`);
       }
     }
   }, []);
