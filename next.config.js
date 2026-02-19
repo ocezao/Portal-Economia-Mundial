@@ -8,6 +8,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  output: 'standalone',
   
   // Configurações de imagens otimizadas
   images: {
