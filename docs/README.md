@@ -146,8 +146,12 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 ## 🆕 Novidades
 
 ### Fev/2026
+- ✅ **Correção Encoding Admin** - Corrigidos caracteres mojibake em todos os arquivos administrativos (Notícia → Noticia, etc)
+- ✅ **API Route para Artigos** - Nova API `/api/articles` usando Service Role Key para criar artigos (bypass RLS)
+- ✅ **Categorias Corrigidas** - Banco de dados.categories com encoding correto
+- ✅ **Painel Admin Simplificado** - Dashboard mostra apenas botão do Metabase e ações rápidas
 - ✅ **Infraestrutura VPS** - Nginx + SSL + Deploy scripts + Backup automatizado
-- ✅ **[RUNBOOK.md](./RUNBOOK.md)** - Manual de operações para produção
+- ✅ **[RUNBOOK.md](./RUNBOOK.md)** - Manual de operações atualizado para Docker
 - ✅ **[22-deploy-producao-checklist.md](./22-deploy-producao-checklist.md)** - Atualizado com status real (95% completo)
 - ✅ **Cache com Tags** - `src/lib/cache.ts` para invalidação granular
 - ✅ **Error Tracking** - `src/lib/sentry.ts` para captura de erros (opcional)
@@ -167,6 +171,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 - ✅ **RESUMO_LIMPEZA_FINAL.md** - Resumo da limpeza
 - ✅ **PLANO_CONSOLIDACAO_DOCUMENTACAO.md** - Plano de consolidação
 - ✅ **Admin Arquivos + Upload SVG/WebP** - `/admin/arquivos` + `GET|DELETE /api/admin-files` + `POST /api/upload`
+- ✅ **EditorConfig** - Arquivo `.editorconfig` para garantir encoding UTF-8
 - 🗑️ Removidos: FINNHUB_SETUP.md, FINNHUB_INTEGRACAO.md, FINNHUB_ENDPOINTS_ANALISE.md (consolidados)
 - 🗑️ Removidos: 08-changelog.md (consolidado em CHANGELOG.md)
 - 🗑️ Removido: TRADING_ECONOMICS_SETUP.md (código removido)
@@ -183,4 +188,15 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 ---
 
 **Última atualização:** 19/02/2026
+
+---
+
+## Configuração do Editor
+
+O projeto inclui um arquivo `.editorconfig` na raiz que garante:
+- Codificação UTF-8 para todos os arquivos
+- Line endings LF
+- Remoção de espaços em branco finais
+
+**Recomendação:** Configure seu editor para respeitar o `.editorconfig` e usar UTF-8.
 

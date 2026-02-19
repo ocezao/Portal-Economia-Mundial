@@ -1,6 +1,6 @@
 # Runbook - Cenario Internacional
 
-> Manual de operações para produção
+> Manual de operações para produção (Docker)
 
 ## Informações Rápidas
 
@@ -8,42 +8,71 @@
 |------|-------|
 | **Domínio** | cenariointernacional.com.br |
 | **Email** | contato@cenariointernacional.com.br |
-| **Produção** | /var/www/pem |
-| **Porta** | 3000 |
+| **VPS** | 187.77.37.175 |
+| **Projeto** | /var/www/portal |
+| **Porta Web** | 3000 |
+| **Porta API** | 4000 |
+| **Porta Collector** | 4010 |
+| **Porta Metabase** | 3001 |
+
+---
+
+## Containers Docker
+
+```bash
+# Listar containers
+docker ps
+
+# ou usando docker compose
+cd /var/www/portal
+docker compose ps
+
+# Ver logs de um serviço
+docker compose logs -f web
+docker compose logs -f api
+docker compose logs -f collector
+
+# Reiniciar um serviço
+docker compose restart web
+docker compose restart api
+
+# Rebuild e reiniciar (após更新代码)
+docker compose build web
+docker compose up -d web
+```
 
 ---
 
 ## Comandos Úteis
 
-### PM2
+### Docker Compose
 
 ```bash
-# Status da aplicação
-pm2 status
+# Status de todos os serviços
+cd /var/www/portal
+docker compose ps
 
-# Logs em tempo real
-pm2 logs portal-economico
+# Logs em tempo real (todos os serviços)
+docker compose logs -f
 
-# Últimas 100 linhas de log
-pm2 logs portal-economico --lines 100
+# Logs de um serviço específico
+docker compose logs -f web
 
 # Reiniciar aplicação
-pm2 restart portal-economico
+docker compose restart web
 
-# Reload zero-downtime
-pm2 reload portal-economico
+# Rebuild completo
+docker compose build web
+docker compose up -d web
 
-# Parar aplicação
-pm2 stop portal-economico
+# Parar todos os serviços
+docker compose down
 
-# Monitoramento
-pm2 monit
+# Iniciar todos os serviços
+docker compose up -d
 
-# Salvar configuração
-pm2 save
-
-# Restaurar após reboot
-pm2 resurrect
+# Ver recursos usados
+docker stats
 ```
 
 ### Nginx
@@ -62,10 +91,10 @@ sudo systemctl restart nginx
 sudo systemctl status nginx
 
 # Logs de acesso
-sudo tail -f /var/log/nginx/pem-access.log
+sudo tail -f /var/log/nginx/access.log
 
 # Logs de erro
-sudo tail -f /var/log/nginx/pem-error.log
+sudo tail -f /var/log/nginx/error.log
 ```
 
 ### Certbot (SSL)
@@ -85,16 +114,17 @@ sudo certbot certificates
 
 ```bash
 # Backup completo
-/var/www/pem/scripts/backup.sh full
+cd /var/www/portal
+./scripts/backup.sh full
 
 # Backup apenas banco
-/var/www/pem/scripts/backup.sh db
+./scripts/backup.sh db
 
 # Restaurar banco
-/var/www/pem/scripts/restore.sh db
+./scripts/restore.sh db
 
 # Listar backups
-ls -lh /var/www/pem-backups/
+ls -lh /var/www/portal-backups/
 ```
 
 ---
@@ -103,14 +133,15 @@ ls -lh /var/www/pem-backups/
 
 ### Site fora do ar
 
-1. Verificar status do PM2:
+1. Verificar status dos containers:
    ```bash
-   pm2 status
+   cd /var/www/portal
+   docker compose ps
    ```
 
 2. Verificar logs:
    ```bash
-   pm2 logs portal-economico --lines 100
+   docker compose logs -f web
    ```
 
 3. Verificar Nginx:
@@ -121,49 +152,46 @@ ls -lh /var/www/pem-backups/
 
 4. Verificar porta 3000:
    ```bash
-   curl http://localhost:3000/api/health
+   curl http://localhost:3000
    ```
 
 ### Erro 502 Bad Gateway
 
-1. Verificar se aplicação está rodando:
+1. Verificar se container web está rodando:
    ```bash
-   pm2 status
+   docker compose ps
    ```
 
 2. Verificar logs de erro:
    ```bash
-   pm2 logs portal-economico --err
+   docker compose logs web
    ```
 
-3. Reiniciar aplicação:
+3. Reiniciar container:
    ```bash
-   pm2 restart portal-economico
+   docker compose restart web
    ```
 
 ### Erro de memória
 
 1. Verificar uso de memória:
    ```bash
-   pm2 monit
+   docker stats
    free -h
    ```
 
-2. Se necessário, aumentar limite no `ecosystem.config.js`:
-   ```javascript
-   max_memory_restart: '1G' // Aumentar para 1.5G ou 2G
-   ```
+2. Ajustar limites no docker-compose.yml se necessário
 
 3. Reiniciar:
    ```bash
-   pm2 restart portal-economico
+   docker compose restart web
    ```
 
 ### Banco de dados lento
 
 1. Verificar conexão:
    ```bash
-   curl http://localhost:3000/api/health
+   curl http://localhost:3000
    ```
 
 2. Verificar logs do Supabase no dashboard
@@ -176,55 +204,73 @@ ls -lh /var/www/pem-backups/
 
 ```bash
 # SSH no servidor
-ssh usuario@cenariointernacional.com.br
+ssh root@187.77.37.175
 
-# Ir para o diretório
-cd /var/www/pem
+# Ir para o diretório do projeto
+cd /var/www/portal
 
-# Executar script de deploy
-./scripts/deploy.sh main
+# Pull das últimas alterações
+git pull origin main
+
+# Rebuild da imagem Docker
+docker compose build web
+
+# Reiniciar o container
+docker compose up -d web
+
+# Verificar se está rodando
+docker compose ps
+curl https://cenariointernacional.com.br
 ```
 
-## Rollback
+---
 
-```bash
-# Listar backups disponíveis
-ls -t /var/www/pem-backups/pre-deploy-*.tar.gz
+## Deploy via GitHub Actions
 
-# Executar rollback
-./scripts/rollback.sh
-```
+O deploy também pode ser feito automaticamente via GitHub Actions quando há push na branch main.
+
+Ver workflow: `.github/workflows/deploy.yml`
 
 ---
 
-## Contatos
-
-| Role | Contato |
-|------|---------|
-| Desenvolvedor | contato@cenariointernacional.com.br |
-| Infraestrutura | contato@cenariointernacional.com.br |
-
----
-
-## Checklist de Deploy
-
-- [ ] Verificar se há commits não publicados
-- [ ] Verificar testes passando localmente
-- [ ] Fazer push para main
-- [ ] Aguardar CI/CD passar
-- [ ] Verificar health check: https://cenariointernacional.com.br/api/health
-- [ ] Verificar homepage: https://cenariointernacional.com.br
-- [ ] Verificar logs: `pm2 logs`
-
----
-
-## URLs Importantes
+## Endpoints Importantes
 
 | Serviço | URL |
 |---------|-----|
-| Produção | https://cenariointernacional.com.br |
-| Health Check | https://cenariointernacional.com.br/api/health |
-| RSS | https://cenariointernacional.com.br/rss.xml |
-| Sitemap | https://cenariointernacional.com.br/sitemap.xml |
-| Supabase Dashboard | https://supabase.com/dashboard |
-| GitHub | (configurar URL do repo) |
+| **Site** | https://cenariointernacional.com.br |
+| **Admin** | https://cenariointernacional.com.br/admin |
+| **API** | https://cenariointernacional.com.br/api/* |
+| **Metabase** | https://metabase.cenariointernacional.com.br |
+| **RSS** | https://cenariointernacional.com.br/rss.xml |
+
+---
+
+## Variáveis de Ambiente
+
+As variáveis de ambiente estão configuradas no arquivo `.env` local e no docker-compose.yml.
+
+**Importante:** Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` ou outras chaves sensíveis.
+
+---
+
+## Monitoramento
+
+### Health Checks
+
+- Site: `https://cenariointernacional.com.br`
+- API: `https://cenariointernacional.com.br/api/news`
+- Metabase: `https://metabase.cenariointernacional.com.br`
+
+### Logs
+
+```bash
+# Ver todos os logs
+docker compose logs -f
+
+# Ver apenas erros
+docker compose logs web | grep -i error
+```
+
+---
+
+**Última atualização:** 19/02/2026

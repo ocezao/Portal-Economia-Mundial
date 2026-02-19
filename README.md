@@ -192,8 +192,9 @@ O projeto inclui infraestrutura completa para VPS:
 
 | Componente | Arquivo | Descrição |
 |------------|---------|-----------|
+| Docker | `docker-compose.yml` | Orquestração de containers |
 | Nginx | `nginx/pem.conf` | Reverse proxy com SSL, CSP e cache |
-| Deploy | `scripts/deploy.sh` | Deploy zero-downtime com PM2 |
+| Deploy | `scripts/deploy.sh` | Deploy com Docker Compose |
 | Backup | `scripts/backup.sh` | Backup diário de DB e uploads |
 | CI/CD | `.github/workflows/deploy.yml` | Deploy automático via GitHub Actions |
 
@@ -201,9 +202,10 @@ O projeto inclui infraestrutura completa para VPS:
 
 ```bash
 # Na VPS
-git clone https://github.com/seu-repo/cin.git /var/www/pem
-cd /var/www/pem && npm ci && npm run build
-pm2 start ecosystem.config.js --env production && pm2 save
+git clone https://github.com/ocezao/Portal-Economia-Mundial.git /var/www/portal
+cd /var/www/portal
+docker compose build web
+docker compose up -d
 sudo ./scripts/nginx-setup.sh
 sudo certbot --nginx -d cenariointernacional.com.br
 ```
@@ -211,7 +213,7 @@ sudo certbot --nginx -d cenariointernacional.com.br
 ### Referências
 
 - `docs/22-deploy-producao-checklist.md` - Checklist completo (95% pronto)
-- `docs/RUNBOOK.md` - Manual de operações
+- `docs/RUNBOOK.md` - Manual de operações (atualizado para Docker)
 - `docs/ops/DEPLOY_SEGURO.md` - Segurança em deploy
 
 ---

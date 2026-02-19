@@ -39,8 +39,7 @@ Progresso: ████████████████████ 95% (5% 
 - [x] Tradução automática (10 idiomas)
 
 ### Infraestrutura
-- [x] PM2 (ecosystem.config.js)
-- [x] Docker (Dockerfile multi-stage)
+- [x] Docker + Docker Compose (produção)
 - [x] Nginx (pem.conf + ssl.conf)
 - [x] Scripts de deploy (deploy.sh + rollback.sh)
 - [x] Scripts de backup (backup.sh + restore.sh)
@@ -141,12 +140,11 @@ nano .env
 # Instalar dependências
 npm ci
 
-# Build
-npm run build
+# Build Docker
+docker compose build web
 
-# Iniciar PM2
-pm2 start ecosystem.config.js --env production
-pm2 save
+# Iniciar containers
+docker compose up -d web
 
 # Configurar Nginx
 sudo ./scripts/nginx-setup.sh
@@ -163,7 +161,7 @@ sudo certbot --nginx -d cenariointernacional.com.br -d www.cenariointernacional.
 crontab -e
 
 # Adicionar backup diário às 2h
-0 2 * * * /var/www/pem/scripts/backup.sh full >> /var/log/pem/backup.log 2>&1
+0 2 * * * cd /var/www/portal && ./scripts/backup.sh full >> /var/log/portal/backup.log 2>&1
 ```
 
 ---
