@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Admin - Nova NotÃ­cia
  * FormulÃ¡rio completo com editor rich text, upload de imagens, auto-save e agendamento
  */
@@ -383,12 +383,13 @@ export default function AdminNewsNewPage() {
         await createArticle(articleData);
         toast.success('Artigo publicado com sucesso!');
       }
-      
+       
       secureStorage.remove('cin_draft_article');
       setHasChanges(false);
       router.push('/admin#noticias');
-    } catch {
-      toast.error('Erro ao salvar artigo');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Erro ao salvar artigo: ${message}`);
     } finally {
       setIsSaving(false);
     }
