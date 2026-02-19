@@ -1,6 +1,6 @@
 /**
  * Hook para gerenciamento de dados do Admin
- * Agora com mÃ©tricas reais de analytics
+ * Agora com metricas reais de analytics
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -47,7 +47,7 @@ const initialStats: DashboardStats = {
   byCategory: { economia: 0, geopolitica: 0, tecnologia: 0 },
 };
 
-// Estado inicial das mÃ©tricas de analytics
+// Estado inicial das metricas de analytics
 const initialAnalyticsMetrics: AnalyticsMetrics = {
   totalPageViews: 0,
   totalUniqueVisitors: 0,
@@ -80,7 +80,7 @@ export function useAdminData() {
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Novas mÃ©tricas de analytics
+  // Novas metricas de analytics
   const [analyticsMetrics, setAnalyticsMetrics] = useState<AnalyticsMetrics>(initialAnalyticsMetrics);
   const [topContent, setTopContent] = useState<TopContentItem[]>([]);
   const [trafficSources, setTrafficSources] = useState<TrafficSource[]>([]);
@@ -95,7 +95,7 @@ export function useAdminData() {
     const from = new Date();
     from.setDate(from.getDate() - 29);
     from.setHours(0, 0, 0, 0);
-    return { from, to, label: 'Ãšltimos 30 dias' };
+    return { from, to, label: 'Ultimos 30 dias' };
   });
 
   // Filtros de artigos
@@ -107,9 +107,9 @@ export function useAdminData() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedArticles, setSelectedArticles] = useState<string[]>([]);
 
-  // ConfiguraÃ§Ãµes
+  // Configuracoes
 
-  // UsuÃ¡rios
+  // Usuarios
   const [users, setUsers] = useState<SystemUser[]>([]);
 
   // Autores
@@ -179,7 +179,7 @@ export function useAdminData() {
     }
   }, [searchTerm, categoryFilter, statusFilter, currentPage, perPage]);
 
-  // Carregar mÃ©tricas de analytics
+  // Carregar metricas de analytics
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoadingSafe(true);
     
@@ -267,7 +267,7 @@ export function useAdminData() {
     ]);
   }, [loadArticles, loadUsers, loadAuthors, loadAnalytics]);
 
-  // Verificar publicaÃ§Ãµes agendadas
+  // Verificar publicacoes agendadas
   const checkScheduled = useCallback(async () => {
     try {
       const published = await publishScheduledPostsNow();
@@ -282,7 +282,7 @@ export function useAdminData() {
     }
   }, [loadData]);
 
-  // Toggle seleÃ§Ã£o de artigo
+  // Toggle selecao de artigo
   const toggleArticleSelection = useCallback((slug: string) => {
     setSelectedArticles((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
@@ -300,12 +300,12 @@ export function useAdminData() {
     });
   }, [articles]);
 
-  // Resetar pÃ¡gina quando filtros mudam
+  // Resetar pagina quando filtros mudam
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, categoryFilter, statusFilter]);
 
-  // InicializaÃ§Ã£o - apenas uma vez
+  // Inicializacao - apenas uma vez
   useEffect(() => {
     let isCancelled = false;
     
@@ -322,7 +322,7 @@ export function useAdminData() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Polling de verificaÃ§Ã£o de agendamentos
+  // Polling de verificacao de agendamentos
   useEffect(() => {
     const interval = setInterval(() => {
       void checkScheduled();
@@ -330,7 +330,7 @@ export function useAdminData() {
     return () => clearInterval(interval);
   }, [checkScheduled]);
 
-  // Refresh periÃ³dico de analytics (a cada 5 minutos)
+  // Refresh periodico de analytics (a cada 5 minutos)
   useEffect(() => {
     const interval = setInterval(() => {
       if (isMounted.current) {
@@ -374,9 +374,9 @@ export function useAdminData() {
     toggleArticleSelection,
     selectAllArticles,
 
-    // ConfiguraÃ§Ãµes
+    // Configuracoes
 
-    // UsuÃ¡rios
+    // Usuarios
     users: users ?? [],
     loadUsers,
 
@@ -384,7 +384,7 @@ export function useAdminData() {
     authors: authors ?? [],
     loadAuthors,
 
-    // AÃ§Ãµes
+    // Acoes
     loadData,
     loadArticles,
     checkScheduled,

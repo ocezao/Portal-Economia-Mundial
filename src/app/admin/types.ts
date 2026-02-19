@@ -7,7 +7,7 @@ import type { ScheduledArticle, ArticleFilters } from '@/services/newsManager';
 import type { AdminUser } from '@/services/adminUsers';
 import type { Author } from '@/config/authors';
 
-// Interface para usuÃ¡rios do sistema
+// Interface para usuarios do sistema
 export type SystemUser = AdminUser;
 
 // Tipos de abas
@@ -29,7 +29,7 @@ export interface DashboardStats {
   };
 }
 
-// Novas mÃ©tricas reais de analytics
+// Novas metricas reais de analytics
 export interface AnalyticsMetrics {
   // MÃ©tricas principais
   totalPageViews: number;
@@ -37,7 +37,7 @@ export interface AnalyticsMetrics {
   avgSessionDuration: string;
   bounceRate: number;
   
-  // MÃ©tricas de conteÃºdo
+  // MÃ©tricas de conteudo
   totalArticles: number;
   publishedArticles: number;
   breakingNews: number;
@@ -50,12 +50,12 @@ export interface AnalyticsMetrics {
   totalComments: number;
   totalShares: number;
   
-  // MÃ©tricas de usuÃ¡rios
+  // MÃ©tricas de usuarios
   totalUsers: number;
   activeUsers: number;
   newUsers: number;
   
-  // TendÃªncias
+  // Tendencias
   viewsTrend: { date: string; views: number }[];
   visitorsTrend: { date: string; visitors: number }[];
 }
@@ -92,7 +92,7 @@ export interface RecentActivityItem {
   timestamp: string;
 }
 
-// Estado do formulÃ¡rio de autor
+// Estado do formulario de autor
 export interface AuthorEducationItem {
   institution: string;
   degree: string;
@@ -209,6 +209,6 @@ export interface SettingsPanelProps {
   onCheckScheduled: () => void;
 }
 
-// Re-exportar tipos necessÃ¡rios
+// Re-exportar tipos necessarios
 export type { NewsArticle, ScheduledArticle, ArticleFilters, AdminUser, Author };
 

@@ -87,7 +87,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     return 'dashboard';
   }, [pathname]);
 
-  // CalendÃ¡rio
+  // Calendario
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -97,7 +97,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
   const [editScheduledOpen, setEditScheduledOpen] = useState(false);
   const [scheduledToEdit, setScheduledToEdit] = useState<{ id: string; scheduledDate: string; scheduledTime: string } | null>(null);
 
-  // FormulÃ¡rios
+  // Formularios
   const [showUserForm, setShowUserForm] = useState(false);
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [userToEdit, setUserToEdit] = useState<SystemUser | null>(null);
@@ -180,7 +180,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     [router]
   );
 
-  // Verificar publicaÃ§Ãµes agendadas periodicamente
+  // Verificar publicacoes agendadas periodicamente
   useEffect(() => {
     const interval = setInterval(() => {
       void checkScheduled();
@@ -198,7 +198,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     if (!articleToDelete) return;
     const success = await deleteArticle(articleToDelete.slug);
     if (success) {
-      toast.success(`Artigo "${articleToDelete.title}" excluÃ­do!`);
+      toast.success(`Artigo "${articleToDelete.title}" excluido!`);
       await loadData();
     }
     setDeleteDialogOpen(false);
@@ -234,7 +234,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     await loadData();
   }, [scheduledToEdit, loadData]);
 
-  // Handlers de usuÃ¡rios
+  // Handlers de usuarios
   const handleAddUser = useCallback(() => {
     setIsEditingUser(false);
     setUserFormData({
@@ -272,24 +272,24 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
   const saveUser = useCallback(async () => {
     if (!userFormData.name || !userFormData.email) {
-      toast.error('Nome e email sÃ£o obrigatÃ³rios!');
+      toast.error('Nome e email sÃ£o obrigatorios!');
       return;
     }
 
     if (!isEditingUser) {
       if (!userFormData.password || !userFormData.confirmPassword) {
-        toast.error('Senha Ã© obrigatÃ³ria para novo usuÃ¡rio');
+        toast.error('Senha Ã© obrigatoria para novo usuÃ¡rio');
         return;
       }
       if (userFormData.password !== userFormData.confirmPassword) {
-        toast.error('As senhas nÃ£o conferem');
+        toast.error('As senhas nao conferem');
         return;
       }
     }
 
     if (userFormData.password && userFormData.confirmPassword) {
       if (userFormData.password !== userFormData.confirmPassword) {
-        toast.error('As senhas nÃ£o conferem');
+        toast.error('As senhas nao conferem');
         return;
       }
       if (userFormData.password.length < 6) {
@@ -328,18 +328,18 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
       setShowUserForm(false);
       await loadUsers();
     } catch {
-      toast.error('Erro ao salvar usuÃ¡rio');
+      toast.error('Erro ao salvar usuario');
     }
   }, [userFormData, isEditingUser, userToEdit, loadUsers]);
 
   const handleDeleteUser = useCallback(async (user: SystemUser) => {
     if (user.id === currentUser?.id) {
-      toast.error('VocÃª nÃ£o pode excluir sua prÃ³pria conta!');
+      toast.error('VocÃª nao pode excluir sua propria conta!');
       return;
     }
     try {
       await deleteAdminUser({ userId: user.id });
-      toast.success(`UsuÃ¡rio "${user.name}" excluÃ­do!`);
+      toast.success(`UsuÃ¡rio "${user.name}" excluido!`);
       await loadUsers();
     } catch {
       toast.error('Erro ao excluir usuÃ¡rio');
@@ -396,34 +396,34 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
 
   const saveAuthor = useCallback(async () => {
     if (!authorFormData.name.trim()) {
-      toast.error('Nome Ã© obrigatÃ³rio');
+      toast.error('Nome Ã© obrigatorio');
       return;
     }
     if (!authorFormData.slug.trim()) {
-      toast.error('Slug Ã© obrigatÃ³rio');
+      toast.error('Slug Ã© obrigatorio');
       return;
     }
     if (!authorFormData.shortName.trim()) {
-      toast.error('Nome curto Ã© obrigatÃ³rio');
+      toast.error('Nome curto Ã© obrigatorio');
       return;
     }
     if (!authorFormData.title.trim()) {
-      toast.error('Cargo/tÃ­tulo Ã© obrigatÃ³rio');
+      toast.error('Cargo/tÃ­tulo Ã© obrigatorio');
       return;
     }
     if (!authorFormData.bio.trim()) {
-      toast.error('Bio curta Ã© obrigatÃ³ria');
+      toast.error('Bio curta Ã© obrigatoria');
       return;
     }
 
     const longBio = authorFormData.longBio.trim() || authorFormData.bio.trim();
 
     if (!authorFormData.photo.trim()) {
-      toast.error('Foto (caminho em /public) Ã© obrigatÃ³ria');
+      toast.error('Foto (caminho em /public) Ã© obrigatoria');
       return;
     }
     if (!authorFormData.email.trim()) {
-      toast.error('Email Ã© obrigatÃ³rio');
+      toast.error('Email Ã© obrigatorio');
       return;
     }
 
@@ -499,10 +499,10 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     }
   }, [loadAuthors]);
 
-  // Handlers de configuraÃ§Ãµes
+  // Handlers de configuracoes
 
   const handleReset = useCallback(async () => {
-    if (confirm('ATENÃ‡ÃƒO: Isso apagarÃ¡ todas as alteraÃ§Ãµes. Continuar?')) {
+    if (confirm('ATENCAO: Isso apagarÃ¡ todas as alteraÃ§Ãµes. Continuar?')) {
       await resetToDefault();
       toast.success('Dados resetados!');
       await loadData();
@@ -521,7 +521,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
     if (!confirm(`Atribuir todos os posts ao perfil profissional "${professionalAuthor.name}"?`)) return;
     try {
       const count = await assignAllArticlesToAuthor(professionalAuthor.slug);
-      toast.success(`${count} post(s) atribuÃ­dos a ${professionalAuthor.name}`);
+      toast.success(`${count} post(s) atribuidos a ${professionalAuthor.name}`);
       await loadData();
     } catch {
       toast.error('Erro ao atribuir posts ao perfil profissional');
@@ -596,7 +596,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
   // Alertas
   const alerts = [];
   if (stats.scheduled > 0) {
-    alerts.push({ type: 'info' as const, message: `${stats.scheduled} artigo(s) agendado(s) para publicaÃ§Ã£o` });
+    alerts.push({ type: 'info' as const, message: `${stats.scheduled} artigo(s) agendado(s) para publicacao` });
   }
   if (selectedArticles.length > 0) {
     alerts.push({ type: 'warning' as const, message: `${selectedArticles.length} artigo(s) selecionado(s)` });
@@ -740,17 +740,17 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
           )}
         </div>
 
-        {/* Dialog de ExclusÃ£o de Artigo */}
+        {/* Dialog de Exclusao de Artigo */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent className="max-w-sm sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-[#ef4444]">
-                <AlertTriangle className="w-5 h-5" /> Confirmar ExclusÃ£o
+                <AlertTriangle className="w-5 h-5" /> Confirmar Exclusao
               </DialogTitle>
               <DialogDescription>
                 Tem certeza que deseja excluir o artigo <strong>&quot;{articleToDelete?.title}&quot;</strong>?
                 <br />
-                Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+                Esta acao nao pode ser desfeita.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -861,7 +861,7 @@ export default function AdminDashboardClient({ initialTab }: { initialTab?: Admi
               )}
               {isEditingUser && (
                 <section>
-                  <label className="text-sm font-medium">Nova Senha (deixe em branco para nÃ£o alterar)</label>
+                  <label className="text-sm font-medium">Nova Senha (deixe em branco para nao alterar)</label>
                   <input
                     type="password"
                     value={userFormData.password}

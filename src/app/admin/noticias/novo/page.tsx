@@ -1,6 +1,6 @@
 /**
- * Admin - Nova NotÃ­cia
- * FormulÃ¡rio completo com editor rich text, upload de imagens, auto-save e agendamento
+ * Admin - Nova Noticia
+ * Formulario completo com editor rich text, upload de imagens, auto-save e agendamento
  */
 
 'use client';
@@ -37,11 +37,11 @@ import {
 } from 'lucide-react';
 
 import { 
-  createArticle, 
   generateSlug, 
   isSlugAvailable,
   scheduleArticle,
 } from '@/services/newsManager';
+import { createArticleApi } from '@/services/articleApi';
 import { listAdminAuthors } from '@/services/adminAuthors';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { Author } from '@/config/authors';
@@ -76,11 +76,11 @@ export default function AdminNewsNewPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Modo de publicaÃ§Ã£o
+  // Modo de publicacao
   const [publishMode, setPublishMode] = useState<'now' | 'schedule'>('now');
   const [authors, setAuthors] = useState<Author[]>([]);
   
-  // Dados do formulÃ¡rio
+  // Dados do formulario
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -110,7 +110,7 @@ export default function AdminNewsNewPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
 
-  // Inicializar dados padrÃ£o para nova notÃ­cia
+  // Inicializar dados padrao para nova noticia
   useEffect(() => {
     let isMounted = true;
 
@@ -162,7 +162,7 @@ export default function AdminNewsNewPage() {
     };
   }, [formData, hasChanges]);
 
-  // Alertar ao sair com alteraÃ§Ãµes
+  // Alertar ao sair com alteracoes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasChanges) {
@@ -205,7 +205,7 @@ export default function AdminNewsNewPage() {
     const tag = formData.tagInput.trim();
     if (!tag) return;
     if (formData.tags.includes(tag)) {
-      toast.error('Esta tag jÃ¡ existe');
+      toast.error('Esta tag ja existe');
       return;
     }
     setFormData(prev => ({
@@ -229,12 +229,12 @@ export default function AdminNewsNewPage() {
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione uma imagem vÃ¡lida');
+      toast.error('Por favor, selecione uma imagem valida');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('A imagem deve ter no mÃ¡ximo 5MB');
+      toast.error('A imagem deve ter no maximo 5MB');
       return;
     }
     
@@ -263,16 +263,16 @@ export default function AdminNewsNewPage() {
         formattedText = `<strong>${selectedText || 'texto em negrito'}</strong>`;
         break;
       case 'italic':
-        formattedText = `<em>${selectedText || 'texto em itÃ¡lico'}</em>`;
+        formattedText = `<em>${selectedText || 'texto em italico'}</em>`;
         break;
       case 'h2':
-        formattedText = `<h2>${selectedText || 'TÃ­tulo'}</h2>`;
+        formattedText = `<h2>${selectedText || 'Titulo'}</h2>`;
         break;
       case 'h3':
-        formattedText = `<h3>${selectedText || 'SubtÃ­tulo'}</h3>`;
+        formattedText = `<h3>${selectedText || 'Subtitulo'}</h3>`;
         break;
       case 'quote':
-        formattedText = `<blockquote>${selectedText || 'CitaÃ§Ã£o'}</blockquote>`;
+        formattedText = `<blockquote>${selectedText || 'Citacao'}</blockquote>`;
         break;
       case 'list':
         formattedText = `<ul>\n  <li>${selectedText || 'Item'}</li>\n</ul>`;
@@ -297,30 +297,30 @@ export default function AdminNewsNewPage() {
   const validate = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.title.trim()) newErrors.title = 'TÃ­tulo Ã© obrigatÃ³rio';
-    else if (formData.title.length < 10) newErrors.title = 'TÃ­tulo deve ter pelo menos 10 caracteres';
+    if (!formData.title.trim()) newErrors.title = 'Titulo e obrigatorio';
+    else if (formData.title.length < 10) newErrors.title = 'Titulo deve ter pelo menos 10 caracteres';
     
-    if (!formData.slug.trim()) newErrors.slug = 'Slug Ã© obrigatÃ³rio';
-    else if (!isSlugAvailable(formData.slug, undefined)) newErrors.slug = 'Este slug jÃ¡ estÃ¡ em uso';
+    if (!formData.slug.trim()) newErrors.slug = 'Slug e obrigatorio';
+    else if (!isSlugAvailable(formData.slug, undefined)) newErrors.slug = 'Este slug ja esta em uso';
     
-    if (!formData.excerpt.trim()) newErrors.excerpt = 'Resumo Ã© obrigatÃ³rio';
+    if (!formData.excerpt.trim()) newErrors.excerpt = 'Resumo e obrigatorio';
     else if (formData.excerpt.length < 50) newErrors.excerpt = 'Resumo deve ter pelo menos 50 caracteres';
-    else if (formData.excerpt.length > 300) newErrors.excerpt = 'Resumo deve ter no mÃ¡ximo 300 caracteres';
+    else if (formData.excerpt.length > 300) newErrors.excerpt = 'Resumo deve ter no maximo 300 caracteres';
     
-    if (!formData.content.trim()) newErrors.content = 'ConteÃºdo Ã© obrigatÃ³rio';
-    else if (formData.content.length < 200) newErrors.content = 'ConteÃºdo deve ter pelo menos 200 caracteres';
+    if (!formData.content.trim()) newErrors.content = 'Conteudo e obrigatorio';
+    else if (formData.content.length < 200) newErrors.content = 'Conteudo deve ter pelo menos 200 caracteres';
     
     if (!formData.authorId.trim()) newErrors.author = 'Perfil profissional obrigatório';
     
-    if (!formData.coverImage.trim()) newErrors.coverImage = 'Imagem de capa Ã© obrigatÃ³ria';
+    if (!formData.coverImage.trim()) newErrors.coverImage = 'Imagem de capa e obrigatoria';
     
     // Validar agendamento
     if (publishMode === 'schedule') {
       if (!formData.scheduledDate) {
-        newErrors.scheduledDate = 'Data de agendamento Ã© obrigatÃ³ria';
+        newErrors.scheduledDate = 'Data de agendamento e obrigatoria';
       }
       if (!formData.scheduledTime) {
-        newErrors.scheduledTime = 'Hora de agendamento Ã© obrigatÃ³ria';
+        newErrors.scheduledTime = 'Hora de agendamento e obrigatoria';
       }
       
       if (formData.scheduledDate && formData.scheduledTime) {
@@ -379,8 +379,8 @@ export default function AdminNewsNewPage() {
         );
         toast.success(`Artigo agendado para ${formData.scheduledDate} às ${formData.scheduledTime}!`);
       } else {
-        // Publicar imediatamente
-        await createArticle(articleData);
+        // Publicar imediatamente via API (bypass RLS)
+        await createArticleApi(articleData);
         toast.success('Artigo publicado com sucesso!');
       }
        
@@ -420,7 +420,7 @@ export default function AdminNewsNewPage() {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
       dates.push({
-        label: i === 1 ? 'AmanhÃ£' : i === 2 ? 'Depois de amanhÃ£' : date.toLocaleDateString('pt-BR', { weekday: 'long' }),
+        label: i === 1 ? 'Amanha' : i === 2 ? 'Depois de amanha' : date.toLocaleDateString('pt-BR', { weekday: 'long' }),
         value: date.toISOString().split('T')[0],
       });
     }
@@ -444,13 +444,13 @@ export default function AdminNewsNewPage() {
             </Button>
             <section>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#111111]">
-                Nova NotÃ­cia
+                Nova Noticia
               </h1>
               <p className="text-sm text-[#6b6b6b]">
                 Crie um novo artigo ou agende para depois
                 {lastSaved && (
                   <span className="ml-2 text-xs text-[#6b6b6b]">
-                    â€¢ Auto-salvo Ã s {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    - Auto-salvo A s {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </p>
@@ -509,7 +509,7 @@ export default function AdminNewsNewPage() {
             </section>
             
             <h1 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-4">
-              {formData.title || 'TÃ­tulo do Artigo'}
+              {formData.title || 'Titulo do Artigo'}
             </h1>
             
             <section className="flex items-center gap-4 text-sm text-[#6b6b6b] mb-6">
@@ -544,11 +544,11 @@ export default function AdminNewsNewPage() {
               />
             )}
             
-            {/* SECURITY: Preview do conteÃºdo sanitizado com DOMPurify */}
+            {/* SECURITY: Preview do conteudo sanitizado com DOMPurify */}
             <section 
               className="prose max-w-none prose-headings:text-[#111111] prose-p:text-[#333]"
               dangerouslySetInnerHTML={{ 
-                __html: sanitizeHtml(formData.content || '<p>ConteÃºdo do artigo...</p>')
+                __html: sanitizeHtml(formData.content || '<p>Conteudo do artigo...</p>')
               }}
             />
           </section>
@@ -557,11 +557,11 @@ export default function AdminNewsNewPage() {
             <TabsList className="grid w-full grid-cols-3 lg:w-fit">
               <TabsTrigger value="content" className="gap-2">
                 <FileText className="w-4 h-4" />
-                ConteÃºdo
+                Conteudo
               </TabsTrigger>
               <TabsTrigger value="publish" className="gap-2">
                 <Clock className="w-4 h-4" />
-                PublicaÃ§Ã£o
+                Publicacao
               </TabsTrigger>
               <TabsTrigger value="seo" className="gap-2">
                 <Globe className="w-4 h-4" />
@@ -573,17 +573,17 @@ export default function AdminNewsNewPage() {
               {/* Coluna Principal */}
               <section className="lg:col-span-2 space-y-6">
                 <TabsContent value="content" className="mt-0 space-y-6">
-                  {/* TÃ­tulo */}
+                  {/* Titulo */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <fieldset>
                       <Label htmlFor="title" className="text-sm font-medium text-[#111111]">
-                        TÃ­tulo *
+                        Titulo *
                       </Label>
                       <Input
                         id="title"
                         value={formData.title}
                         onChange={(e) => handleTitleChange(e.target.value)}
-                        placeholder="Digite um tÃ­tulo impactante..."
+                        placeholder="Digite um titulo impactante..."
                         className={`mt-1.5 text-lg ${errors.title ? 'border-[#ef4444]' : ''}`}
                       />
                       {errors.title ? (
@@ -593,7 +593,7 @@ export default function AdminNewsNewPage() {
                         </p>
                       ) : (
                         <p className="mt-1 text-xs text-[#6b6b6b]">
-                          {formData.title.length} caracteres â€¢ Ideal: 50-60 caracteres
+                          {formData.title.length} caracteres - Ideal: 50-60 caracteres
                         </p>
                       )}
                     </fieldset>
@@ -633,7 +633,7 @@ export default function AdminNewsNewPage() {
                         id="excerpt"
                         value={formData.excerpt}
                         onChange={(e) => handleChange('excerpt', e.target.value)}
-                        placeholder="Breve resumo do artigo que serÃ¡ exibido nas listagens..."
+                        placeholder="Breve resumo do artigo que sera exibido nas listagens..."
                         rows={3}
                         className={`mt-1.5 resize-none ${errors.excerpt ? 'border-[#ef4444]' : ''}`}
                       />
@@ -650,31 +650,31 @@ export default function AdminNewsNewPage() {
                     </fieldset>
                   </article>
 
-                  {/* ConteÃºdo */}
+                  {/* Conteudo */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <section className="flex items-center justify-between mb-4">
                       <Label htmlFor="content" className="text-sm font-medium text-[#111111]">
-                        ConteÃºdo *
+                        Conteudo *
                       </Label>
 </section>
                     
                     {/* Toolbar */}
                     <section className="flex flex-wrap gap-1 p-2 bg-[#f8fafc] rounded-t-lg border border-[#e5e5e5] border-b-0">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h2')} className="h-8 w-8 p-0" title="TÃ­tulo H2">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h2')} className="h-8 w-8 p-0" title="Titulo H2">
                         <Heading1 className="w-4 h-4" />
                       </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h3')} className="h-8 w-8 p-0" title="SubtÃ­tulo H3">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h3')} className="h-8 w-8 p-0" title="Subtitulo H3">
                         <Heading2 className="w-4 h-4" />
                       </Button>
                       <section className="w-px h-6 bg-[#e5e5e5] mx-1 self-center" />
                       <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('bold')} className="h-8 w-8 p-0" title="Negrito">
                         <Bold className="w-4 h-4" />
                       </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('italic')} className="h-8 w-8 p-0" title="ItÃ¡lico">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('italic')} className="h-8 w-8 p-0" title="Italico">
                         <Italic className="w-4 h-4" />
                       </Button>
                       <section className="w-px h-6 bg-[#e5e5e5] mx-1 self-center" />
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('quote')} className="h-8 w-8 p-0" title="CitaÃ§Ã£o">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('quote')} className="h-8 w-8 p-0" title="Citacao">
                         <Quote className="w-4 h-4" />
                       </Button>
                       <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('list')} className="h-8 w-8 p-0" title="Lista">
@@ -690,7 +690,7 @@ export default function AdminNewsNewPage() {
                       id="content"
                       value={formData.content}
                       onChange={(e) => handleChange('content', e.target.value)}
-                      placeholder="Escreva o conteÃºdo completo do artigo aqui..."
+                      placeholder="Escreva o conteudo completo do artigo aqui..."
                       rows={20}
                       className={`resize-none rounded-t-none ${errors.content ? 'border-[#ef4444]' : ''}`}
                     />
@@ -704,7 +704,7 @@ export default function AdminNewsNewPage() {
                         <span />
                       )}
                       <p className="text-xs text-[#6b6b6b]">
-                        {formData.content.length} caracteres â€¢ 
+                        {formData.content.length} caracteres - 
                         Tempo de leitura estimado: {Math.ceil(formData.content.split(/\s+/).length / 200)} min
                       </p>
                     </section>
@@ -712,7 +712,7 @@ export default function AdminNewsNewPage() {
                 </TabsContent>
 
                 <TabsContent value="publish" className="mt-0 space-y-6">
-                  {/* Modo de PublicaÃ§Ã£o */}
+                  {/* Modo de Publicacao */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <header className="flex items-center gap-3 mb-4">
                       <section className="p-2 bg-blue-100 rounded-lg">
@@ -720,7 +720,7 @@ export default function AdminNewsNewPage() {
                       </section>
                       <section>
                         <h2 className="text-lg font-semibold text-[#111111]">Quando Publicar?</h2>
-                        <p className="text-xs text-[#6b6b6b]">Escolha quando o artigo serÃ¡ publicado</p>
+                        <p className="text-xs text-[#6b6b6b]">Escolha quando o artigo sera publicado</p>
                       </section>
                     </header>
                     
@@ -739,7 +739,7 @@ export default function AdminNewsNewPage() {
                           <span className={`text-sm font-medium ${publishMode === 'now' ? 'text-[#c40000]' : 'text-[#111111]'}`}>
                             Publicar Agora
                           </span>
-                          <span className="text-xs text-[#6b6b6b]">DisponÃ­vel imediatamente</span>
+                          <span className="text-xs text-[#6b6b6b]">Disponivel imediatamente</span>
                         </button>
                         
                         <button
@@ -791,7 +791,7 @@ export default function AdminNewsNewPage() {
                           </section>
                           
                           <fieldset>
-                            <Label className="text-sm text-[#111111]">Fuso HorÃ¡rio</Label>
+                            <Label className="text-sm text-[#111111]">Fuso Horario</Label>
                             <select
                               value={formData.timezone}
                               onChange={(e) => handleChange('timezone', e.target.value)}
@@ -805,9 +805,9 @@ export default function AdminNewsNewPage() {
                             </select>
                           </fieldset>
                           
-                          {/* SugestÃµes rÃ¡pidas */}
+                          {/* Sugestoes rapidas */}
                           <section>
-                            <p className="text-xs text-[#6b6b6b] mb-2">SugestÃµes rÃ¡pidas:</p>
+                            <p className="text-xs text-[#6b6b6b] mb-2">Sugestoes rapidas:</p>
                             <section className="flex flex-wrap gap-2">
                               {getSuggestedDates().map((date) => (
                                 <button
@@ -828,7 +828,7 @@ export default function AdminNewsNewPage() {
                           {formData.scheduledDate && formData.scheduledTime && (
                             <section className="p-3 bg-white rounded-lg border border-blue-200">
                               <p className="text-sm text-blue-800">
-                                <strong>SerÃ¡ publicado em:</strong><br />
+                                <strong>Sera publicado em:</strong><br />
                                 {new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleString('pt-BR', {
                                   weekday: 'long',
                                   year: 'numeric',
@@ -845,14 +845,14 @@ export default function AdminNewsNewPage() {
                     </section>
                   </article>
 
-                  {/* ConfiguraÃ§Ãµes */}
+                  {/* Configuracoes */}
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <header className="flex items-center gap-3 mb-4">
                       <section className="p-2 bg-[#fef2f2] rounded-lg">
                         <Type className="w-5 h-5 text-[#c40000]" />
                       </section>
                       <section>
-                        <h2 className="text-lg font-semibold text-[#111111]">ConfiguraÃ§Ãµes de PublicaÃ§Ã£o</h2>
+                        <h2 className="text-lg font-semibold text-[#111111]">Configuracoes de Publicacao</h2>
                       </section>
                     </header>
 
@@ -860,7 +860,7 @@ export default function AdminNewsNewPage() {
                       <section className="flex items-center justify-between p-3 bg-[#f8fafc] rounded-lg">
                         <section>
                           <p className="text-sm font-medium text-[#111111]">Destacar na home</p>
-                          <p className="text-xs text-[#6b6b6b]">Aparece em destaque na pÃ¡gina inicial</p>
+                          <p className="text-xs text-[#6b6b6b]">Aparece em destaque na pagina inicial</p>
                         </section>
                         <Switch
                           checked={formData.featured}
@@ -886,18 +886,18 @@ export default function AdminNewsNewPage() {
                   <article className="bg-white border border-[#e5e5e5] rounded-lg p-4 sm:p-6">
                     <header className="flex items-center gap-2 mb-4">
                       <Globe className="w-5 h-5 text-[#c40000]" />
-                      <h2 className="text-lg font-semibold text-[#111111]">OtimizaÃ§Ã£o para Buscas (SEO)</h2>
+                      <h2 className="text-lg font-semibold text-[#111111]">Otimizacao para Buscas (SEO)</h2>
                     </header>
 
                     <fieldset className="mb-4">
                       <Label htmlFor="seoTitle" className="text-sm font-medium text-[#111111]">
-                        TÃ­tulo SEO
+                        Titulo SEO
                       </Label>
                       <Input
                         id="seoTitle"
                         value={formData.seoTitle}
                         onChange={(e) => handleChange('seoTitle', e.target.value)}
-                        placeholder="TÃ­tulo otimizado para SEO"
+                        placeholder="Titulo otimizado para SEO"
                         className="mt-1.5"
                       />
                       <p className="mt-1 text-xs text-[#6b6b6b]">
@@ -907,13 +907,13 @@ export default function AdminNewsNewPage() {
 
                     <fieldset>
                       <Label htmlFor="seoDescription" className="text-sm font-medium text-[#111111]">
-                        DescriÃ§Ã£o SEO (Meta Description)
+                        Descricao SEO (Meta Description)
                       </Label>
                       <Textarea
                         id="seoDescription"
                         value={formData.seoDescription}
                         onChange={(e) => handleChange('seoDescription', e.target.value)}
-                        placeholder="DescriÃ§Ã£o que aparecerÃ¡ nos resultados de busca..."
+                        placeholder="Descricao que aparecera nos resultados de busca..."
                         rows={3}
                         className="mt-1.5 resize-none"
                       />
@@ -926,13 +926,13 @@ export default function AdminNewsNewPage() {
                       <p className="text-xs text-[#6b6b6b] mb-2">Preview nos resultados de busca:</p>
                       <section className="max-w-[600px]">
                         <p className="text-sm text-[#1a0dab] truncate">
-                          {formData.seoTitle || formData.title || 'TÃ­tulo do Artigo'}
+                          {formData.seoTitle || formData.title || 'Titulo do Artigo'}
                         </p>
                         <p className="text-xs text-[#006621]">
                           cenariointernacional.com.br/noticias/{formData.slug || 'url-do-artigo'}
                         </p>
                         <p className="text-sm text-[#545454] line-clamp-2">
-                          {formData.seoDescription || formData.excerpt || 'DescriÃ§Ã£o do artigo...'}
+                          {formData.seoDescription || formData.excerpt || 'Descricao do artigo...'}
                         </p>
                       </section>
                     </section>
@@ -974,10 +974,10 @@ export default function AdminNewsNewPage() {
                     
                     <ul className="space-y-2 mt-4">
                       {[
-                        { label: 'TÃ­tulo', value: !!formData.title },
+                        { label: 'Titulo', value: !!formData.title },
                         { label: 'Slug', value: !!formData.slug },
                         { label: 'Resumo', value: !!formData.excerpt },
-                        { label: 'ConteÃºdo', value: !!formData.content },
+                        { label: 'Conteudo', value: !!formData.content },
                         { label: 'Autor', value: !!formData.author },
                         { label: 'Imagem de capa', value: !!formData.coverImage },
                       ].map((item) => (
@@ -1059,7 +1059,7 @@ export default function AdminNewsNewPage() {
                     >
                       <Upload className="w-8 h-8 text-[#6b6b6b]" />
                       <span className="text-sm text-[#6b6b6b]">Clique para fazer upload</span>
-                      <span className="text-xs text-[#6b6b6b]">JPG, PNG atÃ© 5MB</span>
+                      <span className="text-xs text-[#6b6b6b]">JPG, PNG ate 5MB</span>
                     </button>
                   )}
                   {errors.coverImage && (
@@ -1077,7 +1077,7 @@ export default function AdminNewsNewPage() {
                     <h2 className="text-lg font-semibold text-[#111111]">Tags</h2>
                   </header>
                   
-                  {/* Tags RÃ¡pidas / Sugeridas */}
+                  {/* Tags Rapidas / Sugeridas */}
                   <section className="mb-4">
                     <p className="text-xs text-[#6b6b6b] mb-2">Tags sugeridas:</p>
                     <div className="flex flex-wrap gap-2">
@@ -1086,25 +1086,25 @@ export default function AdminNewsNewPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          const specialTag = 'PublicaÃ§Ã£o Patrocinada';
+                          const specialTag = 'Publicacao Patrocinada';
                           if (!formData.tags.includes(specialTag)) {
                             setFormData(prev => ({ ...prev, tags: [...prev.tags, specialTag] }));
                             setHasChanges(true);
-                            toast.success('Tag "PublicaÃ§Ã£o Patrocinada" adicionada');
+                            toast.success('Tag "Publicacao Patrocinada" adicionada');
                           } else {
-                            toast.error('Esta tag jÃ¡ existe');
+                            toast.error('Esta tag ja existe');
                           }
                         }}
                         className={`text-xs rounded-full ${
-                          formData.tags.includes('PublicaÃ§Ã£o Patrocinada')
+                          formData.tags.includes('Publicacao Patrocinada')
                             ? 'bg-[#fef2f2] border-[#c40000] text-[#c40000]'
                             : 'border-[#e6e1d8] hover:border-[#c40000] hover:text-[#c40000]'
                         }`}
                       >
-                        ðŸ’Ž PublicaÃ§Ã£o Patrocinada
+                        ðŸ’Ž Publicacao Patrocinada
                       </Button>
                       
-                      {['Destaque', 'Urgente', 'AnÃ¡lise', 'OpiniÃ£o'].map((quickTag) => (
+                      {['Destaque', 'Urgente', 'Analise', 'Opiniao'].map((quickTag) => (
                         <Button
                           key={quickTag}
                           type="button"
@@ -1115,7 +1115,7 @@ export default function AdminNewsNewPage() {
                               setFormData(prev => ({ ...prev, tags: [...prev.tags, quickTag] }));
                               setHasChanges(true);
                             } else {
-                              toast.error('Esta tag jÃ¡ existe');
+                              toast.error('Esta tag ja existe');
                             }
                           }}
                           className={`text-xs rounded-full ${
@@ -1150,7 +1150,7 @@ export default function AdminNewsNewPage() {
                           key={tag} 
                           variant="secondary"
                           className={`gap-1 cursor-pointer hover:bg-[#fef2f2] ${
-                            tag === 'PublicaÃ§Ã£o Patrocinada' 
+                            tag === 'Publicacao Patrocinada' 
                               ? 'bg-[#fef2f2] text-[#c40000] border border-[#c40000]' 
                               : ''
                           }`}
@@ -1200,13 +1200,13 @@ export default function AdminNewsNewPage() {
           </Tabs>
         )}
 
-        {/* Dialog de ConfirmaÃ§Ã£o de SaÃ­da */}
+        {/* Dialog de Confirmacao de Saida */}
         <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Sair sem salvar?</DialogTitle>
               <DialogDescription>
-                VocÃª tem alteraÃ§Ãµes nÃ£o salvas. Deseja realmente sair?
+                Voce tem alteracoes nao salvas. Deseja realmente sair?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
