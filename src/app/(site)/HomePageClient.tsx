@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * Home UI (client)
@@ -15,6 +15,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { HeroSection } from '@/components/home/HeroSection';
 import type { NewsArticle } from '@/types';
 import { AdUnit } from '@/components/ads/AdUnit';
+import { AdAboveFold } from '@/components/ads/AdAboveFold';
+import { AdSidebar } from '@/components/ads/AdSidebar';
+import { AdFeed } from '@/components/ads/AdFeed';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EarningsCalendar } from '@/components/economics/EarningsCalendarWrapper';
@@ -166,6 +169,9 @@ export default function HomePageClient({
           <HeroSection mainArticle={featured[0]} secondaryArticles={featured.slice(1)} />
         )}
 
+        {/* AdAboveFold - Anúncio acima da dobra */}
+        <AdAboveFold />
+
         {/* Category Filter */}
         <div className="flex items-center gap-2 overflow-x-auto py-3 mb-6">
           <button
@@ -308,7 +314,7 @@ export default function HomePageClient({
             <h2 className="text-2xl font-bold mb-6">Ultimas</h2>
 
             <ul className="space-y-6">
-              {filteredArticles.map((article) => {
+              {filteredArticles.map((article, index) => {
                 const category =
                   CONTENT_CONFIG.categories[article.category as keyof typeof CONTENT_CONFIG.categories];
                 const date = new Date(article.publishedAt).toLocaleDateString(locale, {
@@ -317,42 +323,50 @@ export default function HomePageClient({
                 });
 
                 return (
-                  <li key={article.slug}>
-                    <article className="group flex gap-4">
-                      <figure className="w-32 h-24 md:w-48 md:h-32 flex-shrink-0 overflow-hidden rounded-lg relative">
-                        <Image
-                          src={article.coverImage}
-                          alt={article.title}
-                          fill
-                          sizes="(max-width: 768px) 128px, 192px"
-                          className="object-cover group-hover:scale-105 transition-transform"
-                        />
-                      </figure>
-                      <div className="flex-1 min-w-0">
-                        <span
-                          className="text-xs font-semibold uppercase"
-                          style={{ color: category?.color || '#6b6b6b' }}
-                        >
-                          {category?.name || article.category}
-                        </span>
-                        <Link href={ROUTES.noticia(article.slug)}>
-                          <h3 className="text-base md:text-lg font-bold text-[#111111] line-clamp-2 group-hover:text-[#c40000]">
-                            {article.title}
-                          </h3>
-                        </Link>
-                        <p className="hidden md:block text-sm text-[#6b6b6b] line-clamp-2 mt-1">
-                          {article.excerpt}
-                        </p>
-                        <footer className="flex items-center gap-3 mt-2 text-xs text-[#6b6b6b]">
-                          <time>{date}</time>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {article.readingTime} min de leitura
+                  <>
+                    <li key={article.slug}>
+                      <article className="group flex gap-4">
+                        <figure className="w-32 h-24 md:w-48 md:h-32 flex-shrink-0 overflow-hidden rounded-lg relative">
+                          <Image
+                            src={article.coverImage}
+                            alt={article.title}
+                            fill
+                            sizes="(max-width: 768px) 128px, 192px"
+                            className="object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </figure>
+                        <div className="flex-1 min-w-0">
+                          <span
+                            className="text-xs font-semibold uppercase"
+                            style={{ color: category?.color || '#6b6b6b' }}
+                          >
+                            {category?.name || article.category}
                           </span>
-                        </footer>
-                      </div>
-                    </article>
-                  </li>
+                          <Link href={ROUTES.noticia(article.slug)}>
+                            <h3 className="text-base md:text-lg font-bold text-[#111111] line-clamp-2 group-hover:text-[#c40000]">
+                              {article.title}
+                            </h3>
+                          </Link>
+                          <p className="hidden md:block text-sm text-[#6b6b6b] line-clamp-2 mt-1">
+                            {article.excerpt}
+                          </p>
+                          <footer className="flex items-center gap-3 mt-2 text-xs text-[#6b6b6b]">
+                            <time>{date}</time>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {article.readingTime} min de leitura
+                            </span>
+                          </footer>
+                        </div>
+                      </article>
+                    </li>
+                    {/* AdFeed - Anúncio entre artigos (a cada 3) */}
+                    {(index + 1) % 3 === 0 && (
+                      <li key={`ad-${index}`}>
+                        <AdFeed className="my-6" />
+                      </li>
+                    )}
+                  </>
                 );
               })}
             </ul>
@@ -370,6 +384,8 @@ export default function HomePageClient({
 
           {/* Sidebar */}
           <aside className="space-y-8">
+            {/* AdSidebar - Anúncio na barra lateral */}
+            <AdSidebar />
             {/* Trending */}
             <section className="p-6 bg-[#f5f5f5] rounded-lg">
               <header className="flex items-center gap-2 mb-4">

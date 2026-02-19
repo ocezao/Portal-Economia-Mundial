@@ -23,6 +23,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | # | Documento | Descrição |
 |---|-----------|-----------|
 | 02 | [SEO e AdSense](./02-seo-e-adsense.md) | Estratégia de SEO e integração com Google AdSense |
+| ADSENSE | [AdSense Implementation](./ADSENSE_IMPLEMENTATION_GUIDE.md) | Guia de implementação de anúncios (novos blocos) |
 | 03 | [Design System](./03-design-system.md) | Paleta de cores, tipografia, componentes e padrões de design |
 | 06 | [Deploy Hostinger](./06-deploy-hostinger.md) | Guia de deploy no Hostinger |
 | DEPLOY | [Deploy Seguro](./ops/DEPLOY_SEGURO.md) | Checklist de segurança pré-deploy |

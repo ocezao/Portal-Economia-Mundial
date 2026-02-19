@@ -14,6 +14,7 @@ import { Footer } from '@/components/layout/Footer';
 import { AdUnit } from '@/components/ads/AdUnit';
 import { CookieBanner } from '@/components/consent/CookieBanner';
 import { AdSenseScript } from '@/components/ads/AdSenseScript';
+import { AdMobileSticky } from '@/components/ads/AdMobileSticky';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { OneSignalInit } from '@/components/push/OneSignalInit';
 
@@ -54,6 +55,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <Footer />
 
       <CookieBanner />
+      <AdMobileSticky />
     </>
   );
 }
