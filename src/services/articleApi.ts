@@ -5,7 +5,7 @@
 
 import { supabase } from '@/lib/supabaseClient';
 
-const API_BASE = '/api/articles';
+const API_BASE = '/api/articles/';
 
 async function callArticleApi(action: string, payload: Record<string, unknown> = {}) {
   const { data } = await supabase.auth.getSession();
