@@ -37,7 +37,6 @@ import {
 } from 'lucide-react';
 
 import { 
-  createArticle, 
   updateArticle, 
   getArticleBySlug, 
   generateSlug, 
@@ -47,6 +46,7 @@ import {
   getScheduledArticles,
   type ScheduledArticle
 } from '@/services/newsManager';
+import { createArticleApi, updateArticleApi } from '@/services/articleApi';
 import { listAdminAuthors } from '@/services/adminAuthors';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { Author } from '@/config/authors';
@@ -452,21 +452,22 @@ export default function AdminNewsEditPage({ params }: PageProps) {
           toast.success(`Artigo agendado para ${formData.scheduledDate} Ã s ${formData.scheduledTime}!`);
         }
       } else {
-        // Publicar imediatamente
+        // Publicar imediatamente via API (bypass RLS)
         if (slug) {
-          await updateArticle(slug, articleData);
+          await updateArticleApi(slug, articleData);
           toast.success('Artigo atualizado com sucesso!');
         } else {
-          await createArticle(articleData);
+          await createArticleApi(articleData);
           toast.success('Artigo publicado com sucesso!');
         }
       }
-      
+       
       secureStorage.remove('cin_draft_article');
       setHasChanges(false);
       router.push('/admin#noticias');
-    } catch {
-      toast.error('Erro ao salvar artigo');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Erro ao salvar artigo: ${message}`);
     } finally {
       setIsSaving(false);
     }
