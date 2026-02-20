@@ -39,20 +39,25 @@ async function requireAdmin(req: Request) {
   const token = getBearerToken(req);
   if (!token) return { ok: false as const, status: 401, message: 'Nao autenticado' };
 
-  const admin = getSupabaseAdminClient();
-  const { data, error } = await admin.auth.getUser(token);
-  if (error || !data.user) return { ok: false as const, status: 401, message: 'Sessao invalida' };
+  try {
+    const admin = getSupabaseAdminClient();
+    const { data, error } = await admin.auth.getUser(token);
+    if (error || !data.user) return { ok: false as const, status: 401, message: 'Sessao invalida' };
 
-  const { data: profile, error: profileError } = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', data.user.id)
-    .maybeSingle();
+    const { data: profile, error: profileError } = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .maybeSingle();
 
-  if (profileError) return { ok: false as const, status: 500, message: 'Erro interno ao verificar permissoes' };
-  if (profile?.role !== 'admin') return { ok: false as const, status: 403, message: 'Sem permissao' };
+    if (profileError) return { ok: false as const, status: 500, message: 'Erro interno ao verificar permissoes' };
+    if (profile?.role !== 'admin') return { ok: false as const, status: 403, message: 'Sem permissao' };
 
-  return { ok: true as const, admin, userId: data.user.id };
+    return { ok: true as const, admin, userId: data.user.id };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido';
+    return { ok: false as const, status: 500, message: `Erro ao verificar admin: ${message}` };
+  }
 }
 
 function slugify(text: string): string {
