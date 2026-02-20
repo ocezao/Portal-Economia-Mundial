@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PÃ¡gina de Artigo Individual (UI)
  * O artigo Ã© carregado no servidor e passado como props para melhorar SEO.
  */
@@ -7,6 +7,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Clock,
   Calendar,
@@ -28,12 +29,16 @@ import { FactCheckBadge, ReviewedByBadge } from '@/components/news/FactCheckBadg
 import { ReadingProgress } from '@/components/news/ReadingProgress';
 import { ArticleContent } from '@/components/news/ArticleContent';
 import { RelatedArticles } from '@/components/news/RelatedArticles';
-import { CommentSection } from '@/components/interactive/CommentSection';
 import { AdUnit } from '@/components/ads/AdUnit';
 import { CONTENT_CONFIG } from '@/config/content';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import type { NewsArticle } from '@/types';
 import type { Author } from '@/config/authors';
+
+const CommentSection = dynamic(
+  () => import('@/components/interactive/CommentSection').then((mod) => mod.CommentSection),
+  { ssr: false, loading: () => <div className="animate-pulse h-64 bg-gray-100 rounded-lg" /> }
+);
 
 interface NoticiaPageClientProps {
   article: NewsArticle;
