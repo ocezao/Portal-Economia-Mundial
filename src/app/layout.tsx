@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 
 import '../index.css';
 
@@ -103,16 +104,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd id="jsonld-organization" data={SEO_CONFIG.jsonLd.organization} />
         <JsonLd id="jsonld-website" data={SEO_CONFIG.jsonLd.website} />
         
-        {/* Google AdSense */}
-        <script
+        {/* Google AdSense - OTIMIZADO: carregamento tardio */}
+        <Script
           async
+          defer
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6096980902806551"
           crossOrigin="anonymous"
+          strategy="lazyOnload"
         />
         
-        {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-842VLRHHXQ"></script>
-        <script dangerouslySetInnerHTML={{
+        {/* Google tag (gtag.js) - OTIMIZADO: lazyOnload para não bloquear LCP */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-842VLRHHXQ" strategy="lazyOnload" />
+        <Script id="gtag-init" dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -121,8 +124,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `
         }} />
         
-        {/* Microsoft Clarity */}
-        <script dangerouslySetInnerHTML={{
+        {/* Microsoft Clarity - OTIMIZADO: lazyOnload */}
+        <Script id="clarity-init" dangerouslySetInnerHTML={{
           __html: `
             (function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -130,10 +133,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             })(window, document, "clarity", "script", "vjzgusrh04");
           `
-        }} />
+        }} strategy="lazyOnload" />
         
-        {/* Google Tag Manager */}
-        <script dangerouslySetInnerHTML={{
+        {/* Google Tag Manager - OTIMIZADO: lazyOnload */}
+        <Script id="gtm-init" dangerouslySetInnerHTML={{
           __html: `
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -141,7 +144,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
             })(window,document,'script','dataLayer','GTM-PBXFKLFR');
           `
-        }} />
+        }} strategy="lazyOnload" />
       </head>
       <body className="min-h-screen bg-white text-[#111111] antialiased">
         {/* Google Tag Manager (noscript) */}

@@ -204,6 +204,37 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 - Smoke test em 1 comando: `npm run test:smoke:email`.
 - Resultado validado no ambiente local: contato/carreiras `200` em payload valido e `400` em payload invalido.
 
+## Atualizacao operacional - 2026-02-20 (Migração Banco Local PostgreSQL)
+
+### Infraestrutura
+- Container PostgreSQL configurado no docker-compose.yml
+- Deploy para VPS (IP: 187.77.37.175)
+- Container `portal-database` em execução (saudável)
+
+### Banco de Dados
+- 19 tabelas criadas no PostgreSQL local:
+  - news_articles, categories, authors, profiles
+  - job_applications, contact_messages, leads
+  - comments, post_actions, bookmarks, reading_history, reading_progress
+  - news_article_categories, news_article_tags, tags
+  - news_slug_redirects, analytics_events, analytics_sessions
+  - app_errors, external_snapshots
+- Schema `auth` criado com roles e funções
+- Função `auth.uid()` implementada para RLS
+
+### Correções Aplicadas
+- Encoding corrigido em arquivos admin (mojibake → UTF-8)
+- API route `/api/articles` criada com Service Role Key
+- Nginx config atualizado: `client_max_body_size 10M`
+- Variáveis de ambiente corrigidas em supabaseAdmin.ts
+
+### Arquivos Criados
+- `docs/_migration/LOCAL_DB_STATUS.md` - Status completo da migração
+- `supabase/migrations/20260220_full_migration_local.sql` - SQL completo
+- `scripts/create-auth-functions.sql` - Funções auth
+
+---
+
 ## Atualizacao operacional - 2026-02-16 (Newsletter)
 
 - Endpoint implementado: `/api/newsletter/subscribe`.

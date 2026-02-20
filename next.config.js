@@ -10,9 +10,13 @@ const nextConfig = {
   poweredByHeader: false,
   output: 'standalone',
   
+  // Removido: unoptimized: true - isso estava causando problema MASSIVO de performance!
+  // Agora usando otimização nativa do Next.js
+  
   // Configurações de imagens otimizadas
   images: {
-    unoptimized: true, // Necessário para exportação estática
+    // Removido: unoptimized: true - causava 60s de LCP!
+    // Agora usa o optimizer nativo do Next.js
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,17 +26,29 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: '**.unsplash.com',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Device sizes otimizados para mobile-first
+    deviceSizes: [320, 480, 640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 192, 256, 384],
+    // Cache TTL para imagens (7 dias)
+    minimumCacheTTL: 604800,
+    // Enable responsive images
+    disableStaticImages: false,
   },
   
-  // Configurações de trailing slash
-  trailingSlash: true,
+  // Removido: trailingSlash: true - pode adicionar latency
+  // trailingSlash: true,
   
-  // Compressão de dados
+  // Compressão de dados (habilitada por padrão no Next.js)
   compress: true,
+  
+  // Habilitar optimizations de produção
+  productionBrowserSourceMaps: false,
   
   // Experimental: otimizações de build
   experimental: {
@@ -41,16 +57,18 @@ const nextConfig = {
       '@radix-ui/react-icons',
       'recharts',
     ],
+    // Otimizar CSS
+    optimizeCss: true,
+    // Pré-conexão com domínios externos comuns
+    // Seremos mais específicos para evitar overhead
   },
-  
+
   // Redirecionamentos (opcional)
   async redirects() {
     return [
-      // Redirecionar /cadastro para /cadastro/
-      // (trailingSlash já cuida disso)
     ];
   },
-  
+
   // Headers de segurança e performance
   async headers() {
     const cspDirectives = [
@@ -120,6 +138,24 @@ const nextConfig = {
       },
       {
         source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/:path*.jpg',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/:path*.png',
         headers: [
           {
             key: 'Cache-Control',

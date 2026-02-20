@@ -111,7 +111,8 @@ function isSearchResultRow(value: unknown): value is SearchResultRow {
 // ==================== HELPERS ====================
 
 const WARN_INTERVAL_MS = 60_000;
-const QUERY_CACHE_TTL_MS = 15_000;
+// OTIMIZAÇÃO: Cache de 60 segundos para reduzir chamadas ao banco
+const QUERY_CACHE_TTL_MS = 60_000;
 
 const queryCache = new Map<string, { expiresAt: number; promise: Promise<unknown> }>();
 

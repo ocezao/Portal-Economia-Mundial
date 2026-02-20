@@ -238,5 +238,18 @@ sudo certbot --nginx -d cenariointernacional.com.br
 | `npm run lint` | ⚠️ Pendências menores |
 | Infraestrutura VPS | ✅ Completa |
 | Deploy | ✅ 95% pronto |
+| Banco Local PostgreSQL | 🟡 Em Progresso |
+
+### Migração Banco Local PostgreSQL
+
+O projeto está em processo de migração do Supabase (banco remoto) para PostgreSQL local na VPS.
+
+**Status:**
+- 19 tabelas criadas no PostgreSQL local
+- Container `portal-database` em execução na VPS
+- Função `auth.uid()` implementada
+- Conexão híbrida: Supabase (Auth + Storage) + PostgreSQL local (CRUD)
+
+**Documentação:** `docs/_migration/LOCAL_DB_STATUS.md`
 
 O projeto está **pronto para produção**. Consulte `docs/RUNBOOK.md` para operações.
