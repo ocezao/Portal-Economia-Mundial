@@ -15,10 +15,11 @@ import { ROUTES } from '@/config/routes';
 import { getSiteUrl } from '@/lib/siteUrl';
 import { searchArticles } from '@/services/newsManager';
 
-type SearchParams = Record<string, string | string[] | undefined>;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-function getQuery(searchParams?: SearchParams) {
-  const q = searchParams?.q;
+async function getQuery(searchParams?: SearchParams) {
+  const sp = await searchParams;
+  const q = sp?.q;
   if (Array.isArray(q)) return (q[0] ?? '').trim();
   if (typeof q === 'string') return q.trim();
   return '';
@@ -27,7 +28,7 @@ function getQuery(searchParams?: SearchParams) {
 export async function generateMetadata(
   { searchParams }: { searchParams?: SearchParams },
 ): Promise<Metadata> {
-  const query = getQuery(searchParams);
+  const query = await getQuery(searchParams);
 
   const siteUrl = getSiteUrl();
   const url = `${siteUrl}${ROUTES.busca}/`;
@@ -94,7 +95,7 @@ export async function generateMetadata(
 }
 
 export default async function BuscaPage({ searchParams }: { searchParams?: SearchParams }) {
-  const query = getQuery(searchParams);
+  const query = await getQuery(searchParams);
 
   let results = [] as Awaited<ReturnType<typeof searchArticles>>;
   if (query) {
