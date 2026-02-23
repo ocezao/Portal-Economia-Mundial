@@ -142,14 +142,14 @@ export default function HomePageClient({
   return (
     <TooltipProvider delayDuration={200}>
       <section className="max-w-[1280px] mx-auto px-4 py-6">
-        {/* Breaking News */}
-        {breaking.length > 0 && (
+        {/* Última Notícia */}
+        {latest[0] && (
           <aside className="mb-8 p-4 bg-[#c40000] text-white rounded-lg">
             <header className="flex items-center gap-2 mb-2">
               <Zap className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase">Urgente</span>
+              <span className="text-xs font-bold uppercase">{breaking.length > 0 ? 'Urgente' : 'Última'}</span>
               <time className="text-xs opacity-90">
-                {new Date(breaking[0].publishedAt).toLocaleString(locale, {
+                {new Date(latest[0].publishedAt).toLocaleString(locale, {
                   day: '2-digit',
                   month: '2-digit',
                   year: 'numeric',
@@ -159,10 +159,10 @@ export default function HomePageClient({
               </time>
             </header>
             <Link
-              href={ROUTES.noticia(breaking[0].slug)}
+              href={ROUTES.noticia(latest[0].slug)}
               className="block text-lg md:text-xl font-bold hover:underline"
             >
-              {breaking[0].title}
+              {latest[0].title}
             </Link>
           </aside>
         )}
