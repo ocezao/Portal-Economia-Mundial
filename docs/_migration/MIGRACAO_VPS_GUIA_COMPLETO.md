@@ -229,7 +229,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - [ ] Firewall ativo (UFW)
 - [ ] Fail2Ban configurado
 - [ ] SSH hardened (sem root, chaves apenas)
-- [ ] Rate limiting ativo
+- [x] Rate limiting ativo (via middleware Next.js)
 - [ ] Variáveis de ambiente protegidas (chmod 600)
 - [ ] Atualizações automáticas
 - [ ] Backups criptografados

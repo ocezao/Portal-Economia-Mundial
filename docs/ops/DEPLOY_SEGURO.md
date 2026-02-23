@@ -226,7 +226,7 @@ https://securityheaders.com/
 - [ ] Tentar XSS em campos de busca
 - [ ] Tentar SQL Injection em parâmetros de URL
 - [ ] Verificar se dados de outros usuários estão protegidos
-- [ ] Testar rate limiting nas APIs
+- [x] Testar rate limiting nas APIs (middleware implementado)
 
 ---
 

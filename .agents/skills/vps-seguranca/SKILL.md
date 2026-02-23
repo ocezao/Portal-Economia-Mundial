@@ -362,7 +362,7 @@ chown deploy:deploy /var/www/portal-economico/.env.production
 - [ ] Firewall ativo (apenas portas necessárias)
 - [ ] Fail2Ban configurado
 - [ ] SSH hardened (sem root, sem senha)
-- [ ] Rate limiting ativo
+- [x] Rate limiting ativo (via middleware Next.js)
 - [ ] Proteção DDoS básica
 - [ ] Variáveis de ambiente protegidas
 - [ ] Logs de segurança ativos

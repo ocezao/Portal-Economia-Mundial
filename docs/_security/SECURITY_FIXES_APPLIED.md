@@ -108,9 +108,9 @@ const like = `%${safeQuery}%`;
 | 4 | Filename não sanitizado | ✅ CORRIGIDO | api/upload/route.ts:224 |
 | 5 | LIKE SQL sem escape | ✅ CORRIGIDO | newsManager.ts:421,448 |
 | 6 | NEXT_PUBLIC_FINNHUB exposta | ⏭️ PENDENTE (Dia 2) | .env |
-| 7 | CSP ausente | ⏭️ PENDENTE (Dia 2) | next.config.js |
-| 8 | middleware.ts | ⏭️ PENDENTE (Dia 2) | src/middleware.ts |
-| 9 | HSTS ausente | ⏭️ PENDENTE (Dia 2) | next.config.js |
+| 7 | CSP ausente | ✅ CORRIGIDO | next.config.js |
+| 8 | middleware.ts | ✅ CORRIGIDO | src/middleware.ts - rate limiting + security |
+| 9 | HSTS ausente | ✅ CORRIGIDO | next.config.js |
 | 10 | Zod validation | ⏭️ PENDENTE (Dia 3) | APIs |
 
 ---

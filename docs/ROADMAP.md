@@ -54,6 +54,12 @@
 - [x] Comentários
 - [x] Newsletter
 
+### Segurança
+- [x] Security Headers (CSP, X-Frame-Options, etc) ✅
+- [x] Rate Limiting (100 req/min por IP) ✅
+- [x] Middleware de segurança ✅
+- [x] Bloqueio de paths maliciosos ✅
+
 ---
 
 ## Próximas Implementações
@@ -70,8 +76,8 @@
 ### Fase 3: Funcionalidades Extras (Futuro)
 - [x] RSS por categoria ✅ NOVO
 - [x] Hub Pages por tema ✅ NOVO
+- [x] Busca avançada (Fuse.js) ✅ NOVO - autocomplete, Ctrl+K, highlight
 - [ ] Chat IA (HuggingFace)
-- [ ] Busca avançada (Algolia)
 - [ ] Analytics tempo real
 - [x] Monitoramento uptime (UptimeRobot)
 
@@ -92,7 +98,7 @@
 | Serviço | Limite Free | Uso |
 |---------|-------------|-----|
 | OneSignal | 10K push/mês | Push notifications |
-| Algolia | 10K buscas/mês | Busca avançada |
+| Fuse.js | Ilimitado | Busca avançada (client-side) |
 | HuggingFace | 1K msgs/mês | Chat IA |
 | UptimeRobot | 5 monitors | Monitoramento |
 | Cloudflare | CDN free | CDN + Cache |

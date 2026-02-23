@@ -28,8 +28,9 @@ Este documento compara o **Cenário Internacional** com:
 | **App Mobile** | Android + iOS | PWA | 10/10 | 6/10 | -4 |
 | **Video/ Podcast** | YouTube + podcast | Não disponível | 10/10 | 2/10 | -8 |
 | **Chat IA** | Em desenvolvimento | Não implementado | 8/10 | 3/10 | -5 |
-| **Busca Avançada** | Algolia/Elasticsearch | Básica | 10/10 | 5/10 | -5 |
+| **Busca Avançada** | Algolia/Elasticsearch | Fuse.js (autocomplete, Ctrl+K) | 10/10 | 9/10 | -1 |
 | **Comments** | Proprietário | Supabase | 9/10 | 8/10 | -1 |
+| **Segurança** | WAF, DDoS protection | Security Headers + Rate Limiting | 10/10 | 8/10 | -2 |
 | **Autorização/Paywall** | Assinatura | Não implementado | 10/10 | 3/10 | -7 |
 | **Publicidade** | Programática + diret | AdSense | 10/10 | 7/10 | -3 |
 | **E-E-A-T** | Completo | Completo | 10/10 | 9/10 | -1 |
@@ -119,6 +120,7 @@ Este documento compara o **Cenário Internacional** com:
 5. **RSS por categoria** - Funcional
 6. **PWA** - Service Worker
 7. **Metabase** - Analytics avançado
+8. **Busca Avançada** - Fuse.js com autocomplete e Ctrl+K
 
 ### ✅ Acima de Sites Médios
 
@@ -127,6 +129,7 @@ Este documento compara o **Cenário Internacional** com:
 3. **Categorias especializadas** - Alto CPC
 4. **SEO técnico** - Schema completo
 5. **Newsletter** - SMTP próprio
+6. **Segurança** - Security Headers + Rate Limiting + Middleware
 
 ---
 
