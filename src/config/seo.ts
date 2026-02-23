@@ -197,3 +197,21 @@ export const generateItemListJsonLd = (items: Array<{ name: string; url: string 
     item: item.url,
   })),
 });
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export const generateFaqJsonLd = (faqItems: FaqItem[], options?: { headline?: string }) => ({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((faq) => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer,
+    },
+  })),
+});
