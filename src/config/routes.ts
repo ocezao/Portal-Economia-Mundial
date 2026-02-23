@@ -72,14 +72,24 @@ export const SUBCATEGORIES = {
   ],
 } as const;
 
-// Todas as categorias para roteamento
+// Todas as categorias para roteamento (incluindo novas subcategorias de alto CPC)
 export const ALL_CATEGORIES = [
   ...CATEGORIES,
+  // Categorias existentes
   { slug: 'macroeconomia', name: 'Macroeconomia', color: '#7c3aed', description: 'Política monetária e fiscal' },
   { slug: 'moedas', name: 'Moedas', color: '#0891b2', description: 'Forex e criptomoedas' },
   { slug: 'comercio-global', name: 'Comércio Global', color: '#be123c', description: 'Trade internacional' },
   { slug: 'defesa', name: 'Defesa', color: '#4338ca', description: 'Segurança e militar' },
   { slug: 'analises', name: 'Análises', color: '#0f766e', description: 'Opinião e análise' },
+  // Novas subcategorias - Alto CPC/RPM
+  { slug: 'relacoes-internacionais', name: 'Relações Internacionais', color: '#c40000', description: 'Diplomacia e tratados' },
+  { slug: 'conflitos', name: 'Conflitos e Segurança', color: '#8b0000', description: 'Guerras e terrorismo' },
+  { slug: 'blocos-economicos', name: 'Blocos Econômicos', color: '#b22222', description: 'G20, BRICS, UE, OPEC' },
+  { slug: 'criptomoedas', name: 'Criptomoedas', color: '#f7931a', description: 'Bitcoin, Ethereum, crypto' },
+  { slug: 'investimentos', name: 'Investimentos', color: '#2e8b57', description: 'Carteira e wealth management' },
+  { slug: 'startups', name: 'Startups e Tech', color: '#4169e1', description: 'VC, IPOs, unicórnios' },
+  { slug: 'politica-monetaria', name: 'Política Monetária', color: '#191970', description: 'Fed, BC, juros' },
+  { slug: 'mercados-financeiros', name: 'Mercados Financeiros', color: '#006400', description: 'Ações, títulos, forex' },
 ] as const;
 
 export type CategorySlug = typeof CATEGORIES[number]['slug'] | typeof ALL_CATEGORIES[number]['slug'];

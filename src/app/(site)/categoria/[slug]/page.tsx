@@ -89,6 +89,10 @@ export async function generateMetadata({ params, searchParams }: CategoryPagePro
       description: category.description,
       images: [SEO_CONFIG.og.image],
     },
+    other: {
+      'rss:feed': `${siteUrl}/rss/categoria/${category.slug}/rss.xml`,
+      'alternate': `${siteUrl}/rss/categoria/${category.slug}/rss.xml`,
+    },
   };
 }
 

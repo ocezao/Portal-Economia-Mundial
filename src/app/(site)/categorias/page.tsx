@@ -8,7 +8,7 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Grid3X3, ArrowRight, TrendingUp, Globe, Cpu, BarChart3, Zap, Shield, Banknote, Ship, FileText } from 'lucide-react';
+import { Grid3X3, ArrowRight, TrendingUp, Globe, Cpu, BarChart3, Zap, Shield, Banknote, Ship, FileText, Rss } from 'lucide-react';
 import { CATEGORIES, ALL_CATEGORIES, ROUTES } from '@/config/routes';
 import { SEO_CONFIG, generateBreadcrumbJsonLd, generateItemListJsonLd } from '@/config/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -165,9 +165,17 @@ export default function TodasCategoriasPage() {
                       <p className="text-sm text-[#6b6b6b] mb-3 line-clamp-2">
                         {cat.description}
                       </p>
-                      <span className="text-xs font-medium text-[#6b6b6b] bg-[#f6f3ef] px-2 py-1 rounded-full">
-                        {cat.articleCount.toLocaleString()} artigos
-                      </span>
+                        <span className="text-xs font-medium text-[#6b6b6b] bg-[#f6f3ef] px-2 py-1 rounded-full">
+                          {cat.articleCount.toLocaleString()} artigos
+                        </span>
+                        <a 
+                          href={`/rss/categoria/${cat.slug}/rss.xml`}
+                          title={`RSS de ${cat.name}`}
+                          className="text-xs font-medium text-[#f7931a] bg-[#fff5e6] px-2 py-1 rounded-full hover:bg-[#f7931a] hover:text-white transition-colors flex items-center gap-1"
+                        >
+                          <Rss className="w-3 h-3" />
+                          RSS
+                        </a>
                     </div>
                   </div>
                 </Link>
@@ -186,16 +194,24 @@ export default function TodasCategoriasPage() {
             {SUB_CATEGORIES.map((cat) => {
               const Icon = CATEGORY_ICONS[cat.slug] || FileText;
               return (
-                <Link
-                  key={cat.slug}
-                  href={ROUTES.categoria(cat.slug)}
-                  className="group flex items-center gap-3 p-4 bg-[#f6f3ef] rounded-xl hover:bg-[#c40000] transition-all duration-300"
-                >
-                  <Icon className="w-5 h-5 text-[#6b6b6b] group-hover:text-white transition-colors" />
-                  <span className="font-medium text-[#111111] group-hover:text-white transition-colors">
-                    {cat.name}
-                  </span>
-                </Link>
+                <div key={cat.slug} className="relative group">
+                  <Link
+                    href={ROUTES.categoria(cat.slug)}
+                    className="flex items-center gap-3 p-4 bg-[#f6f3ef] rounded-xl hover:bg-[#c40000] transition-all duration-300"
+                  >
+                    <Icon className="w-5 h-5 text-[#6b6b6b] group-hover:text-white transition-colors" />
+                    <span className="font-medium text-[#111111] group-hover:text-white transition-colors">
+                      {cat.name}
+                    </span>
+                  </Link>
+                  <a 
+                    href={`/rss/categoria/${cat.slug}/rss.xml`}
+                    title={`RSS de ${cat.name}`}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Rss className="w-4 h-4 text-[#f7931a]" />
+                  </a>
+                </div>
               );
             })}
           </div>
