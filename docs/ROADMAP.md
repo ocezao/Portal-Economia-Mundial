@@ -35,6 +35,9 @@
 - [x] Schema.org FAQPage ✅ NOVO
 - [x] Página "Como Produzimos" ✅ NOVO
 - [x] Google Search Console ✅ CONFIGURADO
+- [x] 10 Novas Subcategorias (Alto CPC) ✅ NOVO
+- [x] Hub Pages por tema ✅ NOVO
+- [x] RSS por categoria ✅ NOVO
 
 ### Funcionalidades
 - [x] Newsletter (SMTP Hostinger)
@@ -65,11 +68,12 @@
 - [x] OneSignal Push Notifications (script)
 
 ### Fase 3: Funcionalidades Extras (Futuro)
+- [x] RSS por categoria ✅ NOVO
+- [x] Hub Pages por tema ✅ NOVO
 - [ ] Chat IA (HuggingFace)
 - [ ] Busca avançada (Algolia)
-- [ ] RSS por categoria
 - [ ] Analytics tempo real
-- [ ] Monitoramento uptime
+- [x] Monitoramento uptime (UptimeRobot)
 
 ---
 
