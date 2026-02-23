@@ -17,6 +17,28 @@ import { AdSenseScript } from '@/components/ads/AdSenseScript';
 import { AdMobileSticky } from '@/components/ads/AdMobileSticky';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { OneSignalInit } from '@/components/push/OneSignalInit';
+import { OneSignalHeadScript } from '@/components/push/OneSignalHeadScript';
+
+const APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || '';
+
+export const metadata = {
+  title: {
+    default: APP_CONFIG.brand.name,
+    template: `%s | ${APP_CONFIG.brand.name}`,
+  },
+  other: {
+    'onesignal-app-id': APP_ID,
+  },
+  scripts: APP_ID
+    ? [
+        {
+          src: 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js',
+          defer: true,
+          strategy: 'beforeInteractive',
+        },
+      ]
+    : [],
+};
 
 const ADSENSE_SLOT_LAYOUT_FOOTER =
   process.env.NEXT_PUBLIC_ADSENSE_SLOT_LAYOUT_FOOTER || process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;
