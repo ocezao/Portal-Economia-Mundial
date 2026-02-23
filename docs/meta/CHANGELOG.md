@@ -9,6 +9,12 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 ## [Unreleased]
 
 ### Added
+- **SEO Improvements** - Melhorias para igualar os grandes portais:
+  - Schema.org FAQPage (`generateFaqJsonLd`) para fragmentos ricos no Google
+  - Página "Como Produzimos" (`/como-produzimos/`) com processo jornalístico completo
+  - FAQ com 5 perguntas frequentes sobre metodologia editorial
+  - Política de correções pública
+  - Google Search Console configurado
 - **OneSignal Push Notifications** - Script adicionado ao `<head>` de todas as páginas públicas:
   - Componente `OneSignalHeadScript.tsx` para carregamento no head
   - Integração via metadata no layout `(site)`

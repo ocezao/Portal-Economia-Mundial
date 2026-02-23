@@ -27,11 +27,14 @@
 - [x] Dark Mode
 
 ### SEO
-- [x] Sitemap dinâmico ✅ NOVO
+- [x] Sitemap dinâmico ✅
 - [x] Robots.txt
 - [x] Schema.org NewsArticle
 - [x] OpenGraph + Twitter Cards
 - [x] Canonical URLs
+- [x] Schema.org FAQPage ✅ NOVO
+- [x] Página "Como Produzimos" ✅ NOVO
+- [x] Google Search Console ✅ CONFIGURADO
 
 ### Funcionalidades
 - [x] Newsletter (SMTP Hostinger)
@@ -102,10 +105,11 @@
 ### SEO
 - Sitemap: ✅ Dinâmico
 - Robots.txt: ✅ Otimizado
-- Schema.org: ✅ NewsArticle
+- Schema.org: ✅ NewsArticle + FAQPage
+- Google Search Console: ✅ Configurado
 
 ### Engajamento
-- Push: Script instalado
+- Push: ✅ Ativo (OneSignal)
 - Newsletter: ✅ Funcional
 
 ---
@@ -117,6 +121,8 @@
 - Performance atual: TTFB 0.22s (muito bom!)
 - ✅ Build corrigido: Next.js 15 resolve bug do Turbopack
 - ✅ Collector Docker: corrigido para Node 20 + todas deps
+- ✅ Página "Como Produzimos" criada para E-E-A-T
+- ✅ Schema FAQ implementado
 
 ---
 
