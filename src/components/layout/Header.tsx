@@ -180,14 +180,14 @@ export const Header = memo(function Header() {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="hidden sm:inline-flex border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white rounded-full"
+                  className="hidden sm:inline-flex border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg animate-subtle-pulse"
                 >
                   <Link href={ROUTES.login}>Entrar</Link>
                 </Button>
                 <Button
                   asChild
                   size="sm"
-                  className="hidden md:inline-flex bg-[#c40000] hover:bg-[#a00000] text-white rounded-full"
+                  className="hidden md:inline-flex bg-[#c40000] hover:bg-[#a00000] text-white rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 >
                   <Link href="/cadastro">Cadastrar</Link>
                 </Button>
