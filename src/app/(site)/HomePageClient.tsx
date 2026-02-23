@@ -149,7 +149,10 @@ export default function HomePageClient({
               <Zap className="w-4 h-4" />
               <span className="text-xs font-bold uppercase">Urgente</span>
               <time className="text-xs opacity-90">
-                {new Date(breaking[0].publishedAt).toLocaleTimeString(locale, {
+                {new Date(breaking[0].publishedAt).toLocaleString(locale, {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
