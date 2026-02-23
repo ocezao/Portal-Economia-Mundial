@@ -5,6 +5,7 @@ import { Inter, Merriweather } from 'next/font/google';
 import '../index.css';
 
 import { Providers } from './providers';
+import { SearchModal } from '@/components/search/SearchModal';
 import { APP_CONFIG } from '@/config/app';
 import { SEO_CONFIG } from '@/config/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -163,6 +164,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* End Google Tag Manager (noscript) */}
         
         <Providers>
+          <SearchModal />
           {children}
         </Providers>
       </body>
