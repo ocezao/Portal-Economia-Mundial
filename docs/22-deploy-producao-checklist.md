@@ -61,7 +61,7 @@ Progresso: ████████████████████ 95% (5% 
 - [x] RSS Feed
 - [x] PWA Manifest
 - [x] Service Worker
-- [x] Push Notifications (OneSignal)
+- [x] Push Notifications (OneSignal) ✅ ATIVO (script no head)
 
 ### Segurança
 - [x] Headers de segurança (X-Frame-Options, CSP, etc)

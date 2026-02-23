@@ -9,6 +9,11 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 ## [Unreleased]
 
 ### Added
+- **OneSignal Push Notifications** - Script adicionado ao `<head>` de todas as páginas públicas:
+  - Componente `OneSignalHeadScript.tsx` para carregamento no head
+  - Integração via metadata no layout `(site)`
+  - Mantido fallback `OneSignalInit.tsx` para redundância
+  - App ID configurado: `NEXT_PUBLIC_ONESIGNAL_APP_ID`
 - **MCP Server v1.1.0** - Servidor Model Context Protocol completo para integraÃ§Ã£o com Codex CLI:
   - **17 ferramentas** organizadas em 3 categorias:
     - **Analytics (6)**: `get_analytics_events`, `get_article_stats`, `get_top_articles`, `get_user_sessions`, `get_dashboard_metrics`, `get_traffic_sources`
@@ -65,6 +70,9 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 - Fixed a production crash in `MarketTicker` caused by calling React hooks after a conditional return.
 - E2E smoke tests now validate `/rss.xml` and `/sitemap.xml` via `page.request.get()` (Firefox navigation could treat XML as download).
 - E2E determinism: external market widgets/services are disabled during tests via `NEXT_PUBLIC_ENABLE_MARKET_TICKER=false` and `NEXT_PUBLIC_FINNHUB_ENABLED=false` (see `playwright.config.ts`).
+- **Next.js 16 Turbopack build error** - Downgraded to Next.js 15 to resolve "Dependency tracking is disabled so invalidation is not allowed" panic
+- **Collector Docker build error** - Changed from Node 18 to Node 20, removed `--only=production` flag to install TypeScript dependencies
+- **OptimizeCss removed** - Removed `optimizeCss: true` from next.config.js (critters module not found during build)
 
 ---
 

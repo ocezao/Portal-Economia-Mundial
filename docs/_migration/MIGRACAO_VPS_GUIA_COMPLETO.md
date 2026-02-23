@@ -55,7 +55,7 @@ Este guia descreve o processo completo de migração do Portal Econômico Mundia
 
 ## 📦 Componentes do Projeto
 
-### 1. Frontend (Next.js 16+)
+### 1. Frontend (Next.js 15+)
 - **Local**: `/` (raiz)
 - **Porta**: 3000 (produção)
 - **Build**: `npm run build`

@@ -18,7 +18,7 @@ Skill especializada em analisar e documentar a infraestrutura completa do Portal
 ## Componentes do Projeto
 
 ### 1. Frontend (Next.js)
-- **Framework**: Next.js 16+ com App Router
+- **Framework**: Next.js 15+ com App Router
 - **Porta**: 5173 (dev) / 3000 (produção)
 - **Build**: Output standalone ou export estático
 - **Node**: 20+
@@ -52,7 +52,7 @@ Skill especializada em analisar e documentar a infraestrutura completa do Portal
 | Supabase | Auth + Dados principais | Manter externo |
 | Finnhub API | Cotações mercado | Manter externo |
 | GNews API | Notícias IA | Manter externo |
-| servi�o de IA | Geração de conteúdo | Manter externo |
+| servi�o de IA | Geração de conteúdo | Manter externo |
 
 ## Variáveis de Ambiente Críticas
 

@@ -17,11 +17,11 @@
 ## Funcionalidades já Implementadas ✅
 
 ### Core
-- [x] Framework Next.js 16
+- [x] Framework Next.js 15 (downgrade do 16 resolve Turbopack bug)
 - [x] React 19 + Tailwind CSS
 - [x] Supabase (Auth + Storage)
 - [x] PostgreSQL local (VPS)
-- [x] Docker + Docker Compose
+- [x] Docker + Docker Compose (Collector corrigido: Node 20)
 - [x] Nginx com SSL
 - [x] PWA
 - [x] Dark Mode
@@ -44,7 +44,7 @@
 - [x] RSS Feed
 
 ### Engajamento
-- [x] OneSignal Push Notifications ✅ NOVO (script instalado)
+- [x] OneSignal Push Notifications ✅ ATIVO (script no head + fallback)
 - [x] Comentários
 - [x] Newsletter
 
@@ -115,7 +115,8 @@
 - Todas as credenciais sensíveis estão no `.env` (não commitado)
 - O projeto usa arquitetura híbrida: Supabase (Auth/Storage) + PostgreSQL local (dados)
 - Performance atual: TTFB 0.22s (muito bom!)
-- O build no Docker está com problema de Turbopack (Next.js 16) - precisa de investigação
+- ✅ Build corrigido: Next.js 15 resolve bug do Turbopack
+- ✅ Collector Docker: corrigido para Node 20 + todas deps
 
 ---
 

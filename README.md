@@ -74,7 +74,7 @@ A construção foi guiada por 4 pilares:
 
 **Stack técnica**
 
-- Framework: Next.js 16 (App Router)
+- Framework: Next.js 15 (App Router)
 - Frontend: React 19 + TypeScript
 - UI: Tailwind CSS + shadcn/ui
 - Dados e Auth: Supabase (Postgres + Auth)

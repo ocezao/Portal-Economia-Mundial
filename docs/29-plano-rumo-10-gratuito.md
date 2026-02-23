@@ -161,7 +161,7 @@ Entregas:
 Ferramentas:
 
 - Newsletter atual (SMTP Hostinger)
-- Push gratuito (OneSignal plano free, somente se necessario)
+- Push Notifications (OneSignal) ✅ CONFIGURADO E FUNCIONAL
 - Social organico manual com automacao minima (scripts internos)
 
 Objetivo:
@@ -407,7 +407,7 @@ KPIs alvo:
 
 | Gap real | Ferramenta gratis | Condicao de uso |
 |---|---|---|
-| Push em escala | OneSignal free | usar apenas apos preferencia e governanca pronta |
+| Push em escala | OneSignal free | ✅ CONFIGURADO (2026-02-23) |
 | Search Console | Google Search Console | obrigatorio para SEO tecnico |
 | UX observacional | Microsoft Clarity | usar para analise de friccao |
 | Asset design | Figma free | somente para padrao visual e handoff |

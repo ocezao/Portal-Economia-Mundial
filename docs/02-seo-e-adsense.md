@@ -257,14 +257,14 @@ ImplementaÃ§Ã£o real:
 
 - [ ] Title Ãºnico por pÃ¡gina
 - [ ] Meta description (150-160 chars)
-- [ ] H1 Ãºnico por pÃ¡gina
-- [ ] Imagens com alt text
-- [ ] URLs amigÃ¡veis
-- [ ] Internal linking
-- [ ] Mobile-friendly
-- [ ] PageSpeed > 90
-- [ ] HTTPS
-- [ ] Sitemap.xml
-- [ ] Robots.txt
-- [ ] JSON-LD
-- [ ] `NEXT_PUBLIC_SITE_URL` definido em produÃ§Ã£o (canonical/sitemap/host corretos)
+- [x] H1 Ãºnico por pÃ¡gina
+- [x] Imagens com alt text
+- [x] URLs amigÃ¡veis
+- [x] Internal linking
+- [x] Mobile-friendly
+- [x] PageSpeed > 90
+- [x] HTTPS
+- [x] Sitemap.xml ✅ DINÃ‚MICO (src/app/sitemap.ts)
+- [x] Robots.txt ✅ OTIMIZADO
+- [x] JSON-LD ✅ NEWSARTICLE + ORGANIZATION
+- [x] `NEXT_PUBLIC_SITE_URL` definido em produÃ§Ã£o (canonical/sitemap/host corretos)

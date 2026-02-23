@@ -54,13 +54,13 @@ o MCP pode falhar com erro de transporte. Nesses casos, use SSH direto a partir 
 ## 4) Contas de terceiros (quando aplicavel)
 
 ### O que ja existe no repositorio
-- OneSignal (init): `src/components/push/OneSignalInit.tsx`.
+- OneSignal (init): `src/components/push/OneSignalInit.tsx` + `src/components/push/OneSignalHeadScript.tsx` (head script).
 - Documentacao de CI/CD e secrets: `docs/17-cicd-pipeline.md`.
 
 ### O que falta voce fornecer/confirmar
 - Sentry: DSN (e organizacao/projeto) se for obrigatorio.
 - Newsletter: qual provedor (Brevo/Resend/SendGrid/outro) e credenciais.
-- Confirmacao se OneSignal esta ativo e se vamos usar REST API key em prod.
+- ✅ OneSignal: CONFIGURADO e FUNCIONAL (App ID: NEXT_PUBLIC_ONESIGNAL_APP_ID)
 
 ## 5) Criterio de pronto (escopo e prioridade)
 
