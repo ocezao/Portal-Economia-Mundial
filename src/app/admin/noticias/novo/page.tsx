@@ -44,6 +44,7 @@ import {
 import { createArticleApi } from '@/services/articleApi';
 import { listAdminAuthors } from '@/services/adminAuthors';
 import { CONTENT_CONFIG } from '@/config/content';
+import { ALL_CATEGORIES } from '@/config/routes';
 import type { Author } from '@/config/authors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,6 +97,8 @@ export default function AdminNewsNewPage() {
     seoDescription: '',
     breaking: false,
     featured: false,
+    // FAQ
+    faqs: [] as Array<{ question: string; answer: string }>,
     // Agendamento
     scheduledDate: '',
     scheduledTime: '',
@@ -621,6 +624,36 @@ export default function AdminNewsNewPage() {
                         </p>
                       )}
                     </fieldset>
+
+                    {/* Categoria */}
+                    <fieldset className="mt-4">
+                      <Label htmlFor="category" className="text-sm font-medium text-[#111111]">
+                        Categoria *
+                      </Label>
+                      <select
+                        id="category"
+                        value={formData.category}
+                        onChange={(e) => {
+                          handleChange('category', e.target.value);
+                          setHasChanges(true);
+                        }}
+                        className="w-full mt-1.5 px-4 py-2.5 border border-[#e5e5e5] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#c40000] bg-white"
+                      >
+                        <optgroup label="Categorias Principais">
+                          {ALL_CATEGORIES.filter(c => ['geopolitica', 'economia', 'tecnologia'].includes(c.slug)).map((cat) => (
+                            <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Subcategorias">
+                          {ALL_CATEGORIES.filter(c => !['geopolitica', 'economia', 'tecnologia'].includes(c.slug)).map((cat) => (
+                            <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                          ))}
+                        </optgroup>
+                      </select>
+                      <p className="mt-1 text-xs text-[#6b6b6b]">
+                        Categoria: {ALL_CATEGORIES.find(c => c.slug === formData.category)?.name || 'Selecione'}
+                      </p>
+                    </fieldset>
                   </article>
 
                   {/* Resumo */}
@@ -920,6 +953,201 @@ export default function AdminNewsNewPage() {
                       <p className={`mt-1 text-xs ${formData.seoDescription.length > 160 ? 'text-[#ef4444]' : 'text-[#6b6b6b]'}`}>
                         {formData.seoDescription.length}/160 caracteres (ideal)
                       </p>
+                    </fieldset>
+
+                    {/* Tags/Keywords */}
+                    <fieldset className="mt-4">
+                      <Label className="text-sm font-medium text-[#111111]">
+                        Palavras-chave (Tags)
+                      </Label>
+                      <section className="mt-1.5 space-y-2">
+                        <section className="flex flex-wrap gap-2">
+                          {formData.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="gap-1 pr-1">
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newTags = formData.tags.filter((_, i) => i !== index);
+                                  setFormData(prev => ({ ...prev, tags: newTags }));
+                                  setHasChanges(true);
+                                }}
+                                className="ml-1 hover:text-[#ef4444]"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </section>
+                        <section className="flex gap-2">
+                          <Input
+                            id="tagInput"
+                            value={formData.tagInput}
+                            onChange={(e) => handleChange('tagInput', e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && formData.tagInput.trim()) {
+                                e.preventDefault();
+                                if (!formData.tags.includes(formData.tagInput.trim())) {
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    tags: [...prev.tags, prev.tagInput.trim()],
+                                    tagInput: ''
+                                  }));
+                                  setHasChanges(true);
+                                }
+                              }
+                            }}
+                            placeholder="Digite uma tag e pressione Enter"
+                            className="flex-1"
+                          />
+                        </section>
+                        <p className="text-xs text-[#6b6b6b]">
+                          Tags sugeridas: 
+                          {CONTENT_CONFIG.tags.popular.slice(0, 8).map(tag => (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => {
+                                if (!formData.tags.includes(tag)) {
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    tags: [...prev.tags, tag]
+                                  }));
+                                  setHasChanges(true);
+                                }
+                              }}
+                              className="ml-1 text-[#c40000] hover:underline"
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </p>
+                      </section>
+                    </fieldset>
+
+                    {/* Análise de SEO */}
+                    <fieldset className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
+                      <h3 className="text-sm font-medium text-[#111111] mb-3">Análise de SEO</h3>
+                      <section className="space-y-2 text-xs">
+                        <section className="flex items-center justify-between">
+                          <span className="text-[#6b6b6b]">Título SEO</span>
+                          <span className={formData.seoTitle.length >= 50 && formData.seoTitle.length <= 60 ? 'text-[#22c55e]' : 'text-[#ef4444]'}>
+                            {formData.seoTitle.length}/60 {formData.seoTitle.length >= 50 && formData.seoTitle.length <= 60 ? '✓' : '✗'}
+                          </span>
+                        </section>
+                        <section className="flex items-center justify-between">
+                          <span className="text-[#6b6b6b]">Descrição SEO</span>
+                          <span className={formData.seoDescription.length >= 150 && formData.seoDescription.length <= 160 ? 'text-[#22c55e]' : 'text-[#ef4444]'}>
+                            {formData.seoDescription.length}/160 {formData.seoDescription.length >= 150 && formData.seoDescription.length <= 160 ? '✓' : '✗'}
+                          </span>
+                        </section>
+                        <section className="flex items-center justify-between">
+                          <span className="text-[#6b6b6b]">Palavras-chave</span>
+                          <span className={formData.tags.length >= 3 ? 'text-[#22c55e]' : 'text-[#ef4444]'}>
+                            {formData.tags.length} tags {formData.tags.length >= 3 ? '✓' : '✗'}
+                          </span>
+                        </section>
+                        <section className="flex items-center justify-between">
+                          <span className="text-[#6b6b6b]">Conteúdo</span>
+                          <span className={formData.content.length >= 1000 ? 'text-[#22c55e]' : 'text-[#ef4444]'}>
+                            {formData.content.length} chars {formData.content.length >= 1000 ? '✓' : '✗'}
+                          </span>
+                        </section>
+                      </section>
+                    </fieldset>
+
+                    {/* Preview OpenGraph */}
+                    <fieldset className="mt-6">
+                      <h3 className="text-sm font-medium text-[#111111] mb-3">Preview OpenGraph (Facebook/Twitter)</h3>
+                      <section className="border border-[#e5e5e5] rounded-lg overflow-hidden">
+                        {formData.coverImage ? (
+                          <img src={formData.coverImage} alt="" className="w-full aspect-video object-cover" />
+                        ) : (
+                          <section className="w-full aspect-video bg-[#f0f0f0] flex items-center justify-center">
+                            <ImageIcon className="w-8 h-8 text-[#6b6b6b]" />
+                          </section>
+                        )}
+                        <section className="p-3 bg-white">
+                          <p className="text-xs text-[#6b6b6b] uppercase">cenariointernacional.com.br</p>
+                          <p className="text-sm font-medium text-[#1a0dab] line-clamp-1">
+                            {formData.seoTitle || formData.title || 'Título do Artigo'}
+                          </p>
+                          <p className="text-xs text-[#545454] line-clamp-2">
+                            {formData.seoDescription || formData.excerpt || 'Descrição do artigo...'}
+                          </p>
+                        </section>
+                      </section>
+                    </fieldset>
+
+                    {/* Schema FAQ */}
+                    <fieldset className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
+                      <section className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-medium text-[#111111]">Perguntas Frequentes (FAQ)</h3>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              faqs: [...prev.faqs, { question: '', answer: '' }]
+                            }));
+                            setHasChanges(true);
+                          }}
+                        >
+                          + Adicionar FAQ
+                        </Button>
+                      </section>
+                      {formData.faqs.length > 0 && (
+                        <section className="space-y-3">
+                          {formData.faqs.map((faq, index) => (
+                            <section key={index} className="p-3 bg-white rounded-lg border border-[#e5e5e5]">
+                              <section className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-[#6b6b6b]">FAQ #{index + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newFaqs = formData.faqs.filter((_, i) => i !== index);
+                                    setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                    setHasChanges(true);
+                                  }}
+                                  className="text-[#ef4444] hover:text-[#dc2626]"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </section>
+                              <Input
+                                value={faq.question}
+                                onChange={(e) => {
+                                  const newFaqs = [...formData.faqs];
+                                  newFaqs[index].question = e.target.value;
+                                  setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                  setHasChanges(true);
+                                }}
+                                placeholder="Pergunta"
+                                className="mb-2"
+                              />
+                              <Textarea
+                                value={faq.answer}
+                                onChange={(e) => {
+                                  const newFaqs = [...formData.faqs];
+                                  newFaqs[index].answer = e.target.value;
+                                  setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                  setHasChanges(true);
+                                }}
+                                placeholder="Resposta"
+                                rows={2}
+                                className="resize-none"
+                              />
+                            </section>
+                          ))}
+                        </section>
+                      )}
+                      {formData.faqs.length === 0 && (
+                        <p className="text-xs text-[#6b6b6b]">
+                          Adicione perguntas e respostas frequentes para melhorar o SEO com schema FAQPage.
+                        </p>
+                      )}
                     </fieldset>
 
                     <section className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
