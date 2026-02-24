@@ -1,13 +1,20 @@
 /**
- * Serviço de Notícias - Supabase
- * CRUD + consultas e agendamento via banco de dados
+ * Serviço de Notícias - Supabase + PostgreSQL Local
+ * CRUD + consultas via banco de dados
+ * 
+ * NOTA: Migração em progresso - usando PostgreSQL local para leitura,
+ * Supabase mantido para Auth e Storage
  */
 
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { query } from '@/lib/db';
 import { toWebpUrl } from '@/lib/image';
 import { logger } from '@/lib/logger';
 import { escapeLikePattern } from '@/lib/security';
 import type { NewsArticle } from '@/types';
+
+// Flag para usar PostgreSQL local (se DATABASE_URL estiver configurada)
+const useLocalDb = !!process.env.DATABASE_URL;
 
 // ==================== TIPOS ====================
 
@@ -106,6 +113,35 @@ function isArticleRow(value: unknown): value is ArticleRow {
 // Type guard para SearchResultRow
 function isSearchResultRow(value: unknown): value is SearchResultRow {
   return isRecord(value) && (value.id === undefined || typeof value.id === 'string');
+}
+
+// ==================== HELPERS PARA POSTGRESQL LOCAL ====================
+
+function mapDbRowToArticle(row: any): NewsArticle {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    titleEn: row.title_en || undefined,
+    excerpt: row.excerpt || '',
+    excerptEn: row.excerpt_en || undefined,
+    content: row.content || '',
+    contentEn: row.content_en || undefined,
+    coverImage: row.cover_image ? toWebpUrl(row.cover_image) : '/images/news/default.webp',
+    authorId: row.author_id || 'unknown',
+    author: row.author_name || 'Desconhecido',
+    category: (row.category as 'geopolitica' | 'economia' | 'tecnologia') || 'economia',
+    tags: row.tags || [],
+    publishedAt: row.published_at || row.created_at,
+    updatedAt: row.updated_at,
+    readingTime: row.reading_time || 4,
+    featured: row.is_featured || false,
+    breaking: row.is_breaking || false,
+    views: row.views || 0,
+    likes: row.likes || 0,
+    shares: row.shares || 0,
+    comments: row.comments_count || 0,
+  };
 }
 
 // ==================== HELPERS ====================
@@ -357,6 +393,24 @@ export async function getArticlesByCategory(category: string): Promise<NewsArtic
 }
 
 export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
+  // Usar PostgreSQL local se DATABASE_URL estiver configurada
+  if (useLocalDb) {
+    try {
+      const result = await query(
+        `SELECT * FROM news_articles 
+         WHERE status = 'published' AND is_featured = true 
+         ORDER BY published_at DESC NULLS LAST 
+         LIMIT $1`,
+        [limit]
+      );
+      return result.rows.map(mapDbRowToArticle);
+    } catch (error) {
+      logger.error('[newsManager] getFeaturedArticles (local DB) failed:', error);
+      return [];
+    }
+  }
+
+  // Fallback para Supabase
   if (!isSupabaseConfigured) return [];
 
   return withQueryCache(`newsManager:getFeaturedArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
@@ -384,6 +438,22 @@ export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
 }
 
 export async function getBreakingNews(): Promise<NewsArticle[]> {
+  // Usar PostgreSQL local se DATABASE_URL estiver configurada
+  if (useLocalDb) {
+    try {
+      const result = await query(
+        `SELECT * FROM news_articles 
+         WHERE status = 'published' AND is_breaking = true 
+         ORDER BY published_at DESC NULLS LAST`
+      );
+      return result.rows.map(mapDbRowToArticle);
+    } catch (error) {
+      logger.error('[newsManager] getBreakingNews (local DB) failed:', error);
+      return [];
+    }
+  }
+
+  // Fallback para Supabase
   if (!isSupabaseConfigured) return [];
 
   return withQueryCache('newsManager:getBreakingNews', QUERY_CACHE_TTL_MS, async () => {
@@ -410,6 +480,24 @@ export async function getBreakingNews(): Promise<NewsArticle[]> {
 }
 
 export async function getLatestArticles(limit = 10): Promise<NewsArticle[]> {
+  // Usar PostgreSQL local se DATABASE_URL estiver configurada
+  if (useLocalDb) {
+    try {
+      const result = await query(
+        `SELECT * FROM news_articles 
+         WHERE status = 'published' 
+         ORDER BY published_at DESC NULLS LAST 
+         LIMIT $1`,
+        [limit]
+      );
+      return result.rows.map(mapDbRowToArticle);
+    } catch (error) {
+      logger.error('[newsManager] getLatestArticles (local DB) failed:', error);
+      return [];
+    }
+  }
+
+  // Fallback para Supabase
   if (!isSupabaseConfigured) return [];
 
   return withQueryCache(`newsManager:getLatestArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
@@ -465,6 +553,24 @@ export async function getRelatedArticles(
 }
 
 export async function getTrendingArticles(limit = 5): Promise<NewsArticle[]> {
+  // Usar PostgreSQL local se DATABASE_URL estiver configurada
+  if (useLocalDb) {
+    try {
+      const result = await query(
+        `SELECT * FROM news_articles 
+         WHERE status = 'published' 
+         ORDER BY views DESC 
+         LIMIT $1`,
+        [limit]
+      );
+      return result.rows.map(mapDbRowToArticle);
+    } catch (error) {
+      logger.error('[newsManager] getTrendingArticles (local DB) failed:', error);
+      return [];
+    }
+  }
+
+  // Fallback para Supabase
   if (!isSupabaseConfigured) return [];
 
   return withQueryCache(`newsManager:getTrendingArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
