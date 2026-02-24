@@ -30,10 +30,10 @@ call_cron() {
     if [ -n "$CRON_API_SECRET" ]; then
         curl -s -X POST \
             -H "x-cron-secret: $CRON_API_SECRET" \
-            "$WEB_URL/api/cron/$endpoint" \
+            "$WEB_URL/api/cron?type=$endpoint" \
             >> "$LOG_FILE" 2>&1
     else
-        curl -s -X POST "$WEB_URL/api/cron/$endpoint" >> "$LOG_FILE" 2>&1
+        curl -s -X POST "$WEB_URL/api/cron?type=$endpoint" >> "$LOG_FILE" 2>&1
     fi
     
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $description: $?" >> "$LOG_FILE"
@@ -46,25 +46,25 @@ install_crontab() {
 # Limite: ~300 chamadas/dia (Finnhub: 60/min = 86.400/dia)
 
 # Atualizar notícias de mercado - a cada 15 minutos
-*/15 * * * * curl -s -X POST http://localhost:3000/api/cron/refresh-market-news > /dev/null 2>&1
+*/15 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=market-news" > /dev/null 2>&1
 
 # Atualizar earnings - a cada 1 hora
-0 * * * * curl -s -X POST http://localhost:3000/api/cron/refresh-earnings > /dev/null 2>&1
+0 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=earnings" > /dev/null 2>&1
 
 # Atualizar índices globais - a cada 15 minutos
-*/15 * * * * curl -s -X POST http://localhost:3000/api/cron/refresh-indices > /dev/null 2>&1
+*/15 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=indices" > /dev/null 2>&1
 
 # Atualizar commodities - a cada 15 minutos
-*/15 * * * * curl -s -X POST http://localhost:3000/api/cron/refresh-commodities > /dev/null 2>&1
+*/15 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=commodities" > /dev/null 2>&1
 
 # Atualizar setores - a cada 1 hora
-0 * * * * curl -s -X POST http://localhost:3000/api/cron/refresh-sectors > /dev/null 2>&1
+0 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=sectors" > /dev/null 2>&1
 
 # Atualizar calendário econômico - a cada 1 hora
-0 * * * * curl -s -X POST http://localhost:3000/api/cron/refresh-economic-calendar > /dev/null 2>&1
+0 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=economic-calendar" > /dev/null 2>&1
 
 # Verificar status todos os dias às 6h
-0 6 * * * curl -s http://localhost:3000/api/cron/status > /tmp/cron-status-\$(date +\%Y\%m\%d).json 2>&1
+0 6 * * * curl -s "http://localhost:3000/api/cron?type=status" > /tmp/cron-status-\$(date +\%Y\%m\%d).json 2>&1
 
 EOF
     echo "Crontab instalado com sucesso!"
@@ -81,15 +81,15 @@ uninstall_crontab() {
 
 # Mostrar status atual
 show_status() {
-    curl -s http://localhost:3000/api/cron/status | jq '.' 2>/dev/null || \
-    curl -s http://localhost:3000/api/cron/status
+    curl -s "http://localhost:3000/api/cron?type=status" | jq '.' 2>/dev/null || \
+    curl -s "http://localhost:3000/api/cron?type=status"
 }
 
 # Atualizar tudo agora
 refresh_all() {
     echo "Atualizando todos os dados..."
-    curl -s -X POST http://localhost:3000/api/cron/refresh-all | jq '.' 2>/dev/null || \
-    curl -s -X POST http://localhost:3000/api/cron/refresh-all
+    curl -s -X POST "http://localhost:3000/api/cron?type=all" | jq '.' 2>/dev/null || \
+    curl -s -X POST "http://localhost:3000/api/cron?type=all"
 }
 
 # Verificar se a URL está disponível

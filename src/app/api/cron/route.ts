@@ -4,7 +4,7 @@
  * Endpoints que serão chamados periodicamente para
  * buscar dados das APIs e armazenar no banco local.
  * 
- * 调用: curl -X POST http://localhost:3000/api/cron/refresh-market-news
+ * 调用: curl -X POST http://localhost:3000/api/cron?type=market-news
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,8 +20,8 @@ function authenticateRequest(request: NextRequest): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const url = new URL(request.url);
-  const type = url.pathname.split('/').pop();
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type');
 
   if (!authenticateRequest(request) && process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -29,22 +29,22 @@ export async function POST(request: NextRequest) {
 
   try {
     switch (type) {
-      case 'refresh-market-news':
+      case 'market-news':
         return await refreshMarketNews();
-      case 'refresh-earnings':
+      case 'earnings':
         return await refreshEarnings();
-      case 'refresh-indices':
+      case 'indices':
         return await refreshIndices();
-      case 'refresh-commodities':
+      case 'commodities':
         return await refreshCommodities();
-      case 'refresh-sectors':
+      case 'sectors':
         return await refreshSectors();
-      case 'refresh-economic-calendar':
+      case 'economic-calendar':
         return await refreshEconomicCalendar();
-      case 'refresh-all':
+      case 'all':
         return await refreshAll();
       default:
-        return NextResponse.json({ error: 'Unknown refresh type' }, { status: 400 });
+        return NextResponse.json({ error: 'Unknown refresh type. Use: market-news, earnings, indices, commodities, sectors, economic-calendar, all' }, { status: 400 });
     }
   } catch (error) {
     console.error('[Cron] Refresh failed:', error);
@@ -60,7 +60,7 @@ async function refreshMarketNews() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.info(`[Cron] Market news updated: ${data.length} items`);
+      console.log(`[Cron] Market news updated: ${data.length} items`);
       return NextResponse.json({ 
         success: true, 
         key, 
@@ -87,7 +87,7 @@ async function refreshEarnings() {
     const payload = { from: today, to: nextWeek, data };
     
     await saveSnapshotToLocalDb(key, payload);
-    console.info(`[Cron] Earnings updated: ${data.length} items`);
+    console.log(`[Cron] Earnings updated: ${data.length} items`);
     
     return NextResponse.json({ 
       success: true, 
@@ -109,7 +109,7 @@ async function refreshIndices() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.info(`[Cron] Indices updated: ${data.length} items`);
+      console.log(`[Cron] Indices updated: ${data.length} items`);
       
       return NextResponse.json({ 
         success: true, 
@@ -134,7 +134,7 @@ async function refreshCommodities() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.info(`[Cron] Commodities updated: ${data.length} items`);
+      console.log(`[Cron] Commodities updated: ${data.length} items`);
       
       return NextResponse.json({ 
         success: true, 
@@ -159,7 +159,7 @@ async function refreshSectors() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.info(`[Cron] Sectors updated: ${data.length} items`);
+      console.log(`[Cron] Sectors updated: ${data.length} items`);
       
       return NextResponse.json({ 
         success: true, 
@@ -187,7 +187,7 @@ async function refreshEconomicCalendar() {
     const payload = { from: today, to: nextWeek, data };
     
     await saveSnapshotToLocalDb(key, payload);
-    console.info(`[Cron] Economic calendar updated: ${data.length} items`);
+    console.log(`[Cron] Economic calendar updated: ${data.length} items`);
     
     return NextResponse.json({ 
       success: true, 
@@ -224,8 +224,8 @@ async function refreshAll() {
 }
 
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const type = url.pathname.split('/').pop();
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type');
   
   if (type === 'status') {
     const keys = [
@@ -251,14 +251,16 @@ export async function GET(request: NextRequest) {
   
   return NextResponse.json({ 
     message: 'Use POST to trigger refresh',
+    example: 'curl -X POST "http://localhost:3000/api/cron?type=market-news"',
     endpoints: [
-      '/api/cron/refresh-market-news',
-      '/api/cron/refresh-earnings',
-      '/api/cron/refresh-indices',
-      '/api/cron/refresh-commodities',
-      '/api/cron/refresh-sectors',
-      '/api/cron/refresh-economic-calendar',
-      '/api/cron/refresh-all',
+      '?type=market-news',
+      '?type=earnings',
+      '?type=indices',
+      '?type=commodities',
+      '?type=sectors',
+      '?type=economic-calendar',
+      '?type=all',
+      '?type=status (GET)'
     ]
   });
 }
