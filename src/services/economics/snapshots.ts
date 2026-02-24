@@ -3,9 +3,12 @@
  *
  * Ideia: um job (Edge Function/cron) atualiza `external_snapshots` periodicamente
  * e o site so le deste cache. Isso reduz custo por pageview e evita rate limit.
+ * 
+ * PRIORIDADE: PostgreSQL local > Supabase > API direta
  */
 
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { getSnapshotFromLocalDb } from '@/lib/db';
 import {
   getMarketNews,
   getEconomicCalendar,
@@ -15,11 +18,28 @@ import {
   getSectorsPerformance,
 } from './finnhubService';
 import type { EarningsEvent, MarketNews, EconomicCalendarEvent } from './finnhubService';
-import { logger } from '@/lib/logger';
+
+const useLocalDb = !!process.env.DATABASE_URL;
 
 type SnapshotRow = { key: string; data: unknown; updated_at: string };
 
 async function readSnapshot<T>(key: string): Promise<{ data: T | null; updatedAt: Date | null }> {
+  // 1. Tentar ler do PostgreSQL local primeiro
+  if (useLocalDb) {
+    try {
+      const localSnapshot = await getSnapshotFromLocalDb<T>(key);
+      if (localSnapshot && localSnapshot.data) {
+        return {
+          data: localSnapshot.data as T,
+          updatedAt: localSnapshot.updated_at,
+        };
+      }
+    } catch {
+      console.log('[Snapshots] Local DB read failed, trying Supabase');
+    }
+  }
+
+  // 2. Fallback para Supabase
   if (!isSupabaseConfigured) return { data: null, updatedAt: null };
 
   const { data, error } = await supabase
@@ -72,7 +92,7 @@ export async function getMarketNewsSnapshot(category: string = 'general'): Promi
   try {
     return await getMarketNews(category);
   } catch (err) {
-    logger.warn('[Snapshots] marketNews fallback failed:', err);
+    console.warn('[Snapshots] marketNews fallback failed:', err);
     return [];
   }
 }
@@ -96,7 +116,7 @@ export async function getEarningsNext7DaysSnapshot(): Promise<EarningsEvent[]> {
   try {
     return await getEarningsCalendar(today, nextWeek);
   } catch (err) {
-    logger.warn('[Snapshots] earnings fallback failed:', err);
+    console.warn('[Snapshots] earnings fallback failed:', err);
     return [];
   }
 }
@@ -144,7 +164,7 @@ export async function getGlobalIndicesSnapshot(): Promise<SnapshotQuote[]> {
       },
     }));
   } catch (err) {
-    logger.warn('[Snapshots] indices fallback failed:', err);
+    console.warn('[Snapshots] indices fallback failed:', err);
     return [];
   }
 }
@@ -180,7 +200,7 @@ export async function getCommoditiesSnapshot(): Promise<SnapshotQuote[]> {
       },
     }));
   } catch (err) {
-    logger.warn('[Snapshots] commodities fallback failed:', err);
+    console.warn('[Snapshots] commodities fallback failed:', err);
     return [];
   }
 }
@@ -223,7 +243,7 @@ export async function getSectorsSnapshot(): Promise<SnapshotSector[]> {
       },
     }));
   } catch (err) {
-    logger.warn('[Snapshots] sectors fallback failed:', err);
+    console.warn('[Snapshots] sectors fallback failed:', err);
     return [];
   }
 }
@@ -246,7 +266,7 @@ export async function getEconomicCalendarNext7DaysSnapshot(): Promise<EconomicCa
   try {
     return await getEconomicCalendar(today, nextWeek);
   } catch (err) {
-    logger.warn('[Snapshots] economicCalendar fallback failed:', err);
+    console.warn('[Snapshots] economicCalendar fallback failed:', err);
     return [];
   }
 }

@@ -31,3 +31,66 @@ export async function getClient() {
   }
   return pool.connect();
 }
+
+export interface SnapshotData {
+  key: string;
+  data: unknown;
+  updated_at: Date | null;
+}
+
+export async function saveSnapshotToLocalDb(key: string, data: unknown): Promise<boolean> {
+  if (!pool) {
+    console.log('[DB] Pool not available, skipping snapshot save');
+    return false;
+  }
+  
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query(
+        `INSERT INTO external_snapshots (key, data, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = NOW()`,
+        [key, JSON.stringify(data)]
+      );
+      return true;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('[DB] Failed to save snapshot:', error);
+    return false;
+  }
+}
+
+export async function getSnapshotFromLocalDb<T>(key: string): Promise<SnapshotData | null> {
+  if (!pool) {
+    return null;
+  }
+  
+  try {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT key, data, updated_at FROM external_snapshots WHERE key = $1',
+        [key]
+      );
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      const row = result.rows[0];
+      return {
+        key: row.key,
+        data: row.data,
+        updated_at: row.updated_at,
+      };
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('[DB] Failed to get snapshot:', error);
+    return null;
+  }
+}
