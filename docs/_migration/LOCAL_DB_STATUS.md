@@ -1,7 +1,7 @@
 # Status da Migração - Banco Local PostgreSQL
 
-**Última Atualização:** 20/02/2026
-**Status:** 🟢 Em Progresso
+**Última Atualização:** 24/02/2026
+**Status:** 🟢 Concluído (Leitura de Notícias)
 
 ---
 
@@ -65,21 +65,29 @@ O projeto está em processo de migração do Supabase (banco remoto) para Postgr
 - [x] Criar API route `/api/articles` com Service Role Key
 - [x] Fix Nginx config (client_max_body_size 10M)
 - [x] Corrigir variáveis de ambiente no supabaseAdmin.ts
+- [x] Criar lib `src/lib/db.ts` para conexão PostgreSQL
+- [x] Modificar `newsManager.ts` para usar PostgreSQL local (leitura)
+- [x] Adicionar pacote `pg` para conexão PostgreSQL
+- [x] Manter Supabase para Auth e Storage
+- [x] Implementar fallback para Supabase se local DB não disponível
 
 ---
 
 ## 🔄 Tarefas em Andamento
 
-### Conexão App → Banco Local
-- [ ] Criar lib `src/lib/db.ts` para conexão PostgreSQL
-- [ ] Modificar API routes para usar PostgreSQL
-- [ ] Atualizar docker-compose.yml com DATABASE_URL
-- [ ] Testar conexão
-
 ### Migração de Dados
 - [x] Usuário admin já existe localmente (cezaomachado@gmail.com)
-- [ ] Migrar categorias existentes
-- [ ] Migrar artigos existentes (se necessário)
+- [x] Migrar 10 artigos para PostgreSQL local
+- [x] Configurar `DATABASE_URL` no .env da VPS
+
+### Funcionalidades Migradas
+- [x] `getLatestArticles()` - lista de notícias
+- [x] `getFeaturedArticles()` - notícias em destaque
+- [x] `getBreakingNews()` - notícias urgentes
+- [x] `getTrendingArticles()` - notícias mais lidas
+- [ ] Escrita de artigos (ainda via Supabase)
+- [ ] Edição de artigos (ainda via Supabase)
+- [ ] Deleção de artigos (ainda via Supabase)
 
 ---
 
