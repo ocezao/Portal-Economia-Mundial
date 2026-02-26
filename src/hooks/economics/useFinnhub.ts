@@ -27,9 +27,13 @@ import {
   GEOPOLITICAL_STOCKS,
   type StockQuote,
   type MarketNews,
-
   type CompanyProfile,
 } from '@/services/economics/finnhubService';
+
+import {
+  getGlobalIndicesSnapshot,
+  getCommoditiesSnapshot,
+} from '@/services/economics/snapshots';
 
 const FINNHUB_FREE_PLAN = process.env.NEXT_PUBLIC_FINNHUB_FREE_PLAN === 'true';
 
@@ -255,30 +259,31 @@ export function useMarketTicker(): UseMarketTickerReturn {
     setError(null);
     
     try {
+      // Usa snapshots (banco local) primeiro, fallback para API direta
       const [indices, commodities] = await Promise.all([
-        getGlobalIndicesData(),
-        getCommoditiesData(),
+        getGlobalIndicesSnapshot(),
+        getCommoditiesSnapshot(),
       ]);
       
       const tickerData: TickerItem[] = [
         // Índices principais
-        ...indices.slice(0, 6).map(idx => ({
+        ...indices.slice(0, 6).map((idx) => ({
           symbol: idx.symbol,
           name: idx.name,
-          price: idx.price,
-          change: idx.change,
-          changePercent: idx.changePercent,
-          currency: idx.currency,
+          price: idx.quote?.c || 0,
+          change: idx.quote?.d || 0,
+          changePercent: idx.quote?.dp || 0,
+          currency: idx.currency || 'USD',
           type: 'index' as const,
-          region: idx.region,
+          region: idx.region || 'US',
         })),
         // Commodities principais
-        ...commodities.slice(0, 4).map(com => ({
+        ...commodities.slice(0, 4).map((com) => ({
           symbol: com.symbol,
           name: com.name,
-          price: com.price,
-          change: com.change,
-          changePercent: com.changePercent,
+          price: com.quote?.c || 0,
+          change: com.quote?.d || 0,
+          changePercent: com.quote?.dp || 0,
           currency: 'USD',
           type: 'commodity' as const,
         })),
@@ -293,9 +298,11 @@ export function useMarketTicker(): UseMarketTickerReturn {
     }
   }, []);
 
+  // Atualiza a cada 5 minutos (300000ms) para respeitar limites da API
+  // Com cache no banco, as chamadas são feitas apenas pelo cron job
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 300000);
     return () => clearInterval(interval);
   }, [fetchData]);
 

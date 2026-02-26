@@ -1,13 +1,13 @@
 # Status da Migração - Banco Local PostgreSQL
 
-**Última Atualização:** 24/02/2026
-**Status:** 🟢 Concluído (Leitura de Notícias)
+**Última Atualização:** 26/02/2026
+**Status:** 🟢 Concluído (Leitura de Notícias + Cache Finnhub)
 
 ---
 
 ## 📊 Resumo Executivo
 
-O projeto está em processo de migração do Supabase (banco remoto) para PostgreSQL local na VPS. A estrutura base do banco local está criada e funcional.
+O projeto está em processo de migração do Supabase (banco remoto) para PostgreSQL local na VPS. A estrutura base do banco local está criada e funcional. O sistema de cache para APIs externas (Finnhub) está implementado.
 
 ---
 
@@ -23,6 +23,7 @@ O projeto está em processo de migração do Supabase (banco remoto) para Postgr
    - 📈 Analytics e eventos
    - 💬 Comentários
    - 🔖 Bookmarks e histórico
+   - 💾 **Cache de APIs externas (Finnhub)**
 
 ---
 
@@ -70,6 +71,9 @@ O projeto está em processo de migração do Supabase (banco remoto) para Postgr
 - [x] Adicionar pacote `pg` para conexão PostgreSQL
 - [x] Manter Supabase para Auth e Storage
 - [x] Implementar fallback para Supabase se local DB não disponível
+- [x] **Implementar sistema de cache para Finnhub API**
+- [x] **Modificar useMarketTicker para usar snapshots (cache)**
+- [x] **Configurar intervalo de refresh de 30s para 5 minutos**
 
 ---
 
@@ -222,3 +226,73 @@ docker logs portal-web
 | Admin | 🟢 200 OK |
 | API Health | 🟢 200 OK |
 | Backup | 🟢 Criado e testado |
+
+---
+
+## 📈 Sistema de Cache Finnhub (26/02/2026)
+
+### Problema Original
+- O hook `useMarketTicker` fazia chamadas **diretas** à Finnhub API a cada **30 segundos**
+- Isso resultava em ~2.880 chamadas/dia à API
+- Mesmo com limite de 86.400/dia, era um desperdício de recursos
+
+### Solução Implementada
+
+#### 1. Arquitetura de Cache
+```
+Cron Job (a cada 15min) → Finnhub API → PostgreSQL local (external_snapshots)
+                                    ↓
+useMarketTicker → PostgreSQL local → Display
+```
+
+#### 2. Limites de API Finnhub
+- **Plano Gratuito:** 60 chamadas/minuto (~86.400/dia)
+- **Após correção:** ~96-288 chamadas/dia (cron job + fallback)
+
+#### 3. Alterações de Código
+- `src/hooks/economics/useFinnhub.ts`:
+  - Modificado `useMarketTicker` para usar `getGlobalIndicesSnapshot()` e `getCommoditiesSnapshot()`
+  - Intervalo alterado de 30s para 5 minutos (300000ms)
+- `src/services/economics/snapshots.ts`:
+  - TTL de 5 minutos para dados de índices e commodities
+
+#### 4. Endpoints de Refresh (CRON)
+- `POST /api/cron?type=indices` - Atualiza índices
+- `POST /api/cron?type=commodities` - Atualiza commodities
+- `POST /api/cron?type=all` - Atualiza tudo
+
+#### 5. Configuração do Cron na VPS
+```bash
+# No servidor, executar:
+cd /var/www/portal
+./scripts/cron-refresh.sh install
+```
+
+### Tabela de Chamadas de API
+
+| Cenário | Intervalo | Chamadas/Dia |
+|---------|-----------|--------------|
+| **Antes (ERRADO)** | 30s | ~2.880 |
+| **Depois (CORRETO)** | 15min (cron) | ~96-288 |
+| **Limite Finnhub** | - | 86.400 |
+| **Margem de segurança** | - | 99% |
+
+### Variáveis de Ambiente
+```env
+NEXT_PUBLIC_FINNHUB_ENABLED=true
+NEXT_PUBLIC_FINNHUB_FREE_PLAN=true
+NEXT_PUBLIC_FINNHUB_API_KEY="d5vkelhr01qqiqhvfcr0d5vkelhr01qqiqhvfcrg"
+FINNHUB_API_KEY=SEU_VALOR  # Remover se vazio!
+```
+
+### Fluxo de Dados
+1. **Cron job** chama endpoints `/api/cron?type=...`
+2. **Endpoint** busca dados da Finnhub API
+3. **Salva** no banco local (tabela `external_snapshots`)
+4. **useMarketTicker** lê do banco local
+5. **Fallback**: Se banco vazio, chama API direta
+
+### Próximos Passos
+- [ ] Configurar cron na VPS
+- [ ] Testar ticker no header
+- [ ] Monitorar consumo de API
