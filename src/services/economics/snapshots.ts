@@ -21,7 +21,7 @@ import type { EarningsEvent, MarketNews, EconomicCalendarEvent } from './finnhub
 
 const useLocalDb = !!process.env.DATABASE_URL;
 
-type SnapshotRow = { key: string; data: unknown; updated_at: string };
+type SnapshotRow = { key: string; data: unknown; fetched_at: string };
 
 async function readSnapshot<T>(key: string): Promise<{ data: T | null; updatedAt: Date | null }> {
   // 1. Tentar ler do PostgreSQL local primeiro
@@ -31,7 +31,7 @@ async function readSnapshot<T>(key: string): Promise<{ data: T | null; updatedAt
       if (localSnapshot && localSnapshot.data) {
         return {
           data: localSnapshot.data as T,
-          updatedAt: localSnapshot.updated_at,
+          updatedAt: localSnapshot.fetched_at,
         };
       }
     } catch {
@@ -44,7 +44,7 @@ async function readSnapshot<T>(key: string): Promise<{ data: T | null; updatedAt
 
   const { data, error } = await supabase
     .from('external_snapshots')
-    .select('key, data, updated_at')
+    .select('key, data, fetched_at')
     .eq('key', key)
     .maybeSingle();
 
@@ -54,7 +54,7 @@ async function readSnapshot<T>(key: string): Promise<{ data: T | null; updatedAt
   const row = data as SnapshotRow;
   return {
     data: (row.data as T) ?? null,
-    updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+    updatedAt: row.fetched_at ? new Date(row.fetched_at) : null,
   };
 }
 

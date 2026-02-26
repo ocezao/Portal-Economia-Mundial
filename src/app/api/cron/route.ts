@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
     const snapshots = await Promise.all(
       keys.map(async (key) => {
         const data = await getSnapshotFromLocalDb(key);
-        return { key, hasData: !!data, updatedAt: data?.updated_at };
+        return { key, hasData: !!data, updatedAt: data?.fetched_at };
       })
     );
     

@@ -35,7 +35,7 @@ export async function getClient() {
 export interface SnapshotData {
   key: string;
   data: unknown;
-  updated_at: Date | null;
+  fetched_at: Date | null;
 }
 
 export async function saveSnapshotToLocalDb(key: string, data: unknown): Promise<boolean> {
@@ -48,9 +48,9 @@ export async function saveSnapshotToLocalDb(key: string, data: unknown): Promise
     const client = await pool.connect();
     try {
       await client.query(
-        `INSERT INTO external_snapshots (key, data, updated_at)
+        `INSERT INTO external_snapshots (key, data, fetched_at)
          VALUES ($1, $2, NOW())
-         ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = NOW()`,
+         ON CONFLICT (key) DO UPDATE SET data = $2, fetched_at = NOW()`,
         [key, JSON.stringify(data)]
       );
       return true;
@@ -72,7 +72,7 @@ export async function getSnapshotFromLocalDb<T>(key: string): Promise<SnapshotDa
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT key, data, updated_at FROM external_snapshots WHERE key = $1',
+        'SELECT key, data, fetched_at FROM external_snapshots WHERE key = $1',
         [key]
       );
       
@@ -84,7 +84,7 @@ export async function getSnapshotFromLocalDb<T>(key: string): Promise<SnapshotDa
       return {
         key: row.key,
         data: row.data,
-        updated_at: row.updated_at,
+        fetched_at: row.fetched_at,
       };
     } finally {
       client.release();
