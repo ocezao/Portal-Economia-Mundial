@@ -30,11 +30,6 @@ import {
   type CompanyProfile,
 } from '@/services/economics/finnhubService';
 
-import {
-  getGlobalIndicesSnapshot,
-  getCommoditiesSnapshot,
-} from '@/services/economics/snapshots';
-
 const FINNHUB_FREE_PLAN = process.env.NEXT_PUBLIC_FINNHUB_FREE_PLAN === 'true';
 
 // ==================== HOOK: COTAÇÃO EM TEMPO REAL ====================
@@ -259,15 +254,24 @@ export function useMarketTicker(): UseMarketTickerReturn {
     setError(null);
     
     try {
-      // Usa snapshots (banco local) primeiro, fallback para API direta
-      const [indices, commodities] = await Promise.all([
-        getGlobalIndicesSnapshot(),
-        getCommoditiesSnapshot(),
-      ]);
+      // Chama a API route que busca do banco local (cache)
+      const response = await fetch('/api/ticker', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      const indices = result.indices || [];
+      const commodities = result.commodities || [];
       
       const tickerData: TickerItem[] = [
         // Índices principais
-        ...indices.slice(0, 6).map((idx) => ({
+        ...indices.slice(0, 6).map((idx: { symbol: string; name: string; region?: string; currency?: string; quote?: { c?: number; d?: number; dp?: number } }) => ({
           symbol: idx.symbol,
           name: idx.name,
           price: idx.quote?.c || 0,
@@ -278,7 +282,7 @@ export function useMarketTicker(): UseMarketTickerReturn {
           region: idx.region || 'US',
         })),
         // Commodities principais
-        ...commodities.slice(0, 4).map((com) => ({
+        ...commodities.slice(0, 4).map((com: { symbol: string; name: string; quote?: { c?: number; d?: number; dp?: number } }) => ({
           symbol: com.symbol,
           name: com.name,
           price: com.quote?.c || 0,
@@ -290,8 +294,9 @@ export function useMarketTicker(): UseMarketTickerReturn {
       ];
       
       setData(tickerData);
-      setLastUpdate(new Date());
+      setLastUpdate(new Date(result.updatedAt));
     } catch (err) {
+      console.error('[useMarketTicker] Error:', err);
       setError(err instanceof Error ? err : new Error('Erro ao carregar ticker'));
     } finally {
       setIsLoading(false);

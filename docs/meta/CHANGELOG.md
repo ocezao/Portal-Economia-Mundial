@@ -8,6 +8,13 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 
 ## [Unreleased]
 
+### Fixed
+- **MarketTicker não exibia dados** - Corrigido problema onde o ticker de mercado não aparecia:
+  - Problema: Componente cliente tentava chamar funções servidor diretamente (usavam PostgreSQL)
+  - Solução: Criada API route `/api/ticker` que o frontend pode chamar
+  - Arquivos: `src/app/api/ticker/route.ts` (novo), `src/hooks/economics/useFinnhub.ts` (modificado)
+  - Fluxo: Cron Job → Finnhub API → PostgreSQL → API Route → Frontend
+
 ### Added
 - **SEO Improvements** - Melhorias para igualar os grandes portais:
   - Schema.org FAQPage (`generateFaqJsonLd`) para fragmentos ricos no Google

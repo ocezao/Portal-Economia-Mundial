@@ -229,44 +229,71 @@ docker logs portal-web
 
 ---
 
-## 📈 Sistema de Cache Finnhub (26/02/2026)
+## 📈 Sistema de Cache Finnhub (26/02/2026) - CORRIGIDO
 
-### Problema Original
+### Problema Original (RESOLVIDO)
 - O hook `useMarketTicker` fazia chamadas **diretas** à Finnhub API a cada **30 segundos**
 - Isso resultava em ~2.880 chamadas/dia à API
-- Mesmo com limite de 86.400/dia, era um desperdício de recursos
+- O ticker não aparecia porque o código cliente tentava usar conexões de banco servidor
 
 ### Solução Implementada
 
-#### 1. Arquitetura de Cache
+#### 1. Arquitetura de Cache (ATUALIZADA)
 ```
-Cron Job (a cada 15min) → Finnhub API → PostgreSQL local (external_snapshots)
-                                    ↓
-useMarketTicker → PostgreSQL local → Display
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    CRON JOB (VPS Backend)                              │
+│  A cada 15min                                                          │
+│  → Chama Finnhub API                                                  │
+│  → Salva no PostgreSQL (external_snapshots)                           │
+└─────────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│              PostgreSQL (external_snapshots)                           │
+│  - finnhub_indices:global                                             │
+│  - finnhub_commodities:main                                           │
+│  - finnhub_market_news:general                                        │
+│  - finnhub_sectors:main                                               │
+└─────────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    API ROUTE (/api/ticker)                            │
+│  Endpoint que lê do banco e retorna JSON                             │
+└─────────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│              useMarketTicker (Frontend)                               │
+│  fetch('/api/ticker') → JSON → Display                               │
+│  Atualiza a cada 5 minutos                                           │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 #### 2. Limites de API Finnhub
 - **Plano Gratuito:** 60 chamadas/minuto (~86.400/dia)
-- **Após correção:** ~96-288 chamadas/dia (cron job + fallback)
+- **Após correção:** ~96-288 chamadas/dia (cron job)
 
 #### 3. Alterações de Código
-- `src/hooks/economics/useFinnhub.ts`:
-  - Modificado `useMarketTicker` para usar `getGlobalIndicesSnapshot()` e `getCommoditiesSnapshot()`
-  - Intervalo alterado de 30s para 5 minutos (300000ms)
-- `src/services/economics/snapshots.ts`:
-  - TTL de 5 minutos para dados de índices e commodities
+- **`src/app/api/ticker/route.ts`** (NOVO):
+  - Endpoint GET `/api/ticker` que retorna índices e commodities do banco
+  - Usa cache do PostgreSQL local
+- **`src/hooks/economics/useFinnhub.ts`**:
+  - Modificado `useMarketTicker` para chamar API `/api/ticker` em vez de funções diretas
+  - Intervalo: 5 minutos (300000ms)
 
 #### 4. Endpoints de Refresh (CRON)
 - `POST /api/cron?type=indices` - Atualiza índices
 - `POST /api/cron?type=commodities` - Atualiza commodities
+- `POST /api/cron?type=market-news` - Atualiza notícias
+- `POST /api/cron?type=sectors` - Atualiza setores
 - `POST /api/cron?type=all` - Atualiza tudo
 
-#### 5. Configuração do Cron na VPS
-```bash
-# No servidor, executar:
-cd /var/www/portal
-./scripts/cron-refresh.sh install
-```
+#### 5. Arquivos Criados/Modificados
+| Arquivo | Ação |
+|---------|------|
+| `src/app/api/ticker/route.ts` | Criado - API route para ticker |
+| `src/hooks/economics/useFinnhub.ts` | Modificado - usa API route |
 
 ### Tabela de Chamadas de API
 
@@ -277,22 +304,21 @@ cd /var/www/portal
 | **Limite Finnhub** | - | 86.400 |
 | **Margem de segurança** | - | 99% |
 
+### Fluxo de Dados Completo
+1. **Cron job** (backend) → chama `/api/cron?type=...` → Finnhub API → PostgreSQL
+2. **Frontend** → `useMarketTicker` → `/api/ticker` → PostgreSQL → JSON → Display
+
 ### Variáveis de Ambiente
 ```env
 NEXT_PUBLIC_FINNHUB_ENABLED=true
 NEXT_PUBLIC_FINNHUB_FREE_PLAN=true
-NEXT_PUBLIC_FINNHUB_API_KEY="d5vkelhr01qqiqhvfcr0d5vkelhr01qqiqhvfcrg"
-FINNHUB_API_KEY=SEU_VALOR  # Remover se vazio!
+NEXT_PUBLIC_FINNHUB_API_KEY="d6g4in9r01qt4931h4ogd6g4in9r01qt4931h4p0"
 ```
 
-### Fluxo de Dados
-1. **Cron job** chama endpoints `/api/cron?type=...`
-2. **Endpoint** busca dados da Finnhub API
-3. **Salva** no banco local (tabela `external_snapshots`)
-4. **useMarketTicker** lê do banco local
-5. **Fallback**: Se banco vazio, chama API direta
-
-### Próximos Passos
-- [ ] Configurar cron na VPS
-- [ ] Testar ticker no header
-- [ ] Monitorar consumo de API
+### Status
+- [x] API route `/api/ticker` criada
+- [x] useMarketTicker modificado para usar API route
+- [x] Cron jobs configurados na VPS
+- [x] Dados populados no banco
+- [x] Deploy na VPS realizado
+- [ ] Testar ticker no header (em produção)
