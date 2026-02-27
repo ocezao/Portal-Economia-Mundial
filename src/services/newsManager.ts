@@ -973,9 +973,12 @@ export async function checkAndPublishScheduled(): Promise<number> {
       const result = await query(
         `UPDATE news_articles 
          SET status = 'published', updated_at = NOW()
-         WHERE status = 'scheduled' 
-         AND published_at <= $1
-         LIMIT 50
+         WHERE id IN (
+           SELECT id FROM news_articles 
+           WHERE status = 'scheduled' 
+           AND published_at <= $1
+           LIMIT 50
+         )
          RETURNING id`,
         [now.toISOString()]
       );
