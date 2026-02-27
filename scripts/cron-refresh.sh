@@ -42,8 +42,11 @@ call_cron() {
 # Instalar crontab
 install_crontab() {
     cat << EOF | crontab -
-# Cron do Portal - Atualização de Dados Externos
+# Cron do Portal - Atualização de Dados
 # Limite: ~300 chamadas/dia (Finnhub: 60/min = 86.400/dia)
+
+# Publicar artigos agendados - a cada 1 minuto
+* * * * * curl -s -X POST "http://localhost:3000/api/cron?type=publish-scheduled" > /dev/null 2>&1
 
 # Atualizar notícias de mercado - a cada 15 minutos
 */15 * * * * curl -s -X POST "http://localhost:3000/api/cron?type=market-news" > /dev/null 2>&1

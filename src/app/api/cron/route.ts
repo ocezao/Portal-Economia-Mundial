@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getMarketNews, getEarningsCalendar, getGlobalIndicesData, getCommoditiesData, getSectorsPerformance, getEconomicCalendar } from '@/services/economics/finnhubService';
 import { saveSnapshotToLocalDb, getSnapshotFromLocalDb } from '@/lib/db';
 import { CACHE_TTL } from '@/config/apiLimits';
+import { checkAndPublishScheduled } from '@/services/newsManager';
 
 const API_SECRET = process.env.CRON_API_SECRET || '';
 
@@ -41,10 +42,12 @@ export async function POST(request: NextRequest) {
         return await refreshSectors();
       case 'economic-calendar':
         return await refreshEconomicCalendar();
+      case 'publish-scheduled':
+        return await publishScheduledArticles();
       case 'all':
         return await refreshAll();
       default:
-        return NextResponse.json({ error: 'Unknown refresh type. Use: market-news, earnings, indices, commodities, sectors, economic-calendar, all' }, { status: 400 });
+        return NextResponse.json({ error: 'Unknown refresh type. Use: market-news, earnings, indices, commodities, sectors, economic-calendar, publish-scheduled, all' }, { status: 400 });
     }
   } catch (error) {
     console.error('[Cron] Refresh failed:', error);
@@ -197,6 +200,26 @@ async function refreshEconomicCalendar() {
     });
   } catch (error) {
     console.error('[Cron] Economic calendar refresh failed:', error);
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+  }
+}
+
+async function publishScheduledArticles() {
+  console.log('[Cron] Starting scheduled articles publishing check...');
+  
+  try {
+    const count = await checkAndPublishScheduled();
+    console.log(`[Cron] Published ${count} scheduled articles`);
+    
+    return NextResponse.json({
+      success: true,
+      action: 'publish-scheduled',
+      count,
+      message: count > 0 ? `Published ${count} scheduled articles` : 'No articles to publish',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Cron] Publish scheduled articles failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

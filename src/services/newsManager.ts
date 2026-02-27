@@ -963,16 +963,69 @@ export async function updateScheduledArticle(
 }
 
 export async function checkAndPublishScheduled(): Promise<number> {
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('news_articles')
-    .update({ status: 'published' })
-    .eq('status', 'scheduled')
-    .lte('published_at', now)
-    .select('id');
+  const now = new Date();
+  
+  // 1. Tentar PostgreSQL local primeiro
+  if (useLocalDb) {
+    try {
+      console.log('[checkAndPublishScheduled] Checking local PostgreSQL for scheduled articles...');
+      
+      const result = await query(
+        `UPDATE news_articles 
+         SET status = 'published', updated_at = NOW()
+         WHERE status = 'scheduled' 
+         AND published_at <= $1
+         LIMIT 50
+         RETURNING id`,
+        [now.toISOString()]
+      );
+      
+      if (result.rowCount && result.rowCount > 0) {
+        console.log(`[checkAndPublishScheduled] ✓ Published ${result.rowCount} articles from local PostgreSQL`);
+        
+        // Also update the timestamp
+        console.log(`[checkAndPublishScheduled] Published article IDs:`, result.rows.map(r => r.id));
+        return result.rowCount;
+      }
+      
+      console.log('[checkAndPublishScheduled] No scheduled articles found in local PostgreSQL');
+    } catch (err) {
+      console.error('[checkAndPublishScheduled] ✗ Local PostgreSQL error:', err);
+    }
+  }
 
-  if (error) throw error;
-  return isArray(data) ? data.length : 0;
+  // 2. Fallback para Supabase
+  if (isSupabaseConfigured) {
+    try {
+      console.log('[checkAndPublishScheduled] Checking Supabase for scheduled articles...');
+      
+      const { data, error } = await supabase
+        .from('news_articles')
+        .update({ status: 'published' })
+        .eq('status', 'scheduled')
+        .lte('published_at', now.toISOString())
+        .select('id')
+        .limit(50);
+
+      if (error) {
+        console.error('[checkAndPublishScheduled] ✗ Supabase error:', error);
+        throw error;
+      }
+
+      const count = isArray(data) ? data.length : 0;
+      if (count > 0) {
+        console.log(`[checkAndPublishScheduled] ✓ Published ${count} articles from Supabase`);
+      } else {
+        console.log('[checkAndPublishScheduled] No scheduled articles found in Supabase');
+      }
+      return count;
+    } catch (err) {
+      console.error('[checkAndPublishScheduled] ✗ Supabase fallback error:', err);
+    }
+  }
+
+  console.log('[checkAndPublishScheduled] No articles published (no database available)');
+  return 0;
 }
 
 // ==================== ESTATÍSTICAS ====================

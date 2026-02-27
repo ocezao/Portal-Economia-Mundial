@@ -287,6 +287,7 @@ docker logs portal-web
 - `POST /api/cron?type=commodities` - Atualiza commodities
 - `POST /api/cron?type=market-news` - Atualiza notícias
 - `POST /api/cron?type=sectors` - Atualiza setores
+- `POST /api/cron?type=publish-scheduled` - Publica artigos agendados
 - `POST /api/cron?type=all` - Atualiza tudo
 
 #### 5. Arquivos Criados/Modificados
@@ -294,6 +295,78 @@ docker logs portal-web
 |---------|------|
 | `src/app/api/ticker/route.ts` | Criado - API route para ticker |
 | `src/hooks/economics/useFinnhub.ts` | Modificado - usa API route |
+
+---
+
+## 📅 Sistema de Publicação Agendada (26/02/2026) - NOVO
+
+### Problema Original
+O sistema de agendamento de posts existia mas não публикова automaticamente. A função `checkAndPublishScheduled()` existia mas não era chamada por nenhum cron job.
+
+### Solução Implementada
+
+#### 1. Arquitetura
+```
+┌─────────────────────────────────────────────────────────────┐
+│               Cron (a cada 1 min)                           │
+│  → POST /api/cron?type=publish-scheduled                   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│               API Route                                      │
+│  → auth: verificar permissões                               │
+│  → chamar checkAndPublishScheduled()                         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│               newsManager.ts                                 │
+│  1. PostgreSQL local primeiro (preferencial)               │
+│  2. Fallback: Supabase                                     │
+│  3. Batch: max 50 publicações por execução                  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│               PostgreSQL Local                               │
+│  UPDATE news_articles                                        │
+│  SET status = 'published'                                   │
+│  WHERE status = 'scheduled'                                 │
+│  AND published_at <= NOW()                                  │
+│  LIMIT 50                                                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 2. Alterações de Código
+- **`src/services/newsManager.ts`**:
+  - Modificado `checkAndPublishScheduled()` para usar PostgreSQL local primeiro
+  - Log detalhado para debugging
+  - Batch de 50 publicações por execução
+- **`src/app/api/cron/route.ts`**:
+  - Adicionado case `publish-scheduled`
+  - Adicionada função `publishScheduledArticles()`
+- **`scripts/cron-refresh.sh`**:
+  - Adicionado job `* * * * *` (1 em 1 minuto)
+
+#### 3. Cron Job Configurado
+```bash
+# Publicar artigos agendados - a cada 1 minuto
+* * * * * curl -s -X POST "http://localhost:3000/api/cron?type=publish-scheduled" > /dev/null 2>&1
+```
+
+#### 4. Como Criar um Post Agendado
+1. Acesse o admin: `/admin/noticias/novo`
+2. Preencha os campos do artigo
+3. No modo de publicação, selecione "Agendar"
+4. Escolha data e hora
+5. O post será publicado automaticamente quando chegar a hora
+
+#### 5. Logs
+Os logs são exibidos no console do servidor:
+- `[checkAndPublishScheduled] Checking local PostgreSQL for scheduled articles...`
+- `[checkAndPublishScheduled] ✓ Published X articles from local PostgreSQL`
+- `[checkAndPublishScheduled] No scheduled articles found in local PostgreSQL`
 
 ### Tabela de Chamadas de API
 

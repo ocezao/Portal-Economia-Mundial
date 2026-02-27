@@ -16,6 +16,12 @@ O formato Ã© baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
   - Fluxo: Cron Job → Finnhub API → PostgreSQL → API Route → Frontend
 
 ### Added
+- **Sistema de Publicação Agendada** - Implementado sistema automático de publicação de posts:
+  - Problema: Posts agendados não eram publicados automaticamente
+  - Solução: Cron job a cada 1 minuto que verifica e publica artigos agendados
+  - Arquivos: `src/services/newsManager.ts` (modificado), `src/app/api/cron/route.ts` (modificado), `scripts/cron-refresh.sh` (modificado)
+  - Funcionamento: PostgreSQL local primeiro, fallback Supabase, batch de 50 por execução
+  - Logs detalhados para debugging
 - **SEO Improvements** - Melhorias para igualar os grandes portais:
   - Schema.org FAQPage (`generateFaqJsonLd`) para fragmentos ricos no Google
   - Página "Como Produzimos" (`/como-produzimos/`) com processo jornalístico completo
