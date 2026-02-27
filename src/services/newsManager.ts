@@ -350,46 +350,71 @@ export async function getArticleBySlug(
 ): Promise<NewsArticle | null> {
   const includeDrafts = options?.includeDrafts ?? false;
 
+  // 1. Tentar PostgreSQL local primeiro
+  if (useLocalDb) {
+    try {
+      const statusFilter = includeDrafts ? '' : "AND status = 'published'";
+      const result = await query(
+        `SELECT * FROM news_articles 
+         WHERE slug = $1 ${statusFilter} 
+         LIMIT 1`,
+        [slug]
+      );
+      
+      if (result.rows.length > 0) {
+        return mapDbRowToArticle(result.rows[0]);
+      }
+    } catch (error) {
+      logger.error('[newsManager] getArticleBySlug (local DB) failed:', error);
+    }
+  }
+
+  // 2. Fallback para Supabase
   if (!isSupabaseConfigured) return null;
 
-  let query = supabase
+  let queryBuilder = supabase
     .from('news_articles')
     .select(ARTICLE_SELECT)
     .eq('slug', slug);
 
   if (!includeDrafts) {
-    query = query.eq('status', 'published');
+    queryBuilder = queryBuilder.eq('status', 'published');
   }
 
-  const { data, error } = await query.single();
+  const { data, error } = await queryBuilder.single();
   if (error) return null;
   return data ? mapArticleRow(data) : null;
 }
 
 export async function getArticlesByCategory(category: string): Promise<NewsArticle[]> {
-  if (!isSupabaseConfigured) return [];
+  // 1. Tentar Supabase (suporta filtragem por categoria via relationship table)
+  if (isSupabaseConfigured) {
+    try {
+      // Filtra via relacionamento (categories.slug) para evitar "baixar tudo e filtrar em memória".
+      // Obs: depende de join table news_article_categories -> categories.
+      const selectWithInnerCategory = ARTICLE_SELECT
+        .replace('news_article_categories (', 'news_article_categories!inner (')
+        .replace('categories (', 'categories!inner (');
 
-  // Filtra via relacionamento (categories.slug) para evitar "baixar tudo e filtrar em memória".
-  // Obs: depende de join table news_article_categories -> categories.
-  const selectWithInnerCategory = ARTICLE_SELECT
-    .replace('news_article_categories (', 'news_article_categories!inner (')
-    .replace('categories (', 'categories!inner (');
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select(selectWithInnerCategory)
+        .eq('status', 'published')
+        .eq('news_article_categories.categories.slug', category)
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .limit(60);
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(selectWithInnerCategory)
-    .eq('status', 'published')
-    .eq('news_article_categories.categories.slug', category)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(60);
-
-  if (error) {
-    logger.warnRateLimit('newsManager.getArticlesByCategory', WARN_INTERVAL_MS, '[newsManager] getArticlesByCategory failed:', summarizeError(error));
-    return [];
+      if (!error && isArray(data) && data.length > 0) {
+        return data.map(mapArticleRow);
+      }
+    } catch (err) {
+      logger.warnRateLimit('newsManager.getArticlesByCategory', WARN_INTERVAL_MS, '[newsManager] getArticlesByCategory (Supabase) failed:', summarizeError(err));
+    }
   }
 
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+  // 2. Fallback: PostgreSQL local não tem suporte a categorias (relationship table vazia)
+  // Retorna array vazio para forçar outras partes do site a funcionarem
+  return [];
 }
 
 export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
@@ -654,6 +679,27 @@ export async function searchArticles(query: string): Promise<NewsArticle[]> {
 }
 
 export async function getArticlesByAuthor(authorSlug: string, limit = 6): Promise<NewsArticle[]> {
+  // 1. Tentar PostgreSQL local primeiro
+  if (useLocalDb) {
+    try {
+      const result = await query(
+        `SELECT * FROM news_articles 
+         WHERE status = 'published' 
+         AND (author_id = $1 OR author_name ILIKE $2)
+         ORDER BY published_at DESC NULLS LAST 
+         LIMIT $3`,
+        [authorSlug, `%${authorSlug.replace('-', '%')}%`, limit]
+      );
+      
+      if (result.rows.length > 0) {
+        return result.rows.map(mapDbRowToArticle);
+      }
+    } catch (error) {
+      logger.error('[newsManager] getArticlesByAuthor (local DB) failed:', error);
+    }
+  }
+
+  // 2. Fallback para Supabase
   if (!isSupabaseConfigured) return [];
 
   // Busca por author_id (slug do autor) ou author_name contendo o nome
