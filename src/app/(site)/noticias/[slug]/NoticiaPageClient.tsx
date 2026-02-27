@@ -17,7 +17,6 @@ import {
   Twitter,
   Linkedin,
   Link as LinkIcon,
-  AlertTriangle,
   ShieldCheck,
   ExternalLink,
   Gem,
@@ -381,17 +380,6 @@ export default function NoticiaPageClient({ article, reviewedBy, authorProfile }
                   Inscrever-se
                 </button>
               </form>
-            </section>
-
-            {/* Aviso */}
-            <section className="p-4 bg-[#fef2f2] border border-[#fecaca] rounded-lg">
-              <header className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-[#dc2626]" />
-                <h3 className="text-sm font-semibold text-[#dc2626]">Aviso</h3>
-              </header>
-              <p className="text-xs text-[#7f1d1d]">
-                Este conteÃºdo Ã© informativo e nÃ£o constitui recomendaÃ§Ã£o de investimento.
-              </p>
             </section>
           </aside>
         </section>
