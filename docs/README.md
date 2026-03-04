@@ -74,6 +74,14 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | 28 | [Email Hostinger SMTP](./28-email-hostinger-smtp.md) | Fluxos de email automatico, endpoints e smoke test |
 | 29 | [Plano Rumo ao 10 (Gratis)](./29-plano-rumo-10-gratuito.md) | Plano exaustivo de evolucao para nivel dos grandes players com foco em ferramentas gratuitas |
 
+### Operações e Produção de Conteúdo
+
+| # | Documento | Descrição |
+|---|-----------|-----------|
+| PESQUISA | [Plano Pesquisa Veículos](./PLANO-PESQUISA-VEICULOS.md) | Fluxo de pesquisa em fontes oficiais, produção colaborativa e SEO |
+| POSTAGEM | [Guia Postagem SEO](./GUIA-POSTAGEM-SEO.md) | Guia completo para postagem com SEO perfeito |
+| ALERTS | [Google Alerts Config](./GOOGLE_ALERTS_CONFIG.md) | Configuração de alertas para pesquisa |
+
 ### 🤖 Integração com IA (MCP)
 
 | # | Documento | Descrição |
