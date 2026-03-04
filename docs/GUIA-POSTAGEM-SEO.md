@@ -153,7 +153,7 @@ URL: cenariointernacional.com.br/noticias/fed-mantem-juros-sinaliza-cortes-2024
 
 | Campo | Especificação |
 |-------|----------------|
-| **Formatos** | JPG, PNG |
+| **Formatos** | JPG, PNG, **WebP (preferido)** |
 | **Tamanho máx** | 5MB |
 | **Dimensão ideal** | 1200 x 630 pixels (proporção 1.91:1) |
 | **Proporção aceita** | 1.91:1 (OpenGraph/Twitter) |
