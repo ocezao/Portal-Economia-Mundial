@@ -10,11 +10,12 @@ import { notFound, redirect } from 'next/navigation';
 
 import { JsonLd } from '@/components/seo/JsonLd';
 import { CONTENT_CONFIG } from '@/config/content';
-import { SEO_CONFIG, generateArticleJsonLd, generateBreadcrumbJsonLd } from '@/config/seo';
+import { SEO_CONFIG, generateArticleJsonLd, generateBreadcrumbJsonLd, generateFaqJsonLd } from '@/config/seo';
 import { ROUTES } from '@/config/routes';
 import { getSiteUrl } from '@/lib/siteUrl';
 import { getActiveAuthors, getPrimaryFactChecker } from '@/services/authors';
 import { getArticleBySlug, getRedirectTargetSlug } from '@/services/newsManager';
+import { generateAutoFaqs } from '@/lib/autoFaq';
 
 import NoticiaPageClient from './NoticiaPageClient';
 import type { Author } from '@/config/authors';
@@ -148,15 +149,19 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
       isAccessibleForFree: true,
       citation: [
         { name: 'Fontes oficiais de mercado' },
-        { name: 'Dados de agÃªncias reguladoras' },
+        { name: 'Dados de agências reguladoras' },
       ],
     },
   );
+
+  const autoFaqs = generateAutoFaqs(article.title, article.category);
+  const faqJsonLd = generateFaqJsonLd(autoFaqs);
 
   return (
     <>
       <JsonLd id="jsonld-breadcrumb" data={breadcrumbJsonLd} />
       <JsonLd id="jsonld-article" data={articleJsonLd} />
+      <JsonLd id="jsonld-faq" data={faqJsonLd} />
       <NoticiaPageClient article={article} reviewedBy={reviewedBy} authorProfile={authorProfile ?? undefined} />
     </>
   );
