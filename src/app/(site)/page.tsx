@@ -7,6 +7,7 @@
 import type { Metadata } from 'next';
 
 import HomePageClient from './HomePageClient';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { APP_CONFIG } from '@/config/app';
 import { SEO_CONFIG } from '@/config/seo';
 import { getSiteUrl } from '@/lib/siteUrl';
@@ -76,14 +77,18 @@ export default async function HomePage() {
     ]);
 
   return (
-    <HomePageClient
-      featured={featured}
-      latest={latest}
-      trending={trending}
-      breaking={breaking}
-      articlesForCategoryHighlights={articlesForCategoryHighlights}
-      earnings={earnings}
-      marketNews={marketNews}
-    />
+    <>
+      <JsonLd id="jsonld-organization" data={SEO_CONFIG.jsonLd.organization} />
+      <JsonLd id="jsonld-website" data={SEO_CONFIG.jsonLd.website} />
+      <HomePageClient
+        featured={featured}
+        latest={latest}
+        trending={trending}
+        breaking={breaking}
+        articlesForCategoryHighlights={articlesForCategoryHighlights}
+        earnings={earnings}
+        marketNews={marketNews}
+      />
+    </>
   );
 }
