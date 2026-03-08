@@ -14,17 +14,8 @@ import {
   ArrowLeft, 
   AlertCircle,
   Tag,
-  Type,
-  Bold,
-  Italic,
-  List,
-  Heading1,
-  Heading2,
-  Quote,
-  Link as LinkIcon,
   Clock,
   Check,
-  X,
   Trash2,
   Upload,
   Image as ImageIcon,
@@ -33,7 +24,9 @@ import {
   Calendar,
   User,
   Clock3,
-  Play
+  Play,
+  Type,
+  X
 } from 'lucide-react';
 
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
