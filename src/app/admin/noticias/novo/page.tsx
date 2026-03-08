@@ -13,7 +13,6 @@ import {
   Eye, 
   ArrowLeft, 
   AlertCircle,
-  Image as ImageIcon,
   Tag,
   Type,
   Bold,
@@ -28,6 +27,7 @@ import {
   X,
   Trash2,
   Upload,
+  Image as ImageIcon,
   Globe,
   FileText,
   Calendar,
@@ -36,6 +36,7 @@ import {
   Play
 } from 'lucide-react';
 
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { 
   generateSlug, 
   isSlugAvailable,
@@ -689,44 +690,15 @@ export default function AdminNewsNewPage() {
                       <Label htmlFor="content" className="text-sm font-medium text-[#111111]">
                         Conteudo *
                       </Label>
-</section>
-                    
-                    {/* Toolbar */}
-                    <section className="flex flex-wrap gap-1 p-2 bg-[#f8fafc] rounded-t-lg border border-[#e5e5e5] border-b-0">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h2')} className="h-8 w-8 p-0" title="Titulo H2">
-                        <Heading1 className="w-4 h-4" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('h3')} className="h-8 w-8 p-0" title="Subtitulo H3">
-                        <Heading2 className="w-4 h-4" />
-                      </Button>
-                      <section className="w-px h-6 bg-[#e5e5e5] mx-1 self-center" />
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('bold')} className="h-8 w-8 p-0" title="Negrito">
-                        <Bold className="w-4 h-4" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('italic')} className="h-8 w-8 p-0" title="Italico">
-                        <Italic className="w-4 h-4" />
-                      </Button>
-                      <section className="w-px h-6 bg-[#e5e5e5] mx-1 self-center" />
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('quote')} className="h-8 w-8 p-0" title="Citacao">
-                        <Quote className="w-4 h-4" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('list')} className="h-8 w-8 p-0" title="Lista">
-                        <List className="w-4 h-4" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => insertFormat('link')} className="h-8 w-8 p-0" title="Link">
-                        <LinkIcon className="w-4 h-4" />
-                      </Button>
                     </section>
                     
-                    <Textarea
-                      ref={contentRef}
-                      id="content"
+                    <RichTextEditor
                       value={formData.content}
-                      onChange={(e) => handleChange('content', e.target.value)}
-                      placeholder="Escreva o conteudo completo do artigo aqui..."
-                      rows={20}
-                      className={`resize-none rounded-t-none ${errors.content ? 'border-[#ef4444]' : ''}`}
+                      onChange={(value) => handleChange('content', value)}
+                      placeholder="Escreva o conteúdo completo do artigo aqui..."
+                      error={!!errors.content}
                     />
+                    
                     <section className="flex justify-between mt-2">
                       {errors.content ? (
                         <p className="text-xs text-[#ef4444] flex items-center gap-1">
@@ -737,8 +709,8 @@ export default function AdminNewsNewPage() {
                         <span />
                       )}
                       <p className="text-xs text-[#6b6b6b]">
-                        {formData.content.length} caracteres - 
-                        Tempo de leitura estimado: {Math.ceil(formData.content.split(/\s+/).length / 200)} min
+                        {formData.content.replace(/<[^>]*>/g, '').length} caracteres - 
+                        Tempo de leitura estimado: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length / 200)} min
                       </p>
                     </section>
                   </article>
