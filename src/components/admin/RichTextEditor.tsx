@@ -53,11 +53,14 @@ export function RichTextEditor({ value, onChange, placeholder = 'Escreva o conte
   const [imageAlt, setImageAlt] = useState('');
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
         },
+        link: false,
+        underline: false,
       }),
       Link.configure({
         openOnClick: false,
@@ -78,20 +81,25 @@ export function RichTextEditor({ value, onChange, placeholder = 'Escreva o conte
       }),
       Underline,
     ],
-    content: value,
+    content: value || '',
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3',
+        class: 'max-w-none focus:outline-none min-h-[400px] px-4 py-3 text-base text-[#333] leading-relaxed',
       },
     },
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
+    if (!editor) return;
+    const editorContent = editor.getHTML();
+    const cleanValue = value || '';
+    const cleanEditorContent = editorContent === '<p></p>' ? '' : editorContent;
+    
+    if (cleanValue !== cleanEditorContent) {
+      editor.commands.setContent(cleanValue, { emitUpdate: false });
     }
   }, [value, editor]);
 
