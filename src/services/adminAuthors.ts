@@ -1,13 +1,11 @@
 /**
- * Operações administrativas de autores (tabela `authors`)
+ * Operacoes administrativas de autores (tabela `authors`)
  *
- * Implementação direta via Supabase (RLS) para não depender do deploy de Edge Function.
- * Requer que o usuário autenticado tenha `profiles.role = 'admin'` (ver policy em
- * `supabase/migrations/20260207_create_authors_table.sql`).
+ * Implementacao direta via Postgres local.
  */
 
 import type { Author } from '@/config/authors';
-import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
+import { query, queryRows } from '@/lib/db';
 
 type AuthorRow = {
   slug: string;
@@ -83,92 +81,134 @@ const mapAuthorToInsertRow = (author: Author) => ({
 });
 
 export async function listAdminAuthors(): Promise<Author[]> {
-  if (!isSupabaseConfigured) {
-    throw new Error('Supabase não configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('Banco local nao configurado (DATABASE_URL).');
   }
 
-  const { data, error } = await supabase
-    .from('authors')
-    .select('*')
-    .order('editor', { ascending: false })
-    .order('fact_checker', { ascending: false })
-    .order('name', { ascending: true });
-
-  if (error) throw error;
-  return ((data ?? []) as AuthorRow[]).map(mapRowToAuthor);
+  const data = await queryRows<AuthorRow>(
+    `select *
+     from authors
+     order by editor desc, fact_checker desc, name asc`,
+  );
+  return data.map(mapRowToAuthor);
 }
 
 export async function createAdminAuthor(author: Author) {
-  if (!isSupabaseConfigured) {
-    throw new Error('Supabase não configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('Banco local nao configurado (DATABASE_URL).');
   }
 
-  const { error } = await supabase.from('authors').insert(mapAuthorToInsertRow(author));
-  if (error) throw error;
+  const row = mapAuthorToInsertRow(author);
+  await query(
+    `insert into authors (
+      slug, name, short_name, title, bio, long_bio, photo, email, social, website, location,
+      expertise, credentials, education, awards, languages, joined_at, is_active, fact_checker, editor
+    ) values (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11,
+      $12::text[], $13::text[], $14::jsonb, $15::text[], $16::text[], $17, $18, $19, $20
+    )`,
+    [
+      row.slug,
+      row.name,
+      row.short_name,
+      row.title,
+      row.bio,
+      row.long_bio,
+      row.photo,
+      row.email,
+      JSON.stringify(row.social ?? {}),
+      row.website,
+      row.location,
+      row.expertise ?? [],
+      row.credentials ?? [],
+      JSON.stringify(row.education ?? []),
+      row.awards ?? [],
+      row.languages ?? [],
+      row.joined_at,
+      row.is_active,
+      row.fact_checker,
+      row.editor,
+    ],
+  );
   return { ok: true };
 }
 
 export async function updateAdminAuthor(input: { slug: string; updates: Partial<Author> }) {
-  if (!isSupabaseConfigured) {
-    throw new Error('Supabase não configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('Banco local nao configurado (DATABASE_URL).');
   }
 
   const { slug, updates } = input;
-  if (!slug) throw new Error('slug é obrigatório');
+  if (!slug) throw new Error('slug e obrigatorio');
 
   if ((updates as Partial<Author> & { slug?: string }).slug && (updates as Partial<Author> & { slug?: string }).slug !== slug) {
-    throw new Error('Não é permitido alterar o slug do autor');
+    throw new Error('Nao e permitido alterar o slug do autor');
   }
 
-  const dbUpdates: Partial<AuthorRow> = {};
-  if (updates.name !== undefined) dbUpdates.name = updates.name;
-  if (updates.shortName !== undefined) dbUpdates.short_name = updates.shortName;
-  if (updates.title !== undefined) dbUpdates.title = updates.title;
-  if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
-  if (updates.longBio !== undefined) dbUpdates.long_bio = updates.longBio;
-  if (updates.photo !== undefined) dbUpdates.photo = updates.photo;
-  if (updates.email !== undefined) dbUpdates.email = updates.email;
-  if (updates.social !== undefined) dbUpdates.social = updates.social;
-  if (updates.website !== undefined) dbUpdates.website = updates.website;
-  if (updates.location !== undefined) dbUpdates.location = updates.location;
-  if (updates.expertise !== undefined) dbUpdates.expertise = updates.expertise;
-  if (updates.credentials !== undefined) dbUpdates.credentials = updates.credentials;
-  if (updates.education !== undefined) dbUpdates.education = updates.education;
-  if (updates.awards !== undefined) dbUpdates.awards = updates.awards;
-  if (updates.languages !== undefined) dbUpdates.languages = updates.languages;
-  if (updates.joinedAt !== undefined) dbUpdates.joined_at = updates.joinedAt || null;
-  if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
-  if (updates.factChecker !== undefined) dbUpdates.fact_checker = updates.factChecker;
-  if (updates.editor !== undefined) dbUpdates.editor = updates.editor;
+  const assignments: string[] = [];
+  const values: unknown[] = [];
+  let index = 1;
 
-  const { error } = await supabase.from('authors').update(dbUpdates).eq('slug', slug);
-  if (error) throw error;
+  const push = (column: string, value: unknown, cast?: string) => {
+    assignments.push(`${column} = $${index}${cast ? `::${cast}` : ''}`);
+    values.push(value);
+    index += 1;
+  };
+
+  if (updates.name !== undefined) push('name', updates.name);
+  if (updates.shortName !== undefined) push('short_name', updates.shortName);
+  if (updates.title !== undefined) push('title', updates.title);
+  if (updates.bio !== undefined) push('bio', updates.bio);
+  if (updates.longBio !== undefined) push('long_bio', updates.longBio);
+  if (updates.photo !== undefined) push('photo', updates.photo);
+  if (updates.email !== undefined) push('email', updates.email);
+  if (updates.social !== undefined) push('social', JSON.stringify(updates.social ?? {}), 'jsonb');
+  if (updates.website !== undefined) push('website', updates.website);
+  if (updates.location !== undefined) push('location', updates.location);
+  if (updates.expertise !== undefined) push('expertise', updates.expertise ?? [], 'text[]');
+  if (updates.credentials !== undefined) push('credentials', updates.credentials ?? [], 'text[]');
+  if (updates.education !== undefined) push('education', JSON.stringify(updates.education ?? []), 'jsonb');
+  if (updates.awards !== undefined) push('awards', updates.awards ?? [], 'text[]');
+  if (updates.languages !== undefined) push('languages', updates.languages ?? [], 'text[]');
+  if (updates.joinedAt !== undefined) push('joined_at', updates.joinedAt || null);
+  if (updates.isActive !== undefined) push('is_active', updates.isActive);
+  if (updates.factChecker !== undefined) push('fact_checker', updates.factChecker);
+  if (updates.editor !== undefined) push('editor', updates.editor);
+
+  if (assignments.length === 0) {
+    return { ok: true };
+  }
+
+  values.push(slug);
+  await query(
+    `update authors
+     set ${assignments.join(', ')}
+     where slug = $${index}`,
+    values,
+  );
   return { ok: true };
 }
 
 export async function deleteAdminAuthor(input: { slug: string }) {
-  if (!isSupabaseConfigured) {
-    throw new Error('Supabase não configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('Banco local nao configurado (DATABASE_URL).');
   }
 
   const { slug } = input;
-  if (!slug) throw new Error('slug é obrigatório');
+  if (!slug) throw new Error('slug e obrigatorio');
 
-  // Soft delete: mantém referências em artigos e remove do /editorial.
-  const { error } = await supabase.from('authors').update({ is_active: false }).eq('slug', slug);
-  if (error) throw error;
+  await query('update authors set is_active = false where slug = $1', [slug]);
   return { ok: true };
 }
 
 export async function restoreAdminAuthor(input: { slug: string }) {
-  if (!isSupabaseConfigured) {
-    throw new Error('Supabase não configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('Banco local nao configurado (DATABASE_URL).');
   }
 
   const { slug } = input;
-  if (!slug) throw new Error('slug é obrigatório');
+  if (!slug) throw new Error('slug e obrigatorio');
 
-  const { error } = await supabase.from('authors').update({ is_active: true }).eq('slug', slug);
-  if (error) throw error;
+  await query('update authors set is_active = true where slug = $1', [slug]);
   return { ok: true };
 }

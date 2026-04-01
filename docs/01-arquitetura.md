@@ -1,267 +1,301 @@
-﻿# Arquitetura do Cenario Internacional
+# Arquitetura do Cenario Internacional
 
-## VisÃ£o Geral da Arquitetura
+## Resumo executivo
 
-O CIN possui arquitetura modular dividida em trÃªs grandes camadas:
+O projeto hoje e um monolito Next.js com App Router, banco PostgreSQL local e auth local do proprio app. A camada editorial principal roda dentro do namespace `/api/v1/editorial`, enquanto analytics continua separado no servico `collector/`.
 
-1. **Frontend** - Next.js (App Router) com dados do Supabase
-2. **Backend** - Supabase (Auth + Postgres + Edge Functions)
-3. **Analytics** - Stack independente (PostgreSQL + Fastify + Metabase)
+Arquitetura atual:
 
----
+1. aplicacao web e APIs no mesmo projeto Next.js
+2. banco local PostgreSQL acessado por `DATABASE_URL`
+3. uploads em filesystem local sob `public/uploads`
+4. auth local com sessoes do app
+5. cron HTTP para jobs editoriais e refresh de snapshots
+6. collector de analytics isolado
 
-## Camadas da AplicaÃ§Ã£o
+## Componentes principais
 
-### 1. Presentation Layer (Frontend)
+### 1. Aplicacao principal
 
-**Componentes de UI** (`/src/components`)
-- `layout/`: Estrutura visual (Header, Footer, Ticker)
-- `news/`: Componentes de notÃ­cias (Cards, ArticleContent)
-- `ui/`: Componentes base shadcn/ui
+Local:
 
-**PÃ¡ginas** (`/src/app`)
-- Cada rota Ã© uma pasta/arquivo no App Router (file-based)
-- Layouts compartilhados via `layout.tsx`
-- SEO via `metadata`/`generateMetadata`
+- `src/app`
+- `src/components`
+- `src/hooks`
+- `src/services`
+- `src/lib`
 
-### 2. Business Logic Layer
+Responsabilidades:
 
-**Hooks Customizados** (`/src/hooks`)
-- `useAuth`: Gerenciamento de autenticaÃ§Ã£o
-- `useBookmarks`: Favoritos do usuÃ¡rio
-- `useFinnhub`: Dados de mercado em tempo real
-- `useReadingProgress`: Tracking de leitura
+- portal publico
+- area admin
+- API routes
+- renderizacao SEO
+- gestao editorial
+- newsletter, contato, carreiras
+- upload de imagens
 
-**Servicos** (`/src/services`)
-- `newsManager.ts`: CRUD de artigos no Supabase (inclui regras para vincular posts a um autor/profissional)
-- `comments/supabaseService.ts`: Comentarios no Supabase
-- `adminUsers.ts`: Administracao de usuarios (admin)
-- `adminPosts.ts`: Operacoes admin de posts (ex: publicar agendados)
+### 2. Banco de dados local
 
-### 3. Data Layer
+Local:
 
-**ConfiguraÃ§Ãµes** (`/src/config`)
-- CentralizaÃ§Ã£o de todas as configuraÃ§Ãµes
-- FÃ¡cil manutenÃ§Ã£o e modificaÃ§Ã£o
-- Preparado para mÃºltiplos ambientes
+- `src/lib/db.ts`
+- `supabase/migrations/*.sql`
 
-**Storage** (`/src/config/storage.ts`)
-- AbstraÃ§Ã£o do LocalStorage
-- Tipagem forte
-- MÃ©todos especÃ­ficos por entidade
+Estado atual:
 
-**Security** (`/src/lib/security.ts`)
-- `escapeHtml`: PrevenÃ§Ã£o de XSS
-- `sanitizeFilename`: SanitizaÃ§Ã£o de nomes de arquivo
-- `escapeLikePattern`: Escaping de wildcards SQL para queries LIKE seguras
-- `isValidEmail`: ValidaÃ§Ã£o de formato de email
-- `sanitizeText`: SanitizaÃ§Ã£o bÃ¡sica de texto
+- o app depende de `DATABASE_URL`
+- operacoes editoriais, auth local, newsletter, comentarios e dados principais usam PostgreSQL local
+- o diretorio `supabase/migrations` permanece como historico e mecanismo de schema, nao como indicacao de que o runtime principal ainda seja Supabase
 
-> ðŸ“– Ver detalhes em [Guia de SeguranÃ§a para Desenvolvedores](./_security/GUIA_SEGURANCA_DESENVOLVEDORES.md)
+### 3. Auth local
 
----
+Local:
 
-## Analytics Layer (Independente)
+- `src/lib/server/localAuth.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/app/api/auth/*`
 
-A camada de Analytics opera separadamente do sistema principal, garantindo:
-- **Isolamento**: Falhas no analytics nÃ£o afetam o portal
-- **Escalabilidade**: Pode ser movida para infraestrutura separada
-- **Privacidade**: Dados pseudonimizados desde a coleta
+Responsabilidades:
 
-### Componentes do Analytics
+- login
+- logout
+- sessao atual
+- registro
+- autorizacao admin/editorial
 
-```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                         CLIENTE (Browser)                        â”‚
-â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
-â”‚  â”‚   Website    â”‚  â”‚  SDK Analyticsâ”‚  â”‚   localStorage      â”‚  â”‚
-â”‚  â”‚  (React)     â”‚â—„â”€â”¤  (vanilla JS)â”‚â—„â”€â”¤   (offline queue)   â”‚  â”‚
-â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚ HTTPS
-                            â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                    COLLECTOR API (Node.js)                       â”‚
-â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
-â”‚  â”‚   Fastify    â”‚  â”‚   Validate   â”‚  â”‚   Deduplication      â”‚  â”‚
-â”‚  â”‚   Server     â”‚â”€â”€â”¤    Schema    â”‚â”€â”€â”¤   (LRU + DB)         â”‚  â”‚
-â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚ Batch INSERT
-                            â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                    STORAGE (PostgreSQL)                          â”‚
-â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”‚
-â”‚  â”‚  Tabela: events_raw (particionada por mÃªs)                  â”‚â”‚
-â”‚  â”‚  â€¢ UNIQUE INDEX(event_id) por partiÃ§Ã£o                      â”‚â”‚
-â”‚  â”‚  â€¢ Ãndices GIN para JSONB                                   â”‚â”‚
-â”‚  â”‚  â€¢ DeduplicaÃ§Ã£o via ON CONFLICT                             â”‚â”‚
-â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚
-                            â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                      DASHBOARD (Metabase)                        â”‚
-â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”‚
-â”‚  â”‚  â€¢ Dashboard Real-time                                      â”‚â”‚
-â”‚  â”‚  â€¢ Dashboard Editorial                                      â”‚â”‚
-â”‚  â”‚  â€¢ Dashboard TÃ©cnico                                        â”‚â”‚
-â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-```
+### 4. API editorial para LLMs
 
-### Endpoints do Collector
+Local:
 
-| Endpoint | MÃ©todo | DescriÃ§Ã£o |
-|----------|--------|-----------|
-| `/health` | GET | Health check do sistema |
-| `/collect` | POST | Recebe eventos do cliente |
+- `src/app/api/v1/editorial/*`
+- `src/lib/server/editorialAdmin.ts`
+- `src/lib/server/editorialApi.ts`
+- `src/lib/server/editorialHttp.ts`
+- `src/services/editorialJobs.ts`
 
-### Stack TecnolÃ³gico do Analytics
+Capacidades atuais:
 
-| Componente | Tecnologia | Justificativa |
-|------------|------------|---------------|
-| API | Fastify (Node.js) | Performance, baixo overhead |
-| Database | PostgreSQL 15 | Particionamento nativo, familiaridade |
-| Dashboard | Metabase | Open source, fÃ¡cil configuraÃ§Ã£o |
-| Deploy | Docker Compose | Simplicidade, portabilidade |
+- discovery
+- auth check
+- OpenAPI
+- meta
+- readiness
+- market context
+- slug helper
+- listagem e leitura de artigos
+- create e update
+- enrich
+- seo audit
+- internal links
+- similar articles
+- validate
+- approve
+- sources
+- publish
+- schedule
+- jobs
+- uploads
+- upload library
 
----
+Workflow enforced no backend:
 
-## Edge Functions
+1. artigo nasce em `draft`
+2. fontes precisam existir para prontidao
+3. `validate` identifica erros e warnings
+4. `approve` exige validacao sem erros
+5. `publish` e `schedule` exigem validacao + aprovacao
 
-### 1) admin-users
-ResponsÃ¡vel por:
-- Criar usuÃ¡rio com senha
-- Atualizar dados
-- Redefinir senha
-- Excluir usuÃ¡rio
+### 5. Uploads locais
 
-Arquivo: `supabase/functions/admin-users/index.ts`
+Local:
 
-### 2) ai-news (REMOVIDO)
-âš ï¸ **REMOVIDO**: Esta Edge Function foi descontinuada.
-- A funcionalidade de geraÃ§Ã£o de conteÃºdo via provedor de IA foi removida
-- Para busca de notÃ­cias, usar a API GNews diretamente
+- `src/app/api/upload/route.ts`
+- `src/app/api/v1/editorial/uploads/route.ts`
+- `src/lib/server/fileStorage.ts`
 
----
+Comportamento:
 
-## PadrÃµes de Design
+- imagens raster passam por processamento e podem virar WebP
+- SVG e outros vetores seguem fluxo controlado
+- arquivos vao para `public/uploads`
+- a URL publicada e local ao proprio app
 
-### Componentes SemÃ¢nticos
-- Uso estrito de tags HTML semÃ¢nticas
-- Proibido uso de `<div>` para layout
-- Acessibilidade (ARIA labels, skip links)
+### 6. Cron e jobs
 
-### Config-Driven Development
-- Nenhum valor hardcoded
-- Todas as configuraÃ§Ãµes em `/config`
-- Facilita manutenÃ§Ã£o e internacionalizaÃ§Ã£o
+Local:
 
-### Future-Proof Services
-- Interfaces bem definidas
-- ServiÃ§os com backend real no Supabase
-- DTOs preparados para API real
+- `src/app/api/cron/route.ts`
+- `src/services/editorialJobs.ts`
+- `src/services/newsManager.ts`
 
----
+Tipos principais hoje:
 
-## Fluxo de Dados
+- refresh de snapshots externos
+- `publish-scheduled`
+- `editorial-jobs`
 
-### Portal (Frontend)
-```
-UsuÃ¡rio â†’ Componente â†’ Hook â†’ Service â†’ Storage/API
-                â†“
-            Config
+Dependencia operacional:
+
+- um scheduler externo precisa chamar `POST /api/cron?type=editorial-jobs`
+- autenticacao do cron usa `x-cron-secret: <CRON_API_SECRET>`
+
+### 7. Collector de analytics
+
+Local:
+
+- `collector/`
+
+Caracteristica:
+
+- servico separado do portal principal
+- nao faz parte da API editorial
+- pode ser operado isoladamente
+
+## Fluxo de dados
+
+### Portal e editorial
+
+```text
+Browser/Admin/Agent
+  -> Next.js routes
+  -> service layer
+  -> db helpers
+  -> PostgreSQL local
 ```
 
-### Analytics
-```
-Browser â†’ SDK â†’ Collector â†’ PostgreSQL â†’ Metabase
-              â†“
-         verify.sh (validaÃ§Ã£o)
-```
+### Uploads
 
----
-
-## PreparaÃ§Ã£o para Backend
-
-### Services Interface
-
-```typescript
-// Atual (Mock)
-export function getArticleBySlug(slug: string): NewsArticle | undefined {
-  return mockArticles.find(article => article.slug === slug);
-}
-
-// Futuro (API)
-export async function getArticleBySlug(slug: string): Promise<NewsArticle | null> {
-  const response = await fetch(`/api/articles/${slug}`);
-  return response.json();
-}
+```text
+Agent/Admin
+  -> /api/upload ou /api/v1/editorial/uploads
+  -> fileStorage
+  -> public/uploads
+  -> URL publica local
 ```
 
-### Storage Migration Path
+### Publicacao agendada
 
-1. **Fase 1**: LocalStorage (atual)
-2. **Fase 2**: IndexedDB para maior capacidade
-3. **Fase 3**: Sync com backend quando online
-
-### Auth Evolution
-
-1. **Fase 1**: Supabase Auth (atual)
-2. **Fase 2**: OAuth (Google, Apple, etc.)
-
----
-
-## Performance
-
-### OtimizaÃ§Ãµes Implementadas
-- Lazy loading de imagens
-- Code splitting por rota
-- Debounce em inputs de busca
-- RAF para scroll tracking
-
-### MÃ©tricas de Performance
-- First Contentful Paint < 1.5s
-- Time to Interactive < 3s
-- Lighthouse Score > 90
-
----
-
-## SeguranÃ§a
-
-### Medidas Atuais
-- SanitizaÃ§Ã£o de HTML (conteÃºdo de artigos)
-- XSS protection via React
-- CSRF tokens prontos para implementaÃ§Ã£o
-- Hash de IPs no analytics (LGPD)
-
-### Futuras ImplementaÃ§Ãµes
-- Content Security Policy
-- Rate limiting no collector
-- Input validation no backend
-
----
-
-## ValidaÃ§Ã£o do Sistema
-
-Para garantir que todo o sistema estÃ¡ funcionando:
-
-```bash
-# Validar analytics
-./scripts/verify.sh
+```text
+Agent
+  -> create draft
+  -> add sources
+  -> enrich
+  -> validate
+  -> approve
+  -> schedule
+  -> article_jobs
+  -> cron /api/cron?type=editorial-jobs
+  -> artigo publicado
 ```
 
-Este script verifica:
-1. PostgreSQL healthy
-2. PartiÃ§Ãµes criadas automaticamente
-3. UNIQUE INDEX(event_id) nas partiÃ§Ãµes
-4. Collector /health respondendo
-5. POST /collect funcionando
-6. DeduplicaÃ§Ã£o funcionando
+## Fronteiras de autenticacao
 
----
+### Auth do portal
 
-**Data de criaÃ§Ã£o:** 2024-01-10  
-**Ãšltima atualizaÃ§Ã£o:** 2026-02-08 (corrigido hooks e atualizado estrutura)
+- sessao local do usuario
+- cookies same-origin
 
+### Auth editorial
+
+- `Authorization: Bearer <EDITORIAL_API_KEY>`
+- `x-api-key: <EDITORIAL_API_KEY>`
+- sessao admin local
+
+Observacoes:
+
+- a API editorial nao emite credenciais
+- `CRON_API_SECRET` nao deve ser usado como credencial editorial
+
+## Estrutura de pastas relevante
+
+```text
+src/
+  app/
+    (site)/
+    admin/
+    api/
+      auth/
+      upload/
+      cron/
+      v1/editorial/
+  components/
+  config/
+  contexts/
+  hooks/
+  lib/
+    server/
+    db.ts
+  services/
+collector/
+docs/
+supabase/migrations/
+```
+
+## Decisoes arquiteturais importantes
+
+### Banco local como runtime principal
+
+Decisao:
+
+- consolidar operacao principal no PostgreSQL local
+
+Impacto:
+
+- reduz dependencia operacional externa
+- exige disciplina maior de backup, restore e observabilidade
+
+### API editorial dedicada
+
+Decisao:
+
+- separar fluxo editorial profissional do endpoint legado `/api/articles`
+
+Impacto:
+
+- melhora descoberta para agentes
+- facilita evolucao do workflow sem quebrar integracoes legadas
+
+### Upload local
+
+Decisao:
+
+- manter storage simples e controlado em filesystem local
+
+Impacto:
+
+- simplifica deploy inicial
+- exige estrategia clara de backup de uploads
+
+### Cron HTTP
+
+Decisao:
+
+- expor cron por API route autenticada
+
+Impacto:
+
+- simples para VPS comum
+- exige scheduler externo confiavel
+
+## Riscos atuais
+
+1. documentacao historica ainda possui referencias antigas a Supabase como runtime principal em alguns pontos do repositorio
+2. a operacao editorial por LLM depende de scheduler externo para jobs
+3. a suite global de testes ainda possui passivo legado fora do escopo editorial
+4. a VPS ainda precisa de normalizacao operacional antes de considerar deploy totalmente comprovado
+
+## Documentos relacionados
+
+- `docs/16-api-rest.md`
+- `docs/api-editorial-llm.md`
+- `docs/21-image-processing.md`
+- `docs/ops/RUNBOOK_EDITORIAL_LLM.md`
+- `docs/RUNBOOK.md`
+- `docs/22-deploy-producao-checklist.md`
+
+## Estado desta documentacao
+
+Data de revisao: 2026-04-01
+
+Este documento descreve a arquitetura atual observada no codigo e substitui a visao antiga centrada em Supabase como backend principal do portal.

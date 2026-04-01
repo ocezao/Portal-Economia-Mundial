@@ -1,237 +1,129 @@
-# 📋 Checklist Deploy Produção - VPS Hostinger
+# Checklist de Deploy em Producao
 
-> **Versão:** 2.0  
-> **Última atualização:** 2026-02-19  
-> **Target:** VPS Hostinger KVM 1+ (Ubuntu 22.04)
+## Escopo
 
----
+Checklist realista para subir o portal com:
 
-## 🎯 Status Geral
+- app Next.js
+- PostgreSQL local
+- uploads locais
+- auth local
+- API editorial v1 para LLMs
+- cron editorial
 
-```
-Progresso: ████████████████████ 95% (5% pendente)
-```
+Status desta revisao: 2026-04-01
 
-| Categoria | Status | Progresso |
-|-----------|--------|-----------|
-| Core Application | ✅ Completo | 100% |
-| Infraestrutura | ✅ Completo | 100% |
-| Performance | ✅ Completo | 95% |
-| SEO/Distribuição | ✅ Completo | 95% |
-| Segurança | ✅ Completo | 95% |
-| Monitoramento | ⚠️ Configurar | 80% |
+## Estado real resumido
 
----
+- build da aplicacao: passando
+- suite editorial dedicada: passando
+- suite global de testes: com passivo legado
+- lint global: com passivo relevante
+- operacao editorial por LLM: funcional, mas ainda dependente de fechamento operacional da VPS
 
-## ✅ IMPLEMENTADO
+## 1. Aplicacao
 
-### Core Application
-- [x] Next.js App Router
-- [x] React 19 + TypeScript
-- [x] Tailwind CSS + shadcn/ui
-- [x] Supabase Auth + Database
-- [x] Sistema de notícias completo
-- [x] Ticker de mercado (Finnhub)
-- [x] Sistema de comentários (Supabase + RLS)
-- [x] Newsletter (API + Buttondown)
-- [x] Sistema de uploads (Sharp + Supabase Storage)
-- [x] Sistema de favoritos/histórico
-- [x] Tradução automática (10 idiomas)
+- [x] `npm run build` passa
+- [ ] `npm run lint` passa sem passivo relevante
+- [ ] `npm run test` passa por completo
+- [x] namespace `/api/v1/editorial` implementado
+- [x] OpenAPI editorial exposto
+- [x] workflow editorial enforced no backend
 
-### Infraestrutura
-- [x] Docker + Docker Compose (produção)
-- [x] Nginx (pem.conf + ssl.conf)
-- [x] Scripts de deploy (deploy.sh + rollback.sh)
-- [x] Scripts de backup (backup.sh + restore.sh)
-- [x] Script de setup nginx (nginx-setup.sh)
-- [x] Health Check API (/api/health)
+## 2. Banco de dados
 
-### Performance
-- [x] Home SSR (Server Component)
-- [x] Cache com tags (src/lib/cache.ts)
-- [x] Otimização de imagens (Sharp, WebP)
-- [x] Headers de cache
-- [x] Bundle analyzer
+- [ ] `DATABASE_URL` configurado na VPS
+- [ ] banco acessivel pelo app em producao
+- [ ] migrations aplicadas
+- [ ] backup de banco validado
+- [ ] restore de banco testado
 
-### SEO/Distribuição
-- [x] Sitemap dinâmico (index + partições)
-- [x] Robots.txt dinâmico
-- [x] JSON-LD (NewsArticle, Organization)
-- [x] OpenGraph + Twitter Cards
-- [x] RSS Feed
-- [x] PWA Manifest
-- [x] Service Worker
-- [x] Push Notifications (OneSignal) ✅ ATIVO (script no head)
+## 3. Uploads
 
-### Segurança
-- [x] Headers de segurança (X-Frame-Options, CSP, etc)
-- [x] Rate limiting in-memory
-- [x] Sanitização de inputs
-- [x] Validação com Zod
-- [x] RLS no Supabase
-- [x] Logs estruturados
+- [ ] diretorio de uploads persistente configurado
+- [ ] permissao de escrita validada
+- [ ] backup de uploads validado
+- [ ] restauracao de uploads validada
 
-### CI/CD
-- [x] GitHub Actions (CI)
-- [x] Testes unitários (Vitest)
-- [x] Testes E2E (Playwright)
-- [x] Lint + TypeCheck
-- [x] Security audit
-- [x] Workflow de deploy
+## 4. Autenticacao
 
----
+- [ ] auth local validado em producao
+- [ ] usuario admin funcional
+- [ ] `EDITORIAL_API_KEY` provisionada
+- [ ] `EDITORIAL_API_KEY` validada via `/api/v1/editorial/auth`
+- [ ] `CRON_API_SECRET` provisionado separadamente
 
-## ⚠️ PENDENTE (Configuração Externa)
+## 5. Operacao editorial por LLM
 
-### 1. Configurar Sentry (Error Tracking)
-**Tempo:** 15 min
+- [x] discovery em `/api/v1/editorial`
+- [x] auth check em `/api/v1/editorial/auth`
+- [x] `meta`, `slug`, `articles`, `sources`, `enrich`, `validate`, `approve`, `publish`, `schedule`, `jobs`
+- [x] runbook editorial documentado
+- [x] testes dedicados de fluxo editorial criados
+- [ ] executor/agente externo configurado com segredo real
+- [ ] smoke test real contra ambiente de producao
 
-1. Criar conta em https://sentry.io
-2. Criar projeto Next.js
-3. Copiar DSN para `.env`:
-   ```
-   SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-   ```
-4. Instalar dependência:
-   ```bash
-   npm install @sentry/nextjs
-   ```
+## 6. Cron e jobs
 
-### 2. Configurar UptimeRobot (Monitoramento)
-**Tempo:** 10 min
+- [ ] scheduler chamando `POST /api/cron?type=editorial-jobs`
+- [ ] header `x-cron-secret` validado
+- [ ] jobs `queued` indo para `completed`
+- [ ] publicacao agendada comprovada em producao
 
-1. Criar conta em https://uptimerobot.com
-2. Adicionar monitores:
-   - `https://cenariointernacional.com.br/` (5 min)
-   - `https://cenariointernacional.com.br/api/health` (1 min)
-   - `https://cenariointernacional.com.br/rss.xml` (30 min)
-3. Configurar alertas por email
+## 7. Infraestrutura web
 
-### 3. Configurar GitHub Secrets (Deploy Automático)
-**Tempo:** 10 min
+- [ ] reverse proxy configurado
+- [ ] HTTPS valido
+- [ ] dominio principal apontado
+- [ ] healthcheck publico respondendo
+- [ ] reinicio da aplicacao documentado
 
-No repositório GitHub > Settings > Secrets:
-- `SSH_PRIVATE_KEY` - Chave SSH privada para acessar VPS
-- `VPS_HOST` - IP ou domínio da VPS
-- `VPS_USER` - Usuário SSH (ex: `deploy`)
+## 8. Observabilidade
 
-### 4. Configurar SSL (Certbot na VPS)
-**Tempo:** 5 min
+- [ ] logs da aplicacao acessiveis
+- [ ] logs de cron acessiveis
+- [ ] monitoramento de `/api/health`
+- [ ] monitoramento de fila editorial
+- [ ] alerta para jobs falhos
 
-```bash
-sudo certbot --nginx -d cenariointernacional.com.br -d www.cenariointernacional.com.br
-```
+## 9. Seguranca
 
-### 5. Primeiro Deploy na VPS
-**Tempo:** 30 min
+- [ ] segredos fora do repositorio
+- [ ] `EDITORIAL_API_KEY` nao reutilizada como segredo geral
+- [ ] `CRON_API_SECRET` nao reutilizado como segredo editorial
+- [ ] acesso administrativo restrito
+- [ ] backup protegido
 
-```bash
-# SSH na VPS
-ssh usuario@vps
+## 10. Go-live editorial
 
-# Clonar repositório
-git clone https://github.com/seu-repo/cin.git /var/www/pem
-cd /var/www/pem
+- [ ] criar draft real
+- [ ] adicionar fonte real
+- [ ] executar enrich
+- [ ] validar
+- [ ] aprovar
+- [ ] agendar
+- [ ] cron publicar
+- [ ] artigo aparecer no site
 
-# Configurar .env
-cp .env.example .env
-nano .env
+## Criterio de pronto
 
-# Instalar dependências
-npm ci
+So considerar deploy editorial pronto quando todos os itens abaixo forem verdadeiros:
 
-# Build Docker
-docker compose build web
+1. app sobe com `DATABASE_URL`
+2. auth local funciona
+3. `EDITORIAL_API_KEY` funciona
+4. cron editorial funciona
+5. um artigo real percorre `draft -> validate -> approve -> schedule -> publish`
+6. healthcheck responde
+7. logs e backup estao operacionais
 
-# Iniciar containers
-docker compose up -d web
+## O que ainda nao pode ser afirmado hoje
 
-# Configurar Nginx
-sudo ./scripts/nginx-setup.sh
+Nao e correto afirmar nesta data que:
 
-# Configurar SSL
-sudo certbot --nginx -d cenariointernacional.com.br -d www.cenariointernacional.com.br
-```
+- a VPS esta 100% normalizada
+- o deploy esta 95% comprovado
+- a suite global de testes esta verde
+- a operacao editorial por LLM esta tranquila em producao
 
-### 6. Configurar Backup Cron
-**Tempo:** 5 min
-
-```bash
-# Editar crontab
-crontab -e
-
-# Adicionar backup diário às 2h
-0 2 * * * cd /var/www/portal && ./scripts/backup.sh full >> /var/log/portal/backup.log 2>&1
-```
-
----
-
-## 📁 ARQUIVOS CRIADOS
-
-```
-nginx/
-├── pem.conf           # Configuração Nginx
-└── ssl.conf           # Configuração SSL
-
-scripts/
-├── nginx-setup.sh     # Setup Nginx + Certbot
-├── deploy.sh          # Deploy zero-downtime
-├── rollback.sh        # Rollback emergencial
-├── backup.sh          # Backup DB + uploads
-└── restore.sh         # Restauração
-
-src/lib/
-├── cache.ts           # Cache com tags
-├── sentry.ts          # Error tracking
-└── logger.new.ts      # Logger estruturado
-
-.github/workflows/
-└── deploy.yml         # Deploy automático
-
-docs/
-└── RUNBOOK.md         # Manual de operações
-```
-
----
-
-## 💰 CUSTOS MENSAIS
-
-| Serviço | Plano | Custo |
-|---------|-------|-------|
-| VPS Hostinger KVM 1 | 1 core, 4GB RAM | $4.99/mês |
-| Supabase | Free (500MB) | $0 |
-| Sentry | Developer (5k erros) | $0 |
-| UptimeRobot | Free | $0 |
-| OneSignal | Free (10k subs) | $0 |
-| Buttondown | Free (1k subs) | $0 |
-| **TOTAL** | | **~$5/mês** |
-
----
-
-## 🎯 DEFINIÇÃO DE "PRONTO"
-
-A aplicação está **100% pronta para produção** quando:
-
-- [x] Todos os itens acima implementados
-- [x] CI/CD passando
-- [x] Testes passando
-- [ ] SSL configurado na VPS
-- [ ] Health check respondendo 200
-- [ ] UptimeRobot configurado
-- [ ] Primeiro deploy realizado
-
----
-
-## 📞 SUPORTE
-
-Ver **[RUNBOOK.md](./RUNBOOK.md)** para:
-- Comandos úteis
-- Troubleshooting
-- Procedimentos de deploy
-- Contatos
-
----
-
-**Responsável:** _________________  
-**Data de início:** _________________  
-**Previsão de go-live:** _________________
+Esses pontos ainda dependem de validacao operacional real.

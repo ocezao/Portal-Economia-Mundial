@@ -1,276 +1,172 @@
-# Runbook - Cenario Internacional
+# Runbook de Operacoes
 
-> Manual de operações para produção (Docker)
+## Escopo
 
-## Informações Rápidas
+Runbook principal do projeto para ambiente de producao.
 
-| Item | Valor |
-|------|-------|
-| **Domínio** | cenariointernacional.com.br |
-| **Email** | contato@cenariointernacional.com.br |
-| **VPS** | 187.77.37.175 |
-| **Projeto** | /var/www/portal |
-| **Porta Web** | 3000 |
-| **Porta API** | 4000 |
-| **Porta Collector** | 4010 |
-| **Porta Metabase** | 3001 |
+Para operacao editorial por agente, use tambem:
 
----
+- `docs/ops/RUNBOOK_EDITORIAL_LLM.md`
 
-## Containers Docker
+## Informacoes basicas
+
+- dominio principal: `cenariointernacional.com.br`
+- projeto esperado na VPS: `/var/www/portal`
+- app principal: Next.js
+- banco principal: PostgreSQL local via `DATABASE_URL`
+- cron editorial: `/api/cron?type=editorial-jobs`
+
+## Comandos basicos da aplicacao
 
 ```bash
-# Listar containers
-docker ps
-
-# ou usando docker compose
 cd /var/www/portal
-docker compose ps
-
-# Ver logs de um serviço
-docker compose logs -f web
-docker compose logs -f api
-docker compose logs -f collector
-
-# Reiniciar um serviço
-docker compose restart web
-docker compose restart api
-
-# Rebuild e reiniciar (após更新代码)
-docker compose build web
-docker compose up -d web
+npm run build
+npm start
 ```
 
----
+Se estiver usando Docker ou outro supervisor, adapte o comando ao processo real da VPS.
 
-## Comandos Úteis
+## Variaveis criticas
 
-### Docker Compose
+- `DATABASE_URL`
+- `NEXT_PUBLIC_SITE_URL`
+- `EDITORIAL_API_KEY`
+- `CRON_API_SECRET`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+
+## Health checks
+
+Rotas principais:
+
+- `GET /api/health`
+- `GET /api/v1/editorial`
+- `GET /api/v1/editorial/auth` com credencial valida
+
+## Verificacoes rapidas
+
+### Aplicacao
 
 ```bash
-# Status de todos os serviços
+curl -I https://cenariointernacional.com.br
+curl https://cenariointernacional.com.br/api/health
+```
+
+### Editorial API
+
+```bash
+curl https://cenariointernacional.com.br/api/v1/editorial
+curl -H "Authorization: Bearer $EDITORIAL_API_KEY" \
+  https://cenariointernacional.com.br/api/v1/editorial/auth
+```
+
+### Cron editorial
+
+```bash
+curl -X POST "https://cenariointernacional.com.br/api/cron?type=editorial-jobs" \
+  -H "x-cron-secret: $CRON_API_SECRET"
+```
+
+## Procedimento de deploy manual
+
+```bash
 cd /var/www/portal
-docker compose ps
-
-# Logs em tempo real (todos os serviços)
-docker compose logs -f
-
-# Logs de um serviço específico
-docker compose logs -f web
-
-# Reiniciar aplicação
-docker compose restart web
-
-# Rebuild completo
-docker compose build web
-docker compose up -d web
-
-# Parar todos os serviços
-docker compose down
-
-# Iniciar todos os serviços
-docker compose up -d
-
-# Ver recursos usados
-docker stats
+git pull origin main
+npm ci
+npm run build
 ```
 
-### Nginx
-
-```bash
-# Testar configuração
-sudo nginx -t
-
-# Recarregar configuração
-sudo systemctl reload nginx
-
-# Reiniciar Nginx
-sudo systemctl restart nginx
-
-# Status
-sudo systemctl status nginx
-
-# Logs de acesso
-sudo tail -f /var/log/nginx/access.log
-
-# Logs de erro
-sudo tail -f /var/log/nginx/error.log
-```
-
-### Certbot (SSL)
-
-```bash
-# Renovar certificado
-sudo certbot renew
-
-# Testar renovação
-sudo certbot renew --dry-run
-
-# Verificar certificados
-sudo certbot certificates
-```
-
-### Backup
-
-```bash
-# Backup completo
-cd /var/www/portal
-./scripts/backup.sh full
-
-# Backup apenas banco
-./scripts/backup.sh db
-
-# Restaurar banco
-./scripts/restore.sh db
-
-# Listar backups
-ls -lh /var/www/portal-backups/
-```
-
----
+Depois, reinicie o processo da aplicacao conforme o gerenciador usado na VPS.
 
 ## Troubleshooting
 
-### Site fora do ar
+### 1. `Database pool not available`
 
-1. Verificar status dos containers:
-   ```bash
-   cd /var/www/portal
-   docker compose ps
-   ```
+Diagnostico:
 
-2. Verificar logs:
-   ```bash
-   docker compose logs -f web
-   ```
+- `DATABASE_URL` ausente ou invalido
 
-3. Verificar Nginx:
-   ```bash
-   sudo systemctl status nginx
-   sudo nginx -t
-   ```
+Acao:
 
-4. Verificar porta 3000:
-   ```bash
-   curl http://localhost:3000
-   ```
+1. verificar ambiente do processo
+2. confirmar conectividade com PostgreSQL
+3. reiniciar a aplicacao apos corrigir a variavel
 
-### Erro 502 Bad Gateway
+### 2. `UNAUTHORIZED` na API editorial
 
-1. Verificar se container web está rodando:
-   ```bash
-   docker compose ps
-   ```
+Diagnostico:
 
-2. Verificar logs de erro:
-   ```bash
-   docker compose logs web
-   ```
+- `EDITORIAL_API_KEY` ausente, incorreta ou base URL errada
 
-3. Reiniciar container:
-   ```bash
-   docker compose restart web
-   ```
+Acao:
 
-### Erro de memória
+1. validar segredo no ambiente do agente
+2. chamar `/api/v1/editorial/auth`
+3. confirmar que o agente nao esta usando `CRON_API_SECRET`
 
-1. Verificar uso de memória:
-   ```bash
-   docker stats
-   free -h
-   ```
+### 3. `VALIDATION_REQUIRED`
 
-2. Ajustar limites no docker-compose.yml se necessário
+Diagnostico:
 
-3. Reiniciar:
-   ```bash
-   docker compose restart web
-   ```
+- fluxo editorial fora de ordem ou artigo com pendencias
 
-### Banco de dados lento
+Acao:
 
-1. Verificar conexão:
-   ```bash
-   curl http://localhost:3000
-   ```
+1. chamar `/api/v1/editorial/articles/{id}/validate`
+2. corrigir erros
+3. repetir `approve`
+4. repetir `publish` ou `schedule`
 
-2. Verificar logs do Supabase no dashboard
+### 4. artigo agendado nao publicou
 
-3. Verificar se há muitas conexões abertas
+Diagnostico:
 
----
+- cron nao rodou
+- job falhou
+- segredo de cron invalido
 
-## Deploy Manual
+Acao:
 
-```bash
-# SSH no servidor
-ssh root@187.77.37.175
+1. chamar `/api/v1/editorial/jobs`
+2. verificar jobs `queued` ou `failed`
+3. disparar manualmente `/api/cron?type=editorial-jobs`
+4. revisar logs da aplicacao
 
-# Ir para o diretório do projeto
-cd /var/www/portal
+### 5. upload falhando
 
-# Pull das últimas alterações
-git pull origin main
+Diagnostico:
 
-# Rebuild da imagem Docker
-docker compose build web
+- permissao de escrita
+- path de uploads
+- arquivo invalido
 
-# Reiniciar o container
-docker compose up -d web
+Acao:
 
-# Verificar se está rodando
-docker compose ps
-curl https://cenariointernacional.com.br
-```
+1. revisar permissao do diretorio de uploads
+2. verificar tamanho e tipo do arquivo
+3. revisar logs do endpoint de upload
 
----
+## Monitoramento minimo recomendado
 
-## Deploy via GitHub Actions
+- uptime de `/api/health`
+- uptime da home
+- fila de jobs editoriais
+- falhas em cron
+- crescimento de uploads
+- uso de disco
 
-O deploy também pode ser feito automaticamente via GitHub Actions quando há push na branch main.
+## Backups
 
-Ver workflow: `.github/workflows/deploy.yml`
+O ambiente deve ter backup recorrente de:
 
----
+1. banco PostgreSQL
+2. diretorio `public/uploads`
+3. arquivo de ambiente seguro fora do repositorio
 
-## Endpoints Importantes
+Sem isso, a operacao nao pode ser considerada robusta.
 
-| Serviço | URL |
-|---------|-----|
-| **Site** | https://cenariointernacional.com.br |
-| **Admin** | https://cenariointernacional.com.br/admin |
-| **API** | https://cenariointernacional.com.br/api/* |
-| **Metabase** | https://metabase.cenariointernacional.com.br |
-| **RSS** | https://cenariointernacional.com.br/rss.xml |
+## Limites desta documentacao
 
----
-
-## Variáveis de Ambiente
-
-As variáveis de ambiente estão configuradas no arquivo `.env` local e no docker-compose.yml.
-
-**Importante:** Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` ou outras chaves sensíveis.
-
----
-
-## Monitoramento
-
-### Health Checks
-
-- Site: `https://cenariointernacional.com.br`
-- API: `https://cenariointernacional.com.br/api/news`
-- Metabase: `https://metabase.cenariointernacional.com.br`
-
-### Logs
-
-```bash
-# Ver todos os logs
-docker compose logs -f
-
-# Ver apenas erros
-docker compose logs web | grep -i error
-```
-
----
-
-**Última atualização:** 19/02/2026
+Este runbook nao prova que a VPS atual esta normalizada. Ele documenta o que deve existir e como operar a stack atual. A comprovacao depende de validacao no servidor real.

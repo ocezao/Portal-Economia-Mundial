@@ -55,6 +55,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 |---|-----------|-----------|
 | 16 | [API REST](./16-api-rest.md) | Especificação OpenAPI, endpoints e integração |
 | 21 | [Uploads e Processamento de Imagens](./21-image-processing.md) | Upload via API, conversao WebP e suporte a SVG (admin) |
+| API-LLM | [Editorial API para LLMs](./api-editorial-llm.md) | Guia operacional da API editorial v1 para agentes, automacoes e publicacao programatica |
 | FINNHUB | [Finnhub - Guia Completo](./product/FINNHUB-GUIA-COMPLETO.md) | Integração completa com Finnhub API |
 
 ### CI/CD e DevOps
@@ -64,6 +65,10 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | 17 | [CI/CD Pipeline](./17-cicd-pipeline.md) | Integração contínua e deploy automatizado |
 | RUNBOOK | [Runbook de Operações](./RUNBOOK.md) | Manual de operações para produção |
 | DEPLOY | [Checklist Deploy](./22-deploy-producao-checklist.md) | Checklist completo de deploy em produção |
+| LLM-OPS | [Plano Execucao LLM Editorial com Subagentes](./ops/PLANO_EXECUCAO_LLM_EDITORIAL_COM_SUBAGENTES.md) | Time, checklist e revisao para fechar operacao editorial por LLM |
+| OPS-LLM | [Time de Subagentes - Execucao Editorial por LLM](./ops/TIME_SUBAGENTES_EXECUCAO_EDITORIAL_LLM.md) | Time, checklist e revisão operacional para executar a camada editorial por agentes |
+
+| RUNBOOK-LLM | [Runbook Editorial por LLM](./ops/RUNBOOK_EDITORIAL_LLM.md) | Segredos, cron, fluxo obrigatorio, falhas e monitoramento da operacao editorial por agente |
 
 ### Funcionalidades
 
@@ -80,6 +85,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 |---|-----------|-----------|
 | PESQUISA | [Plano Pesquisa Veículos](./PLANO-PESQUISA-VEICULOS.md) | Fluxo de pesquisa em fontes oficiais, produção colaborativa e SEO |
 | POSTAGEM | [Guia Postagem SEO](./GUIA-POSTAGEM-SEO.md) | Guia completo para postagem com SEO perfeito |
+| 30 | [Automacao Editorial SEO AEO GEO](./30-automacao-editorial-seo-aeo-geo.md) | Plano tecnico para evoluir a API e o workflow editorial para automacao profissional focada no Brasil |
 | ALERTS | [Google Alerts Config](./GOOGLE_ALERTS_CONFIG.md) | Configuração de alertas para pesquisa |
 
 ### 🤖 Integração com IA (MCP)
@@ -119,6 +125,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 | [AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md](./audits/AUDITORIA_ARQUIVOS_NAO_NECESSARIOS.md) | Auditoria de código morto |
 | [RELATORIO_CODIGO_MORTO.md](./audits/RELATORIO_CODIGO_MORTO.md) | Relatório de código morto |
 | [RESUMO_LIMPEZA_FINAL.md](./audits/RESUMO_LIMPEZA_FINAL.md) | Resumo da limpeza de código |
+| [AUDITORIA_REPOSITORIO_2026-04-01.md](./audits/AUDITORIA_REPOSITORIO_2026-04-01.md) | Auditoria de aderencia entre codigo atual e documentacao |
 
 ---
 
@@ -180,6 +187,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 - ✅ **PLANO_CONSOLIDACAO_DOCUMENTACAO.md** - Plano de consolidação
 - ✅ **Admin Arquivos + Upload SVG/WebP** - `/admin/arquivos` + `GET|DELETE /api/admin-files` + `POST /api/upload`
 - ✅ **EditorConfig** - Arquivo `.editorconfig` para garantir encoding UTF-8
+- ✅ **Editorial API v1 para automacao** - Namespace `/api/v1/editorial` com discovery, OpenAPI, metadados, slug helper, listagem e uploads autenticados por API key
 - 🗑️ Removidos: FINNHUB_SETUP.md, FINNHUB_INTEGRACAO.md, FINNHUB_ENDPOINTS_ANALISE.md (consolidados)
 - 🗑️ Removidos: 08-changelog.md (consolidado em CHANGELOG.md)
 - 🗑️ Removido: TRADING_ECONOMICS_SETUP.md (código removido)
@@ -195,7 +203,7 @@ Bem-vindo à documentação central do Cenario Internacional (CIN).
 
 ---
 
-**Última atualização:** 19/02/2026
+**Ultima atualizacao:** 01/04/2026
 
 ---
 
@@ -207,4 +215,3 @@ O projeto inclui um arquivo `.editorconfig` na raiz que garante:
 - Remoção de espaços em branco finais
 
 **Recomendação:** Configure seu editor para respeitar o `.editorconfig` e usar UTF-8.
-

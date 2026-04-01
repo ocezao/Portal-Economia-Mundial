@@ -1,18 +1,13 @@
 import type { FaqItem } from '@/config/seo';
 
-interface FaqTemplate {
-  keywords: string[];
-  questions: (title: string, category: string) => FaqItem[];
-}
-
 const economyFaqs = (title: string): FaqItem[] => [
   {
     question: `O que é "${title}"?`,
     answer: `Este artigo aborda os principais desenvolvimentos econômicos relacionados a "${title}", com análise de especialistas e dados de fontes oficiais.`,
   },
   {
-    question: `Quais são as Implications de "${title}" para o Brasil?`,
-    answer: `As Implications para o Brasil variam conforme o contexto específico. Monitoramos de perto os desenvolvimentos e publicamos análises detalhadas.`,
+    question: `Quais sao os impactos de "${title}" para o Brasil?`,
+    answer: `Os efeitos para o Brasil dependem de cambio, inflacao, juros, comercio exterior e reacao dos mercados. Use este FAQ apenas como ponto de partida e revise com dados reais antes de publicar.`,
   },
   {
     question: `Onde encontrar mais informações sobre "${title}"?`,
@@ -38,11 +33,11 @@ const cryptoFaqs = (title: string): FaqItem[] => [
 const geopoliticsFaqs = (title: string): FaqItem[] => [
   {
     question: `O que significa "${title}" para o Brasil?`,
-    answer: `Este artigo analisa as Implications de "${title}" para a economia brasileira e as relações internacionais do país.`,
+    answer: `O angulo Brasil deve explicar efeitos em diplomacia, comercio, commodities, cambio e empresas locais, sempre com base em fontes verificadas.`,
   },
   {
     question: `Quais países são afetados por "${title}"?`,
-    answer: `${title} tem Implications globais. Monitoramos os principais impactos em diferentes regiões e publicamos análises detalhadas.`,
+    answer: `Mapeie os principais paises e blocos afetados e complemente a resposta com dados confirmados antes de publicar.`,
   },
   {
     question: `Onde encontrar informações oficiais sobre "${title}"?`,
@@ -57,7 +52,7 @@ const technologyFaqs = (title: string): FaqItem[] => [
   },
   {
     question: `Como "${title}" afeta o mercado?`,
-    answer: `As Implications de "${title}" para o mercado de tecnologia são analisadas por especialistas em nossa publicação.`,
+    answer: `Explique efeitos em empresas, investimento, regulacao e adocao no Brasil com exemplos e fontes reais.`,
   },
   {
     question: `Quais empresas estão envolvidas em "${title}"?`,
@@ -99,8 +94,7 @@ export function generateAutoFaqs(title: string, category: string): FaqItem[] {
 export function generateContextualFaqs(
   title: string,
   category: string,
-  tags: string[],
-  content: string
+  tags: string[]
 ): FaqItem[] {
   const baseFaqs = generateAutoFaqs(title, category);
   
@@ -116,7 +110,7 @@ export function generateContextualFaqs(
   if (tags.some(t => t.toLowerCase().includes('dólar') || t.toLowerCase().includes('moeda'))) {
     contextualFaqs.push({
       question: `Como "${title}" impacta o câmbio?`,
-      answer: `Este artigo analisa as Implications deste cenário para o mercado de câmbio brasileiro.`,
+      answer: `Explique a transmissao para dolar, fluxo externo e precificacao de risco no Brasil com base em dados confirmados.`,
     });
   }
   
@@ -130,7 +124,7 @@ export function generateContextualFaqs(
   if (tags.some(t => t.toLowerCase().includes('china') || t.toLowerCase().includes('eua') || t.toLowerCase().includes('estados unidos'))) {
     contextualFaqs.push({
       question: `Qual o impacto de "${title}" nas relações internacionais?`,
-      answer: `Este artigo traz análise sobre as Implications geopolíticas deste cenário.`,
+      answer: `Descreva os efeitos diplomaticos, comerciais e estrategicos com base em fatos verificados e fontes oficiais.`,
     });
   }
   

@@ -4,16 +4,16 @@ Este documento descreve as API Routes atualmente existentes no projeto Next.js.
 
 ## Base URL
 
-- Desenvolvimento: `http://localhost:5173`
+- Desenvolvimento: `http://localhost:3000`
 - Producao: dominio configurado em `NEXT_PUBLIC_SITE_URL`
 
-As rotas ficam sob o prefixo `/api` (nao existe versao `/v1` no app atual).
+As rotas ficam sob os prefixos `/api` e `/api/v1/editorial`.
 
 ## Endpoints implementados
 
 ### `POST /api/admin-users`
 
-Gerenciamento administrativo de usuarios (proxy para Supabase Admin API).
+Gerenciamento administrativo de usuarios do sistema local.
 
 - Auth: obrigatoria via `Authorization: Bearer <token>`
 - Permissao: usuario com `role=admin` em `profiles`
@@ -30,14 +30,13 @@ Arquivo: `src/app/api/admin-users/route.ts`
 
 ### `GET|DELETE /api/admin-files`
 
-Listagem e exclusao de arquivos enviados para o Supabase Storage (admin-only).
+Listagem e exclusao de arquivos enviados localmente em `public/uploads` (admin-only).
 
-- Auth: obrigatoria via `Authorization: Bearer <access_token>` (token do Supabase)
-- Permissao: usuario com `role=admin` em `profiles`
-- Bucket: `SUPABASE_UPLOAD_BUCKET` (default: `uploads`)
+- Auth: sessao admin local ou auth editorial
+- Permissao: admin
 
 `GET /api/admin-files`
-- Retorna `{ ok, bucket, files[] }`
+- Retorna `{ ok, files[] }`
 - `files[]` inclui `name`, `path`, `size`, `contentType`, `updatedAt`, `publicUrl`, `isVector`
 
 `DELETE /api/admin-files`
@@ -50,8 +49,8 @@ Arquivo: `src/app/api/admin-files/route.ts`
 
 Operacoes administrativas relacionadas a posts (admin-only).
 
-- Auth: obrigatoria via `Authorization: Bearer <access_token>` (token do Supabase)
-- Permissao: usuario com `role=admin` em `profiles`
+- Auth: sessao admin local, bearer key editorial ou `x-api-key`
+- Permissao: admin/editorial
 - Body: JSON com `action`
 
 Acoes suportadas:
@@ -85,7 +84,7 @@ Health check de aplicacao.
 
 Verifica:
 - uptime e memoria
-- conectividade com Supabase
+- conectividade com PostgreSQL local
 
 Arquivo: `src/app/api/health/route.ts`
 
@@ -128,7 +127,7 @@ Arquivo: `src/app/api/telemetry/error/route.ts`
 
 ### `POST /api/upload`
 
-Upload/processamento de imagem para Supabase Storage.
+Upload/processamento de imagem para armazenamento local.
 
 Caracteristicas:
 - auth obrigatoria (admin)
@@ -136,9 +135,194 @@ Caracteristicas:
 - validacao de tipo e tamanho
 - processamento com Sharp para imagens raster (webp, resize, metadata)
 - suporte a vetores (SVG): armazenado como `.svg` sem conversao via Sharp, com validacoes basicas de seguranca
-- objeto salvo com path `yyyy/mm/<uuid>.(webp|svg)`
+- objeto salvo com path `yyyy/mm/<uuid>.(webp|svg)` em `public/uploads`
 
 Arquivo: `src/app/api/upload/route.ts`
+
+## Editorial API v1
+
+Namespace voltado para automacao, integracoes programaticas e agentes LLM.
+
+### `GET /api/v1/editorial`
+
+Endpoint de descoberta com links principais e modelo de autenticacao.
+
+### `GET /api/v1/editorial/auth`
+
+Verifica se a credencial editorial recebida esta valida.
+
+### `GET /api/v1/editorial/openapi`
+
+Contrato OpenAPI JSON da API editorial.
+
+### `GET /api/v1/editorial/meta`
+
+Retorna:
+- autores ativos
+- categorias
+- enums de `status` e `editorialStatus`
+
+### `GET /api/v1/editorial/readiness`
+
+Retorna readiness operacional da API editorial para agentes.
+
+Inclui:
+- status de banco
+- status de uploads
+- presenca de `EDITORIAL_API_KEY`
+- presenca de `CRON_API_SECRET`
+- presenca de `NEXT_PUBLIC_SITE_URL`
+- contagem agregada de jobs editoriais
+
+### `GET /api/v1/editorial/context/market`
+
+Retorna contexto economico resumido para enriquecer artigos e posts.
+
+Inclui:
+- indices globais
+- commodities
+- setores
+- noticias de mercado
+- calendario economico
+- earnings
+
+### `GET /api/v1/editorial/slug`
+
+Gera ou valida slug.
+
+Query:
+- `value`
+- `title`
+- `excludeSlug`
+
+### `GET|POST /api/v1/editorial/articles`
+
+`GET`
+- lista artigos com filtros e paginacao
+- filtros: `page`, `perPage`, `search`, `category`, `status`, `author`, `dateFrom`, `dateTo`, `sortBy`, `sortOrder`
+
+`POST`
+- cria artigo
+- aceita payload editorial validado por `zod`
+- o fluxo atual exige criacao inicial em `draft`
+
+### `GET|PATCH /api/v1/editorial/articles/:id`
+
+- `GET` busca artigo por id ou slug
+- `PATCH` atualiza artigo
+- query opcional: `lookup=slug`
+
+### `GET /api/v1/editorial/articles/:id/validate`
+
+Valida prontidao editorial e retorna checklist estruturado para publicacao.
+
+Regras atuais:
+
+- fontes ausentes bloqueiam prontidao
+- erros estruturais retornam `readyToPublish=false`
+- aprovacao ainda e etapa separada
+
+### `POST /api/v1/editorial/articles/:id/approve`
+
+Marca o artigo como aprovado editorialmente.
+
+Regra atual:
+
+- so aprova se `validate` estiver sem erros estruturais
+
+### `POST /api/v1/editorial/articles/:id/enrich`
+
+Enriquece dados editoriais persistidos, como `seo_title`, `meta_description`, `faq_items` e `editorial_status`.
+
+### `GET /api/v1/editorial/articles/:id/seo-audit`
+
+Audita SEO/AEO do artigo.
+
+Retorna:
+- `checks`
+- `issues`
+- sugestoes de `seoTitle`
+- sugestoes de `metaDescription`
+- FAQ sugerido
+- links internos sugeridos
+
+### `GET /api/v1/editorial/articles/:id/internal-links`
+
+Sugere links internos relevantes para o artigo.
+
+Query:
+- `limit`
+
+### `GET /api/v1/editorial/articles/:id/similar`
+
+Lista artigos semanticamente parecidos para evitar duplicidade e canibalizacao editorial.
+
+Query:
+- `limit`
+
+### `POST /api/v1/editorial/articles/:id/publish`
+
+Publica imediatamente.
+
+Regra atual:
+
+- exige artigo aprovado
+- exige artigo validado sem erros
+- exige fontes persistidas
+
+### `POST /api/v1/editorial/articles/:id/schedule`
+
+Agenda publicacao. Requer `publishedAt`.
+
+Regra atual:
+
+- exige artigo aprovado
+- exige artigo validado sem erros
+- exige fontes persistidas
+
+### `POST /api/v1/editorial/articles/:id/sources`
+
+Adiciona fonte editorial persistida ao artigo.
+
+### `DELETE /api/v1/editorial/articles/:id/sources/:sourceId`
+
+Remove fonte editorial persistida.
+
+### `GET /api/v1/editorial/jobs`
+
+Lista jobs editoriais com filtros.
+
+### `POST /api/v1/editorial/jobs/dispatch`
+
+Executa jobs editoriais elegiveis.
+
+Observacao:
+
+- o cron publico recomendado para producao continua sendo `POST /api/cron?type=editorial-jobs`
+
+### `POST /api/v1/editorial/uploads`
+
+Upload editorial autenticado por API key ou sessao admin.
+
+Auth aceita:
+- `Authorization: Bearer <EDITORIAL_API_KEY>`
+- `x-api-key: <EDITORIAL_API_KEY>`
+- sessao admin same-origin
+
+### `GET /api/v1/editorial/uploads/library`
+
+Lista arquivos ja disponiveis no storage local editorial.
+
+Query:
+- `dir`
+- `search`
+- `limit`
+
+Observacao:
+- a API nao emite credenciais
+- `EDITORIAL_API_KEY` precisa ser provisionada externamente
+
+Documentacao operacional detalhada: `docs/api-editorial-llm.md`
 
 ## Erros e status codes
 
@@ -151,12 +335,19 @@ Padrao geral observado:
 - `500` erro interno
 - `503` dependencia/config indisponivel
 
+Codigos estaveis relevantes no fluxo editorial:
+
+- `UNAUTHORIZED`
+- `INVALID_PAYLOAD`
+- `INVALID_QUERY`
+- `NOT_FOUND`
+- `WORKFLOW_CONFLICT`
+- `VALIDATION_REQUIRED`
+
 ## Variaveis de ambiente relevantes
 
-- Supabase
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY`
+- Banco local
+  - `DATABASE_URL`
 - Newsletter/Email
   - `NEXT_PUBLIC_SITE_URL`
   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURITY`
@@ -164,10 +355,22 @@ Padrao geral observado:
   - `NEWSLETTER_INBOX_EMAIL`, `CONTACT_INBOX_EMAIL`, `CAREERS_INBOX_EMAIL`
   - `BUTTONDOWN_API_KEY` (opcional)
 - Upload
-  - `SUPABASE_UPLOAD_BUCKET`
+  - `UPLOADS_DIR` (opcional)
+- Editorial API
+  - `EDITORIAL_API_KEY`
+  - `CRON_API_SECRET`
+  - `ALLOW_INTERNAL_EDITORIAL_IP_BYPASS`
+  - `EDITORIAL_ALLOWED_IPS`
+  - `EDITORIAL_ALLOWED_CIDRS`
+  - `EDITORIAL_ALLOW_PRIVATE_NETWORKS`
 
 ## Fora de escopo deste documento
 
 - APIs do servico `collector/` (analytics separado)
 - Endpoints de MCP (`mcp-server/`)
-- Supabase Edge Functions (diretorio `supabase/functions`)
+- detalhes operacionais completos do cron editorial
+
+Runbooks relacionados:
+
+- `docs/api-editorial-llm.md`
+- `docs/ops/RUNBOOK_EDITORIAL_LLM.md`

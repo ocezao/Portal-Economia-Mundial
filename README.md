@@ -5,7 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Local%20DB-336791?logo=postgresql&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Pronto%20Producao-22C55E)
 
 ---
@@ -29,10 +29,10 @@ A construção foi guiada por 4 pilares:
 - Estrutura editorial com categorias, autores, páginas institucionais e área administrativa.
 
 2. **Distribuição e retenção**
-- Estratégia de newsletter com double opt-in e automações por email.
+- Estrategia de newsletter com double opt-in e automacoes por email.
 
 3. **Base técnica escalável**
-- Next.js App Router + Supabase + APIs internas para evitar dependências desnecessárias.
+- Next.js App Router + PostgreSQL local + APIs internas para concentrar a operacao no proprio projeto.
 
 4. **Governança e operação**
 - Documentação extensa, checklists de deploy e trilha de auditorias técnicas.
@@ -77,7 +77,8 @@ A construção foi guiada por 4 pilares:
 - Framework: Next.js 15 (App Router)
 - Frontend: React 19 + TypeScript
 - UI: Tailwind CSS + shadcn/ui
-- Dados e Auth: Supabase (Postgres + Auth)
+- Dados: PostgreSQL local
+- Auth: sessoes locais do app
 - Email transacional: SMTP Hostinger (Nodemailer)
 - Serviços auxiliares: `mcp-server/` e `collector/`
 
@@ -111,15 +112,41 @@ Todas implementadas em `src/app/api`:
 - `POST /api/admin-users`
 - `GET|DELETE /api/admin-files`
 - `POST /api/admin-posts`
+- `POST /api/articles`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/auth/register`
+- `GET /api/auth/session`
 - `POST /api/career-applications`
+- `GET|POST|PATCH|DELETE /api/comments`
 - `POST /api/contact-messages`
+- `GET|POST /api/cron`
 - `GET|HEAD /api/health`
 - `POST /api/newsletter/subscribe`
 - `GET /api/newsletter/confirm`
+- `GET /api/search`
 - `POST /api/telemetry/error`
+- `GET /api/ticker`
 - `POST /api/upload`
+- `GET|POST|DELETE /api/user/bookmarks`
+- `GET|POST|DELETE /api/user/reading-history`
+- `GET|DELETE /api/user/reading-progress`
+
+Namespace editorial para automacao:
+
+- `GET /api/v1/editorial`
+- `GET /api/v1/editorial/openapi`
+- `GET /api/v1/editorial/meta`
+- `GET /api/v1/editorial/slug`
+- `GET|POST /api/v1/editorial/articles`
+- `GET|PATCH /api/v1/editorial/articles/[id]`
+- `POST /api/v1/editorial/articles/[id]/enrich`
+- `POST /api/v1/editorial/articles/[id]/publish`
+- `POST /api/v1/editorial/articles/[id]/schedule`
+- `POST /api/v1/editorial/uploads`
 
 Documentação detalhada: `docs/16-api-rest.md`
+Runbook operacional do agente: `docs/ops/RUNBOOK_EDITORIAL_LLM.md`
 
 ---
 
@@ -133,8 +160,8 @@ Documentação detalhada: `docs/16-api-rest.md`
 
 Dependências:
 
-- tabela `leads` no Supabase
-- variáveis SMTP configuradas
+- tabela `leads` no PostgreSQL local
+- variaveis SMTP configuradas
 
 ---
 
@@ -224,6 +251,7 @@ sudo certbot --nginx -d cenariointernacional.com.br
 - Índice rápido: `docs/_project/DOCUMENTATION_INDEX.md`
 - Arquitetura: `docs/01-arquitetura.md`
 - API: `docs/16-api-rest.md`
+- API editorial para LLMs: `docs/api-editorial-llm.md`
 - Segurança: `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
 - Auditoria de segurança: `docs/audits/AUDITORIA_SEGURANCA.md`
 
@@ -231,11 +259,20 @@ sudo certbot --nginx -d cenariointernacional.com.br
 
 ## Estado Atual
 
+Nota de revisao em 2026-04-01:
+
+- `npm run build` passou nesta rodada.
+- `npm run lint` nao esta apenas com pendencias menores; ha passivo relevante fora do escopo atual.
+- `npm run test` foi revalidado em 01/04/2026 e falhou em suites legadas fora do escopo editorial.
+- a API editorial v1 para LLMs ja existe em `/api/v1/editorial`.
+- o workflow editorial para LLM agora exige `draft -> validate -> approve -> publish|schedule`.
+- o deploy segue parcial enquanto a VPS nao for normalizada.
+
 | Item | Status |
 |------|--------|
 | `npm run build` | ✅ Passando |
-| `npm run test` | ✅ Passando |
-| `npm run lint` | ⚠️ Pendências menores |
+| `npm run test` | ⚠️ Falhando em suites legadas |
+| `npm run lint` | ⚠️ Passivo relevante |
 | Infraestrutura VPS | ✅ Completa |
 | Deploy | ✅ 95% pronto |
 | Banco Local PostgreSQL | 🟡 Em Progresso |

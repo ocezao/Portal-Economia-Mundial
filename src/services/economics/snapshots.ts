@@ -4,10 +4,9 @@
  * Ideia: um job (Edge Function/cron) atualiza `external_snapshots` periodicamente
  * e o site so le deste cache. Isso reduz custo por pageview e evita rate limit.
  * 
- * PRIORIDADE: PostgreSQL local > Supabase > API direta
+ * PRIORIDADE: PostgreSQL local > API direta
  */
 
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { getSnapshotFromLocalDb } from '@/lib/db';
 import {
   getMarketNews,
@@ -24,38 +23,21 @@ const useLocalDb = !!process.env.DATABASE_URL;
 type SnapshotRow = { key: string; data: unknown; fetched_at: string };
 
 async function readSnapshot<T>(key: string): Promise<{ data: T | null; updatedAt: Date | null }> {
-  // 1. Tentar ler do PostgreSQL local primeiro
-  if (useLocalDb) {
-    try {
-      const localSnapshot = await getSnapshotFromLocalDb<T>(key);
-      if (localSnapshot && localSnapshot.data) {
-        return {
-          data: localSnapshot.data as T,
-          updatedAt: localSnapshot.fetched_at,
-        };
-      }
-    } catch {
-      console.log('[Snapshots] Local DB read failed, trying Supabase');
+  if (!useLocalDb) return { data: null, updatedAt: null };
+
+  try {
+    const localSnapshot = await getSnapshotFromLocalDb<T>(key);
+    if (!localSnapshot?.data) {
+      return { data: null, updatedAt: null };
     }
+
+    return {
+      data: localSnapshot.data as T,
+      updatedAt: localSnapshot.fetched_at,
+    };
+  } catch {
+    return { data: null, updatedAt: null };
   }
-
-  // 2. Fallback para Supabase
-  if (!isSupabaseConfigured) return { data: null, updatedAt: null };
-
-  const { data, error } = await supabase
-    .from('external_snapshots')
-    .select('key, data, fetched_at')
-    .eq('key', key)
-    .maybeSingle();
-
-  if (error) return { data: null, updatedAt: null };
-  if (!data) return { data: null, updatedAt: null };
-
-  const row = data as SnapshotRow;
-  return {
-    data: (row.data as T) ?? null,
-    updatedAt: row.fetched_at ? new Date(row.fetched_at) : null,
-  };
 }
 
 async function readSnapshotWithMeta<T>(key: string) {
