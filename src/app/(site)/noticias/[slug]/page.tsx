@@ -109,8 +109,13 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
 
   const authorProfile: Author | null = authorSlug ? (authors.find((a) => a.slug === authorSlug) ?? null) : null;
 
-  const authorImageUrl = authorProfile
-    ? (authorProfile.photo.startsWith('http') ? authorProfile.photo : `${siteUrl}${authorProfile.photo}`)
+  const authorPhoto =
+    authorProfile && typeof authorProfile.photo === 'string' && authorProfile.photo.trim().length > 0
+      ? authorProfile.photo.trim()
+      : null;
+
+  const authorImageUrl = authorPhoto
+    ? (authorPhoto.startsWith('http') ? authorPhoto : `${siteUrl}${authorPhoto}`)
     : undefined;
 
   const authorSameAs = authorProfile
@@ -166,5 +171,4 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
     </>
   );
 }
-
 
