@@ -1,8 +1,8 @@
-# Checklist de Deploy em Producao
+﻿# Checklist de Deploy em Producao
 
 ## Escopo
 
-Checklist realista para subir o portal com:
+Checklist realista para subir o portal com o fluxo oficial de producao:
 
 - app Next.js
 - PostgreSQL local
@@ -10,16 +10,18 @@ Checklist realista para subir o portal com:
 - auth local
 - API editorial v1 para LLMs
 - cron editorial
+- Docker Compose como orquestrador oficial
 
-Status desta revisao: 2026-04-01
+Status desta revisao: 2026-04-02
 
 ## Estado real resumido
 
 - build da aplicacao: passando
+- stack Docker oficial: validada na VPS
+- web/api/collector/database: saudaveis na ultima validacao
 - suite editorial dedicada: passando
 - suite global de testes: com passivo legado
 - lint global: com passivo relevante
-- operacao editorial por LLM: funcional, mas ainda dependente de fechamento operacional da VPS
 
 ## 1. Aplicacao
 
@@ -32,16 +34,16 @@ Status desta revisao: 2026-04-01
 
 ## 2. Banco de dados
 
-- [ ] `DATABASE_URL` configurado na VPS
-- [ ] banco acessivel pelo app em producao
-- [ ] migrations aplicadas
+- [x] `DB_NAME`, `DB_USER` e `DB_PASSWORD` configurados na VPS
+- [x] banco local acessivel pelo app em producao
+- [x] migrations aplicadas
 - [ ] backup de banco validado
 - [ ] restore de banco testado
 
 ## 3. Uploads
 
-- [ ] diretorio de uploads persistente configurado
-- [ ] permissao de escrita validada
+- [x] diretorio de uploads persistente configurado
+- [x] permissao de escrita validada
 - [ ] backup de uploads validado
 - [ ] restauracao de uploads validada
 
@@ -72,17 +74,17 @@ Status desta revisao: 2026-04-01
 
 ## 7. Infraestrutura web
 
-- [ ] reverse proxy configurado
-- [ ] HTTPS valido
-- [ ] dominio principal apontado
-- [ ] healthcheck publico respondendo
+- [x] reverse proxy configurado
+- [x] HTTPS valido
+- [x] dominio principal apontado
+- [x] healthcheck publico respondendo
 - [ ] reinicio da aplicacao documentado
 
 ## 8. Observabilidade
 
-- [ ] logs da aplicacao acessiveis
+- [x] logs da aplicacao acessiveis
 - [ ] logs de cron acessiveis
-- [ ] monitoramento de `/api/health`
+- [x] monitoramento de `/api/health`
 - [ ] monitoramento de fila editorial
 - [ ] alerta para jobs falhos
 

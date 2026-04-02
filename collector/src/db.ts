@@ -52,7 +52,7 @@ export async function insertCollectorEvents(rows: CollectorEventRow[]): Promise<
 
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    await pool.query('select 1 from analytics_events limit 1');
+    await pool.query('select 1');
     return true;
   } catch {
     return false;

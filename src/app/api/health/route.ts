@@ -69,10 +69,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
   checks.server.responseTime = Date.now() - startTime;
 
-  let overallStatus: HealthStatus['status'] = 'healthy';
-  if (checks.database.status === 'error' || checks.server.memory.percentage > 90) {
-    overallStatus = 'degraded';
-  }
+  const overallStatus: HealthStatus['status'] = checks.database.status === 'ok' ? 'healthy' : 'unhealthy';
 
   const healthStatus: HealthStatus = {
     status: overallStatus,
@@ -82,7 +79,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     checks,
   };
 
-  const statusCode = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
+  const statusCode = overallStatus === 'unhealthy' ? 503 : 200;
 
   return NextResponse.json(healthStatus, {
     status: statusCode,

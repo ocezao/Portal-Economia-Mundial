@@ -1,6 +1,6 @@
-# Cenario Internacional (CIN)
+﻿# Cenario Internacional (CIN)
 
-> **Portal de notícias internacional** focado em geopolítica, economia global e tecnologia, pensado para combinar **jornalismo estruturado**, **SEO forte** e **operação enxuta**.
+> **Portal de notÃ­cias internacional** focado em geopolÃ­tica, economia global e tecnologia, pensado para combinar **jornalismo estruturado**, **SEO forte** e **operaÃ§Ã£o enxuta**.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
@@ -10,69 +10,69 @@
 
 ---
 
-## Visão do Projeto
+## VisÃ£o do Projeto
 
-O CIN foi desenhado para ser um portal de conteúdo com padrão profissional, mas com arquitetura pragmática e custos controlados.
+O CIN foi desenhado para ser um portal de conteÃºdo com padrÃ£o profissional, mas com arquitetura pragmÃ¡tica e custos controlados.
 
-A ideia central do produto é:
+A ideia central do produto Ã©:
 
-- transformar temas complexos (geopolítica/economia) em conteúdo claro e navegável;
-- crescer organicamente com SEO técnico consistente;
-- manter independência operacional com stack moderna e simples de manter;
-- permitir evolução contínua sem reescrever a base inteira.
+- transformar temas complexos (geopolÃ­tica/economia) em conteÃºdo claro e navegÃ¡vel;
+- crescer organicamente com SEO tÃ©cnico consistente;
+- manter independÃªncia operacional com stack moderna e simples de manter;
+- permitir evoluÃ§Ã£o contÃ­nua sem reescrever a base inteira.
 
 ## Como o Projeto Foi Pensado
 
-A construção foi guiada por 4 pilares:
+A construÃ§Ã£o foi guiada por 4 pilares:
 
-1. **Conteúdo como ativo principal**
-- Estrutura editorial com categorias, autores, páginas institucionais e área administrativa.
+1. **ConteÃºdo como ativo principal**
+- Estrutura editorial com categorias, autores, pÃ¡ginas institucionais e Ã¡rea administrativa.
 
-2. **Distribuição e retenção**
+2. **DistribuiÃ§Ã£o e retenÃ§Ã£o**
 - Estrategia de newsletter com double opt-in e automacoes por email.
 
-3. **Base técnica escalável**
+3. **Base tÃ©cnica escalÃ¡vel**
 - Next.js App Router + PostgreSQL local + APIs internas para concentrar a operacao no proprio projeto.
 
-4. **Governança e operação**
-- Documentação extensa, checklists de deploy e trilha de auditorias técnicas.
+4. **GovernanÃ§a e operaÃ§Ã£o**
+- DocumentaÃ§Ã£o extensa, checklists de deploy e trilha de auditorias tÃ©cnicas.
 
 ---
 
 ## Funcionalidades Principais
 
-### Público / Portal
+### PÃºblico / Portal
 
-- Home editorial com destaques e blocos temáticos
-- Páginas de notícias, categorias, autor e busca
-- Seções dedicadas (`/mercados`, `/dados-economicos`, `/calendario-economico`, etc.)
-- Sitemap, RSS e robots para SEO técnico
+- Home editorial com destaques e blocos temÃ¡ticos
+- PÃ¡ginas de notÃ­cias, categorias, autor e busca
+- SeÃ§Ãµes dedicadas (`/mercados`, `/dados-economicos`, `/calendario-economico`, etc.)
+- Sitemap, RSS e robots para SEO tÃ©cnico
 
-### Relacionamento e Captação
+### Relacionamento e CaptaÃ§Ã£o
 
-- Formulário de contato (`/fale-conosco`)
-- Formulário de carreiras (`/trabalhe-conosco`)
-- Newsletter com confirmação por token (double opt-in)
+- FormulÃ¡rio de contato (`/fale-conosco`)
+- FormulÃ¡rio de carreiras (`/trabalhe-conosco`)
+- Newsletter com confirmaÃ§Ã£o por token (double opt-in)
 
-### Administração
+### AdministraÃ§Ã£o
 
-- Área admin para gestão operacional
-- APIs de administração de usuários
-- Página de arquivos enviados (`/admin/arquivos`) com upload/listagem/exclusão
-- Upload/processamento de imagens com validações
-- Publicação de posts agendados via API admin
+- Ãrea admin para gestÃ£o operacional
+- APIs de administraÃ§Ã£o de usuÃ¡rios
+- PÃ¡gina de arquivos enviados (`/admin/arquivos`) com upload/listagem/exclusÃ£o
+- Upload/processamento de imagens com validaÃ§Ãµes
+- PublicaÃ§Ã£o de posts agendados via API admin
 
 ### Observabilidade e Robustez
 
-- Health check de aplicação (`/api/health`)
+- Health check de aplicaÃ§Ã£o (`/api/health`)
 - Endpoint de telemetria de erros (`/api/telemetry/error`)
-- Validações com Zod em fluxos críticos de entrada
+- ValidaÃ§Ãµes com Zod em fluxos crÃ­ticos de entrada
 
 ---
 
 ## Arquitetura Atual
 
-**Stack técnica**
+**Stack tÃ©cnica**
 
 - Framework: Next.js 15 (App Router)
 - Frontend: React 19 + TypeScript
@@ -80,14 +80,14 @@ A construção foi guiada por 4 pilares:
 - Dados: PostgreSQL local
 - Auth: sessoes locais do app
 - Email transacional: SMTP Hostinger (Nodemailer)
-- Serviços auxiliares: `mcp-server/` e `collector/`
+- ServiÃ§os auxiliares: `mcp-server/` e `collector/`
 
-**Estrutura do repositório**
+**Estrutura do repositÃ³rio**
 
 ```text
 /src
-  /app           # Rotas e páginas (Next.js App Router)
-    /(auth)      # Grupo de autenticação
+  /app           # Rotas e pÃ¡ginas (Next.js App Router)
+    /(auth)      # Grupo de autenticaÃ§Ã£o
     /api         # API Routes
   /components
   /config
@@ -95,11 +95,11 @@ A construção foi guiada por 4 pilares:
   /lib
   /services
   /types
-/collector       # Serviço de analytics separado
+/collector       # ServiÃ§o de analytics separado
 /mcp-server      # Servidor MCP
 /supabase        # Migrations e functions
-/docs            # Documentação funcional e operacional
-/nginx           # Configuração Nginx para produção
+/docs            # DocumentaÃ§Ã£o funcional e operacional
+/nginx           # ConfiguraÃ§Ã£o Nginx para produÃ§Ã£o
 /scripts         # Scripts de deploy, backup, etc.
 ```
 
@@ -145,7 +145,7 @@ Namespace editorial para automacao:
 - `POST /api/v1/editorial/articles/[id]/schedule`
 - `POST /api/v1/editorial/uploads`
 
-Documentação detalhada: `docs/16-api-rest.md`
+DocumentaÃ§Ã£o detalhada: `docs/16-api-rest.md`
 Runbook operacional do agente: `docs/ops/RUNBOOK_EDITORIAL_LLM.md`
 
 ---
@@ -153,12 +153,12 @@ Runbook operacional do agente: `docs/ops/RUNBOOK_EDITORIAL_LLM.md`
 ## Newsletter (Fluxo Atual)
 
 1. `POST /api/newsletter/subscribe` cria/atualiza lead pendente
-2. sistema gera token com expiração
-3. usuário recebe email com link de confirmação
-4. `GET /api/newsletter/confirm?token=...` ativa inscrição
-5. notificações internas são enviadas via SMTP
+2. sistema gera token com expiraÃ§Ã£o
+3. usuÃ¡rio recebe email com link de confirmaÃ§Ã£o
+4. `GET /api/newsletter/confirm?token=...` ativa inscriÃ§Ã£o
+5. notificaÃ§Ãµes internas sÃ£o enviadas via SMTP
 
-Dependências:
+DependÃªncias:
 
 - tabela `leads` no PostgreSQL local
 - variaveis SMTP configuradas
@@ -176,7 +176,7 @@ npm run lint
 npm run test
 ```
 
-### Variáveis de ambiente mínimas
+### VariÃ¡veis de ambiente mÃ­nimas
 
 Use `.env.example` como base.
 
@@ -202,91 +202,87 @@ NEWSLETTER_INBOX_EMAIL=
 
 Notas:
 
-- `BUTTONDOWN_API_KEY` é opcional
-- não commitar `.env` com credenciais reais
+- `BUTTONDOWN_API_KEY` Ã© opcional
+- nÃ£o commitar `.env` com credenciais reais
 
 ---
 
 ## Deploy
 
-Para manter funcionalidades dinâmicas (API Routes), usar runtime Node.js.
+To keep dynamic functionality (API Routes), the runtime must stay on Node.js.
 
-Com `output: 'export'`, APIs internas não funcionam.
+With `output: export`, internal APIs do not work.
 
-### Infraestrutura de Produção
+### Production Stack
 
-O projeto inclui infraestrutura completa para VPS:
+The official production flow uses Docker Compose with local PostgreSQL on the VPS:
 
-| Componente | Arquivo | Descrição |
-|------------|---------|-----------|
-| Docker | `docker-compose.yml` | Orquestração de containers |
-| Nginx | `nginx/pem.conf` | Reverse proxy com SSL, CSP e cache |
-| Deploy | `scripts/deploy.sh` | Deploy com Docker Compose |
-| Backup | `scripts/backup.sh` | Backup diário de DB e uploads |
-| CI/CD | `.github/workflows/deploy.yml` | Deploy automático via GitHub Actions |
+| Component | File | Description |
+|------------|------|-------------|
+| Docker | `docker-compose.yml` | Official production stack with `database`, `web`, `api`, `collector`, and `metabase` |
+| Nginx | `nginx/pem.conf` | Reverse proxy with SSL, CSP, and cache |
+| Backup | `scripts/backup-local-db.sh` | Backup for local PostgreSQL and uploads |
+| Deploy | `scripts/vps/deploy-docker-nginx.sh` | Official Docker deploy on the VPS |
+| Validation | `docs/22-deploy-producao-checklist.md` | Operational readiness checklist |
 
-### Primeiro Deploy
+### First Deploy
 
 ```bash
-# Na VPS
-git clone https://github.com/ocezao/Portal-Economia-Mundial.git /var/www/portal
-cd /var/www/portal
-docker compose build web
-docker compose up -d
-sudo ./scripts/nginx-setup.sh
-sudo certbot --nginx -d cenariointernacional.com.br
+# On the VPS
+ git clone https://github.com/ocezao/Portal-Economia-Mundial.git /var/www/portal
+ cd /var/www/portal
+ cp .env.example .env
+ # edit .env with DB_NAME, DB_USER, DB_PASSWORD and the remaining secrets
+ docker compose -f docker-compose.yml up -d --build
+ docker compose -f docker-compose.yml ps
+ curl http://127.0.0.1:3000/api/health
 ```
 
-### Referências
+### References
 
-- `docs/22-deploy-producao-checklist.md` - Checklist completo (95% pronto)
-- `docs/RUNBOOK.md` - Manual de operações (atualizado para Docker)
-- `docs/ops/DEPLOY_SEGURO.md` - Segurança em deploy
+- `docs/22-deploy-producao-checklist.md` - Production readiness checklist
+- `docs/RUNBOOK.md` - Operational manual for the Docker flow
+- `docs/24-deploy-vps-execucao-manual.md` - Manual execution guide for the local DB flow
+- `docs/ops/DEPLOY_SEGURO.md` - Deployment security guide
 
 ---
 
-## Documentação do Projeto
+## Project Documentation
 
-- Índice geral: `docs/README.md`
-- Índice rápido: `docs/_project/DOCUMENTATION_INDEX.md`
-- Arquitetura: `docs/01-arquitetura.md`
+- Index: `docs/README.md`
+- Quick index: `docs/_project/DOCUMENTATION_INDEX.md`
+- Architecture: `docs/01-arquitetura.md`
 - API: `docs/16-api-rest.md`
-- API editorial para LLMs: `docs/api-editorial-llm.md`
-- Segurança: `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
-- Auditoria de segurança: `docs/audits/AUDITORIA_SEGURANCA.md`
+- Editorial API for LLMs: `docs/api-editorial-llm.md`
+- Security: `docs/_security/GUIA_SEGURANCA_DESENVOLVEDORES.md`
+- Security audit: `docs/audits/AUDITORIA_SEGURANCA.md`
 
 ---
 
-## Estado Atual
+## Current State
 
-Nota de revisao em 2026-04-01:
+Review note as of 2026-04-02:
 
-- `npm run build` passou nesta rodada.
-- `npm run lint` nao esta apenas com pendencias menores; ha passivo relevante fora do escopo atual.
-- `npm run test` foi revalidado em 01/04/2026 e falhou em suites legadas fora do escopo editorial.
-- a API editorial v1 para LLMs ja existe em `/api/v1/editorial`.
-- o workflow editorial para LLM agora exige `draft -> validate -> approve -> publish|schedule`.
-- o deploy segue parcial enquanto a VPS nao for normalizada.
+- `npm run build` passed in this round.
+- `npm run lint` still has relevant legacy debt outside the scope of this documentation.
+- `npm run test` still has legacy suites failing outside the editorial scope.
+- the official production runtime uses Docker Compose with local PostgreSQL on the VPS.
+- the editorial API v1 exists at `/api/v1/editorial`.
+- the editorial workflow requires `draft -> validate -> approve -> publish|schedule`.
 
 | Item | Status |
 |------|--------|
-| `npm run build` | ✅ Passando |
-| `npm run test` | ⚠️ Falhando em suites legadas |
-| `npm run lint` | ⚠️ Passivo relevante |
-| Infraestrutura VPS | ✅ Completa |
-| Deploy | ✅ 95% pronto |
-| Banco Local PostgreSQL | 🟡 Em Progresso |
+| `npm run build` | Passing |
+| `npm run test` | Failing in legacy suites |
+| `npm run lint` | Relevant debt |
+| VPS infrastructure | Complete |
+| Docker deploy with local DB | Official flow |
+| Local PostgreSQL | In use on the VPS |
 
-### Migração Banco Local PostgreSQL
+### Local PostgreSQL
 
-O projeto está em processo de migração do Supabase (banco remoto) para PostgreSQL local na VPS.
+The official runtime uses local PostgreSQL on the VPS through `DATABASE_URL` and the `portal-database` container.
+The `supabase/migrations/` and `supabase/functions/` directories remain as schema history and utilities, not as evidence that Supabase is still the main runtime.
 
-**Status:**
-- 19 tabelas criadas no PostgreSQL local
-- Container `portal-database` em execução na VPS
-- Função `auth.uid()` implementada
-- Conexão híbrida: Supabase (Auth + Storage) + PostgreSQL local (CRUD)
+See `docs/RUNBOOK.md` for operations and `docs/22-deploy-producao-checklist.md` for the readiness criteria.
 
-**Documentação:** `docs/_migration/LOCAL_DB_STATUS.md`
-
-O projeto está **pronto para produção**. Consulte `docs/RUNBOOK.md` para operações.
