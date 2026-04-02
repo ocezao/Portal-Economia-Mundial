@@ -54,7 +54,7 @@ Operacoes administrativas relacionadas a posts (admin-only).
 - Body: JSON com `action`
 
 Acoes suportadas:
-- `publish_scheduled`: publica posts com `status=scheduled` e `published_at <= now`
+- `publish_scheduled`: despacha `article_jobs` vencidos do tipo `publish_article`
 
 Arquivo: `src/app/api/admin-posts/route.ts`
 
@@ -266,6 +266,7 @@ Publica imediatamente.
 
 Regra atual:
 
+- o fluxo recomendado e `draft -> validate -> approve -> publish`
 - exige artigo aprovado
 - exige artigo validado sem erros
 - exige fontes persistidas
@@ -276,6 +277,7 @@ Agenda publicacao. Requer `publishedAt`.
 
 Regra atual:
 
+- o fluxo recomendado e `draft -> validate -> approve -> schedule`
 - exige artigo aprovado
 - exige artigo validado sem erros
 - exige fontes persistidas

@@ -24,9 +24,10 @@ Estado atual observado no codigo:
 
 - A API admin legada de artigos continua pequena e acoplada a acoes genericas.
 - `POST /api/articles` continua como camada legada.
-- `POST /api/admin-posts` continua suportando apenas `publish_scheduled`.
+- `POST /api/admin-posts` continua suportando apenas `publish_scheduled`, agora como dispatcher de `article_jobs`.
 - A API editorial v1 ja existe com `meta`, `slug`, listagem, `GET/PATCH` por artigo, `enrich`, `publish`, `schedule`, `uploads` e `openapi`.
 - O create/update editorial ja persistem `seoTitle`, `metaDescription`, `faqItems`, `sources`, `editorialStatus` e `publishedAt`.
+- As telas admin de criar/editar artigo passaram a seguir o workflow editorial completo antes de publicar ou agendar.
 - O schema publico do artigo ja usa fontes persistidas e nao depende mais de `citation` placeholder fixo.
 - O FAQ automatico ainda existe como apoio, mas a camada editorial ja suporta FAQ persistido.
 - O indice `/api/search` ainda nao expande sinais uteis para AEO/GEO.
@@ -540,6 +541,8 @@ Arquivos:
 - `src/app/api/cron/route.ts`
 - `src/services/editorialJobs.ts`
 - `src/services/newsManager.ts`
+- `src/app/admin/noticias/novo/page.tsx`
+- `src/app/admin/noticias/editar/[slug]/page.tsx`
 
 Entregas:
 

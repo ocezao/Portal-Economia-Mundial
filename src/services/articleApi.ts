@@ -6,12 +6,13 @@
 const LEGACY_API_BASE = '/api/articles/';
 const EDITORIAL_ROOT = '/api/v1/editorial';
 
-interface ArticleFaqItem {
+export interface ArticleFaqItem {
   question: string;
   answer: string;
 }
 
-interface ArticleSource {
+export interface ArticleSource {
+  id?: string;
   sourceType: string;
   sourceName: string;
   sourceUrl?: string;
@@ -21,7 +22,7 @@ interface ArticleSource {
   accessedAt?: string;
 }
 
-interface ArticlePayload {
+export interface ArticlePayload {
   title: string;
   slug: string;
   seoTitle?: string;
@@ -55,6 +56,65 @@ interface EditorialEnvelope<T> {
   };
 }
 
+export interface EditorialValidationIssue {
+  code: string;
+  severity: 'error' | 'warning';
+  message: string;
+  field?: string;
+}
+
+export interface EditorialValidationResult {
+  articleId: string;
+  slug: string;
+  status: string;
+  editorialStatus: string;
+  readyToPublish: boolean;
+  issues: EditorialValidationIssue[];
+}
+
+export interface EditorialArticleRecord extends Partial<ArticlePayload> {
+  id: string;
+  slug: string;
+  status: 'draft' | 'scheduled' | 'published';
+  editorial_status?: string;
+  editorialStatus?: string;
+  published_at?: string | null;
+  publishedAt?: string | null;
+  faq_items?: ArticleFaqItem[] | null;
+  article_sources?: ArticleSource[] | null;
+  news_article_categories?: { categories?: { slug?: string } }[] | null;
+  author_id?: string;
+  author_name?: string;
+  cover_image?: string | null;
+  seo_title?: string | null;
+  meta_description?: string | null;
+  is_featured?: boolean;
+  is_breaking?: boolean;
+  reading_time?: number;
+  comments_count?: number;
+  tags?: string[];
+}
+
+function mapEditorialArticleRecord(article: EditorialArticleRecord): EditorialArticleRecord {
+  const primaryCategory = article.news_article_categories?.[0]?.categories?.slug;
+
+  return {
+    ...article,
+    category: article.category ?? primaryCategory,
+    authorId: article.authorId ?? article.author_id,
+    author: article.author ?? article.author_name,
+    coverImage: article.coverImage ?? article.cover_image ?? undefined,
+    seoTitle: article.seoTitle ?? article.seo_title ?? undefined,
+    metaDescription: article.metaDescription ?? article.meta_description ?? undefined,
+    faqItems: article.faqItems ?? article.faq_items ?? undefined,
+    sources: article.sources ?? article.article_sources ?? undefined,
+    featured: article.featured ?? article.is_featured ?? false,
+    breaking: article.breaking ?? article.is_breaking ?? false,
+    readingTime: article.readingTime ?? article.reading_time ?? undefined,
+    comments: article.comments ?? article.comments_count ?? undefined,
+  };
+}
+
 async function callArticleApi(action: string, payload: Record<string, unknown> = {}) {
   const response = await fetch(LEGACY_API_BASE, {
     method: 'POST',
@@ -76,7 +136,7 @@ async function callArticleApi(action: string, payload: Record<string, unknown> =
 async function callEditorialApi(
   path: string,
   method: 'GET' | 'POST' | 'PATCH',
-  payload?: Record<string, unknown>,
+  payload?: unknown,
 ) {
   const response = await fetch(`${EDITORIAL_ROOT}${path}`, {
     method,
@@ -106,6 +166,11 @@ export async function updateArticleApi(
   return callEditorialApi(`/articles/${encodeURIComponent(slug)}?lookup=slug`, 'PATCH', updates);
 }
 
+export async function getEditorialArticleApi(slug: string) {
+  const article = await callEditorialApi(`/articles/${encodeURIComponent(slug)}?lookup=slug`, 'GET') as unknown as EditorialArticleRecord;
+  return mapEditorialArticleRecord(article);
+}
+
 export async function deleteArticleApi(slug: string) {
   return callArticleApi('delete', { slug });
 }
@@ -115,7 +180,7 @@ export async function enrichArticleApi(slug: string) {
 }
 
 export async function validateArticleApi(slug: string) {
-  return callEditorialApi(`/articles/${encodeURIComponent(slug)}/validate?lookup=slug`, 'GET');
+  return callEditorialApi(`/articles/${encodeURIComponent(slug)}/validate?lookup=slug`, 'GET') as unknown as Promise<EditorialValidationResult>;
 }
 
 export async function approveArticleApi(slug: string) {

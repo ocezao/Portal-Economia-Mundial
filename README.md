@@ -143,6 +143,7 @@ Namespace editorial para automacao:
 - `POST /api/v1/editorial/articles/[id]/enrich`
 - `POST /api/v1/editorial/articles/[id]/publish`
 - `POST /api/v1/editorial/articles/[id]/schedule`
+- `POST /api/v1/editorial/articles/[id]/sources`
 - `POST /api/v1/editorial/uploads`
 
 DocumentaÃ§Ã£o detalhada: `docs/16-api-rest.md`
@@ -278,6 +279,8 @@ Review note as of 2026-04-02:
 - the official production runtime uses Docker Compose with local PostgreSQL on the VPS.
 - the editorial API v1 exists at `/api/v1/editorial`.
 - the editorial workflow requires `draft -> validate -> approve -> publish|schedule`.
+- the admin create/edit screens now use the editorial workflow and upload cover images through `/api/v1/editorial/uploads`.
+- scheduled publication is processed through `article_jobs` from both `/api/admin-posts` and `/api/cron?type=publish-scheduled`.
 
 | Item | Status |
 |------|--------|

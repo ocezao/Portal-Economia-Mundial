@@ -54,11 +54,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-// Type guard para verificar se um valor é um array
-function isArray(value: unknown): value is unknown[] {
-  return Array.isArray(value);
-}
-
 // ==================== HELPERS PARA POSTGRESQL LOCAL ====================
 
 function mapDbRowToArticle(row: Record<string, unknown>): NewsArticle {
@@ -97,13 +92,13 @@ function mapDbRowToArticle(row: Record<string, unknown>): NewsArticle {
   };
 }
 
-type LocalArticleQueryOptions = {
+interface LocalArticleQueryOptions {
   where?: string[];
   params?: unknown[];
   orderBy?: string;
   limit?: number;
   offset?: number;
-};
+}
 
 async function fetchArticlesFromLocalDb(options: LocalArticleQueryOptions = {}): Promise<NewsArticle[]> {
   const whereClause = (options.where ?? []).length > 0
@@ -239,31 +234,6 @@ const normalizeEditorialStatus = (
     : 'draft';
 };
 
-async function syncArticleSources(articleId: string, sources?: ArticleSource[]) {
-  await query('delete from article_sources where article_id = $1', [articleId]);
-
-  const validSources = (sources ?? []).filter((source) => source.sourceName.trim());
-  if (validSources.length === 0) return;
-
-  for (const source of validSources) {
-    await query(
-      `insert into article_sources (
-        article_id, source_type, source_name, source_url, publisher, country, language, accessed_at
-      ) values ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [
-        articleId,
-        source.sourceType || 'reference',
-        source.sourceName.trim(),
-        source.sourceUrl?.trim() || null,
-        source.publisher?.trim() || null,
-        source.country?.trim() || null,
-        source.language?.trim() || null,
-        source.accessedAt || null,
-      ],
-    );
-  }
-}
-
 const getArticleMetaBySlug = async (
   slug: string,
 ): Promise<{ id: string; authorId: string | null } | null> => {
@@ -320,33 +290,15 @@ export async function getArticleBySlug(
   const includeDrafts = options?.includeDrafts ?? false;
 
   try {
-    const statusFilter = includeDrafts ? '' : "AND status = 'published'";
-    const result = await query(
-      `SELECT * FROM news_articles
-       WHERE slug = $1 ${statusFilter}
-       LIMIT 1`,
-      [slug],
-    );
+    const articles = await fetchArticlesFromLocalDb({
+      where: includeDrafts
+        ? ['na.slug = $1']
+        : ['na.slug = $1', `na.status = 'published'`],
+      params: [slug],
+      limit: 1,
+    });
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    const articleRow = result.rows[0];
-    try {
-      const sourceResult = await query(
-        `SELECT id, source_type, source_name, source_url, publisher, country, language, accessed_at
-         FROM article_sources
-         WHERE article_id = $1
-         ORDER BY created_at ASC`,
-        [articleRow.id],
-      );
-      articleRow.article_sources = sourceResult.rows;
-    } catch {
-      articleRow.article_sources = [];
-    }
-
-    return mapDbRowToArticle(articleRow);
+    return articles[0] ?? null;
   } catch (error) {
     logger.error('[newsManager] getArticleBySlug (local DB) failed:', error);
     return null;

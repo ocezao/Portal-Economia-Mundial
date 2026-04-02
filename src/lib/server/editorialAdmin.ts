@@ -14,7 +14,7 @@ export interface EditorialSourceInput {
   publisher?: string;
   country?: string;
   language?: string;
-  accessedAt?: string;
+  accessedAt?: string | null;
 }
 
 export interface EditorialPayload {
@@ -299,9 +299,10 @@ export async function createEditorialArticle(_admin: unknown, payload: Editorial
     faqItems = [],
     editorialStatus,
     sources = [],
-    status = 'draft',
+    status: rawStatus = 'draft',
     publishedAt,
   } = payload;
+  const status: 'draft' | 'scheduled' | 'published' = rawStatus;
 
   if (!title) throw new Error('Titulo e obrigatorio');
   if (!slug) throw new Error('Slug e obrigatorio');
@@ -312,8 +313,8 @@ export async function createEditorialArticle(_admin: unknown, payload: Editorial
   if (!coverImage) throw new Error('Imagem de capa e obrigatoria');
   if (status !== 'draft') throw new Error('Fluxo editorial exige criacao inicial como draft');
 
-  const nextPublishedAt = publishedAt ?? (status === 'draft' ? null : new Date().toISOString());
-  const nextEditorialStatus = editorialStatus ?? (status === 'scheduled' ? 'scheduled' : status);
+  const nextPublishedAt = publishedAt ?? null;
+  const nextEditorialStatus = editorialStatus ?? 'draft';
 
   return withTransaction(async (client) => {
     const inserted = await client.query<{
@@ -363,23 +364,6 @@ export async function createEditorialArticle(_admin: unknown, payload: Editorial
     await syncCategory(client, article.id, category);
     await syncTags(client, article.id, tags);
     await replaceArticleSources(client, article.id, sources);
-
-    if (status === 'scheduled') {
-      await client.query(
-        `insert into article_jobs (
-          article_id, job_type, status, idempotency_key, run_after, payload, last_error, updated_at
-        ) values (
-          $1, 'publish_article', 'queued', $2, $3, $4::jsonb, null, now()
-        )
-        on conflict (idempotency_key) do update
-          set status = excluded.status,
-              run_after = excluded.run_after,
-              payload = excluded.payload,
-              last_error = null,
-              updated_at = now()`,
-        [article.id, `publish_article:${article.id}`, nextPublishedAt, JSON.stringify({ articleId: article.id })],
-      );
-    }
 
     return article;
   });
@@ -531,6 +515,15 @@ export async function getEditorialArticle(_admin: unknown, identifier: string, l
     [article.id],
   );
 
+  const tags = await queryRows<{ name: string }>(
+    `select t.name
+     from news_article_tags nat
+     join tags t on t.id = nat.tag_id
+     where nat.article_id = $1
+     order by t.name asc`,
+    [article.id],
+  );
+
   const sources = await queryRows<ArticleSourceRecord>(
     `select
       id,
@@ -549,6 +542,7 @@ export async function getEditorialArticle(_admin: unknown, identifier: string, l
 
   return {
     ...article,
+    tags: tags.map((tag) => tag.name),
     news_article_categories: categories.map((category) => ({
       categories: { slug: category.slug },
     })),

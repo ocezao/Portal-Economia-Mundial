@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { 
@@ -37,16 +37,14 @@ import {
 } from 'lucide-react';
 
 import { 
-  updateArticle, 
-  getArticleBySlug, 
   generateSlug, 
-  isSlugAvailable,
-  scheduleArticle,
-  updateScheduledArticle,
-  getScheduledArticles,
-  type ScheduledArticle
 } from '@/services/newsManager';
-import { createArticleApi, updateArticleApi } from '@/services/articleApi';
+import {
+  getEditorialArticleApi,
+  type ArticleSource,
+  uploadEditorialImageApi,
+  updateArticleApi,
+} from '@/services/articleApi';
 import { listAdminAuthors } from '@/services/adminAuthors';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { Author } from '@/config/authors';
@@ -74,16 +72,23 @@ import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { secureStorage } from '@/config/storage';
+import {
+  buildScheduledAtIso,
+  getLocalScheduleParts,
+  isEditorialSlugAvailable,
+  normalizeSources,
+  persistEditorialArticle,
+} from '@/app/admin/noticias/editorialForm';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default function AdminNewsEditPage({ params }: PageProps) {
   const router = useRouter();
-  const { slug } = params;
+  const { slug } = use(params);
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +96,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
   
   // Modo de publicacao
   const [publishMode, setPublishMode] = useState<'now' | 'schedule'>('now');
-  const [scheduledInfo, setScheduledInfo] = useState<ScheduledArticle | null>(null);
+  const [articleStatus, setArticleStatus] = useState<'draft' | 'scheduled' | 'published'>('draft');
   const [authors, setAuthors] = useState<Author[]>([]);
   
   // Dados do formulario
@@ -110,6 +115,7 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     seoDescription: '',
     breaking: false,
     featured: false,
+    sources: [] as ArticleSource[],
     // Agendamento
     scheduledDate: '',
     scheduledTime: '',
@@ -138,64 +144,47 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       }
 
       if (slug) {
-        const article = await getArticleBySlug(slug, { includeDrafts: true });
+        const article = await getEditorialArticleApi(slug).catch(() => null);
         if (article && isMounted) {
+          const nextStatus = article.status === 'published' || article.status === 'scheduled'
+            ? article.status
+            : 'draft';
           const selectedAuthor =
             activeAuthors.find((author) => author.slug === article.authorId) ??
             activeAuthors.find((author) => author.name === article.author);
+          const publishedAt = article.publishedAt ?? article.published_at ?? null;
+          const scheduleParts = publishedAt ? getLocalScheduleParts(publishedAt, 'America/Sao_Paulo') : null;
 
+          setArticleStatus(nextStatus);
           setFormData({
-            title: article.title,
-            slug: article.slug,
-            excerpt: article.excerpt,
-            content: article.content.replace(/<[^>]*>/g, ''),
-            category: article.category,
-            author: selectedAuthor?.name ?? article.author,
+            title: article.title ?? '',
+            slug: article.slug ?? '',
+            excerpt: article.excerpt ?? '',
+            content: article.content ?? '',
+            category: (article.category as 'economia' | 'geopolitica' | 'tecnologia') ?? 'economia',
+            author: selectedAuthor?.name ?? article.author ?? '',
             authorId: selectedAuthor?.slug ?? article.authorId ?? '',
-            tags: article.tags,
+            tags: article.tags ?? [],
             tagInput: '',
-            coverImage: article.coverImage,
-            seoTitle: article.title,
-            seoDescription: article.excerpt.slice(0, 160),
-            breaking: article.breaking,
-            featured: article.featured,
-            scheduledDate: '',
-            scheduledTime: '',
+            coverImage: article.coverImage ?? '',
+            seoTitle: article.seoTitle ?? article.title ?? '',
+            seoDescription: article.metaDescription ?? article.excerpt?.slice(0, 160) ?? '',
+            breaking: article.breaking ?? false,
+            featured: article.featured ?? false,
+            sources: normalizeSources(
+              Array.isArray(article.sources)
+                ? article.sources
+                : Array.isArray(article.article_sources)
+                  ? article.article_sources
+                  : [],
+            ),
+            scheduledDate: scheduleParts?.date ?? '',
+            scheduledTime: scheduleParts?.time ?? '',
             timezone: 'America/Sao_Paulo',
           });
-          setPublishMode('now');
+          setPublishMode(nextStatus === 'scheduled' ? 'schedule' : 'now');
           setIsLoading(false);
           return;
-        }
-
-        const scheduledList = await getScheduledArticles();
-        const scheduled = scheduledList.find(s => s.articleData.slug === slug);
-        if (scheduled && isMounted) {
-          const selectedAuthor =
-            activeAuthors.find((author) => author.slug === scheduled.articleData.authorId) ??
-            activeAuthors.find((author) => author.name === scheduled.articleData.author);
-
-          setScheduledInfo(scheduled);
-          setFormData({
-            title: scheduled.articleData.title,
-            slug: scheduled.articleData.slug,
-            excerpt: scheduled.articleData.excerpt,
-            content: scheduled.articleData.content.replace(/<[^>]*>/g, ''),
-            category: scheduled.articleData.category,
-            author: selectedAuthor?.name ?? scheduled.articleData.author,
-            authorId: selectedAuthor?.slug ?? scheduled.articleData.authorId ?? '',
-            tags: scheduled.articleData.tags,
-            tagInput: '',
-            coverImage: scheduled.articleData.coverImage,
-            seoTitle: scheduled.articleData.title,
-            seoDescription: scheduled.articleData.excerpt.slice(0, 160),
-            breaking: scheduled.articleData.breaking,
-            featured: scheduled.articleData.featured,
-            scheduledDate: scheduled.scheduledDate,
-            scheduledTime: scheduled.scheduledTime,
-            timezone: scheduled.timezone,
-          });
-          setPublishMode('schedule');
         }
       }
       setIsLoading(false);
@@ -285,7 +274,37 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     setHasChanges(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const addSource = () => {
+    setFormData((prev) => ({
+      ...prev,
+      sources: [
+        ...prev.sources,
+        { sourceType: 'reference', sourceName: '', sourceUrl: '', publisher: '' },
+      ],
+    }));
+    setHasChanges(true);
+    if (errors.sources) setErrors((prev) => ({ ...prev, sources: '' }));
+  };
+
+  const updateSource = (index: number, field: keyof ArticleSource, value: string) => {
+    setFormData((prev) => {
+      const sources = [...prev.sources];
+      sources[index] = { ...sources[index], [field]: value };
+      return { ...prev, sources };
+    });
+    setHasChanges(true);
+    if (errors.sources) setErrors((prev) => ({ ...prev, sources: '' }));
+  };
+
+  const removeSource = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sources: prev.sources.filter((_, sourceIndex) => sourceIndex !== index),
+    }));
+    setHasChanges(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -298,15 +317,24 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       toast.error('A imagem deve ter no maximo 5MB');
       return;
     }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setFormData(prev => ({ ...prev, coverImage: result }));
+
+    try {
+      const payload = new FormData();
+      payload.append('file', file);
+      const result = await uploadEditorialImageApi(payload) as { file?: { url?: string } };
+      const imageUrl = result.file?.url;
+      if (!imageUrl) throw new Error('URL da imagem nao retornada');
+
+      setFormData(prev => ({ ...prev, coverImage: imageUrl }));
       setHasChanges(true);
       toast.success('Imagem carregada com sucesso!');
-    };
-    reader.readAsDataURL(file);
+      if (errors.coverImage) setErrors((prev) => ({ ...prev, coverImage: '' }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro no upload da imagem';
+      toast.error(message);
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const insertFormat = (format: string) => {
@@ -357,12 +385,13 @@ export default function AdminNewsEditPage({ params }: PageProps) {
 
   const validate = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
+    const normalizedSources = normalizeSources(formData.sources);
     
     if (!formData.title.trim()) newErrors.title = 'Titulo e obrigatorio';
     else if (formData.title.length < 10) newErrors.title = 'Titulo deve ter pelo menos 10 caracteres';
     
     if (!formData.slug.trim()) newErrors.slug = 'Slug e obrigatorio';
-    else if (!isSlugAvailable(formData.slug, slug)) newErrors.slug = 'Este slug ja esta em uso';
+    else if (!(await isEditorialSlugAvailable(formData.slug, slug))) newErrors.slug = 'Este slug ja esta em uso';
     
     if (!formData.excerpt.trim()) newErrors.excerpt = 'Resumo e obrigatorio';
     else if (formData.excerpt.length < 50) newErrors.excerpt = 'Resumo deve ter pelo menos 50 caracteres';
@@ -374,6 +403,9 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     if (!formData.authorId.trim()) newErrors.author = 'Perfil profissional obrigatório';
     
     if (!formData.coverImage.trim()) newErrors.coverImage = 'Imagem de capa e obrigatoria';
+    if ((publishMode === 'schedule' || articleStatus !== 'published') && normalizedSources.length === 0) {
+      newErrors.sources = 'Adicione pelo menos uma fonte editorial';
+    }
     
     // Validar agendamento
     if (publishMode === 'schedule') {
@@ -415,7 +447,9 @@ export default function AdminNewsEditPage({ params }: PageProps) {
       const articleData = {
         title: formData.title,
         slug: formData.slug,
+        seoTitle: formData.seoTitle.trim() || undefined,
         excerpt: formData.excerpt,
+        metaDescription: formData.seoDescription.trim() || undefined,
         content: formData.content,
         category: formData.category as 'economia' | 'geopolitica' | 'tecnologia',
         author: selectedAuthor.name,
@@ -429,35 +463,28 @@ export default function AdminNewsEditPage({ params }: PageProps) {
         likes: 0,
         shares: 0,
         comments: 0,
+        sources: normalizeSources(formData.sources),
       };
       
       if (publishMode === 'schedule') {
-        // Agendar publicacao
-        if (scheduledInfo) {
-          // Atualizar agendamento existente
-          await updateArticle(scheduledInfo.articleData.slug, articleData);
-          await updateScheduledArticle(scheduledInfo.id, {
-            scheduledDate: formData.scheduledDate,
-            scheduledTime: formData.scheduledTime,
-          });
-          toast.success('Agendamento atualizado com sucesso!');
-        } else {
-          // Criar novo agendamento
-          await scheduleArticle(
-            articleData,
-            formData.scheduledDate,
-            formData.scheduledTime,
-            formData.timezone
-          );
-          toast.success(`Artigo agendado para ${formData.scheduledDate} Ã s ${formData.scheduledTime}!`);
-        }
+        const publishedAt = buildScheduledAtIso(formData.scheduledDate, formData.scheduledTime, formData.timezone);
+        await persistEditorialArticle({
+          currentSlug: slug,
+          articleData,
+          mode: 'schedule',
+          publishedAt,
+        });
+        toast.success('Agendamento atualizado com sucesso!');
       } else {
-        // Publicar imediatamente via API (bypass RLS)
-        if (slug) {
+        if (articleStatus === 'published') {
           await updateArticleApi(slug, articleData);
           toast.success('Artigo atualizado com sucesso!');
         } else {
-          await createArticleApi(articleData);
+          await persistEditorialArticle({
+            currentSlug: slug,
+            articleData,
+            mode: 'publish',
+          });
           toast.success('Artigo publicado com sucesso!');
         }
       }
@@ -531,15 +558,15 @@ export default function AdminNewsEditPage({ params }: PageProps) {
             </Button>
             <section>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#111111]">
-                {scheduledInfo ? 'Editar Agendamento' : 'Editar Noticia'}
+                {publishMode === 'schedule' ? 'Editar Agendamento' : 'Editar Noticia'}
               </h1>
               <p className="text-sm text-[#6b6b6b]">
-                {scheduledInfo 
-                  ? `Agendado para: ${formData.scheduledDate} Ã s ${formData.scheduledTime}` 
+                {publishMode === 'schedule' 
+                  ? `Agendado para: ${formData.scheduledDate} as ${formData.scheduledTime}` 
                   : `Editando: ${formData.title}`}
                 {lastSaved && (
                   <span className="ml-2 text-xs text-[#6b6b6b]">
-                    - Auto-salvo Ã s {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    - Auto-salvo as {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </p>
@@ -1011,6 +1038,63 @@ export default function AdminNewsEditPage({ params }: PageProps) {
                       </p>
                     </fieldset>
 
+                    <fieldset className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
+                      <section className="flex items-center justify-between mb-3">
+                        <section>
+                          <h3 className="text-sm font-medium text-[#111111]">Fontes Editoriais</h3>
+                          <p className="text-xs text-[#6b6b6b]">Pelo menos uma fonte e obrigatoria para publicar ou agendar.</p>
+                        </section>
+                        <Button type="button" variant="outline" size="sm" onClick={addSource}>
+                          + Adicionar fonte
+                        </Button>
+                      </section>
+                      {formData.sources.length > 0 ? (
+                        <section className="space-y-3">
+                          {formData.sources.map((source, index) => (
+                            <section key={`${source.sourceName}-${index}`} className="p-3 bg-white rounded-lg border border-[#e5e5e5]">
+                              <section className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-[#6b6b6b]">Fonte #{index + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeSource(index)}
+                                  className="text-[#ef4444] hover:text-[#dc2626]"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </section>
+                              <Input
+                                value={source.sourceName}
+                                onChange={(e) => updateSource(index, 'sourceName', e.target.value)}
+                                placeholder="Nome da fonte"
+                                className="mb-2"
+                              />
+                              <Input
+                                value={source.sourceUrl ?? ''}
+                                onChange={(e) => updateSource(index, 'sourceUrl', e.target.value)}
+                                placeholder="https://fonte.com/materia"
+                                className="mb-2"
+                              />
+                              <Input
+                                value={source.publisher ?? ''}
+                                onChange={(e) => updateSource(index, 'publisher', e.target.value)}
+                                placeholder="Veiculo / publisher"
+                              />
+                            </section>
+                          ))}
+                        </section>
+                      ) : (
+                        <p className="text-xs text-[#6b6b6b]">
+                          Adicione as referencias usadas para embasar a publicacao.
+                        </p>
+                      )}
+                      {errors.sources && (
+                        <p className="mt-2 text-xs text-[#ef4444] flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {errors.sources}
+                        </p>
+                      )}
+                    </fieldset>
+
                     <section className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
                       <p className="text-xs text-[#6b6b6b] mb-2">Preview nos resultados de busca:</p>
                       <section className="max-w-[600px]">
@@ -1315,4 +1399,3 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     </>
   );
 }
-

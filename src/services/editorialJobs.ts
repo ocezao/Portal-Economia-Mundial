@@ -53,10 +53,10 @@ export async function dispatchDueEditorialJobs(limit = 25): Promise<DispatchResu
             `update news_articles
              set status = 'published',
                  editorial_status = 'published',
-                 published_at = now()
+                 published_at = coalesce(published_at, $2::timestamptz, now())
              where id = $1
                and status = 'scheduled'`,
-            [job.article_id],
+            [job.article_id, job.run_after],
           );
           if ((publishResult.rowCount ?? 0) > 0) {
             published += 1;

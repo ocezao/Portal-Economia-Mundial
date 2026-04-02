@@ -7,11 +7,12 @@
  * 调用: curl -X POST http://localhost:3000/api/cron?type=market-news
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getMarketNews, getEarningsCalendar, getGlobalIndicesData, getCommoditiesData, getSectorsPerformance, getEconomicCalendar } from '@/services/economics/finnhubService';
 import { saveSnapshotToLocalDb, getSnapshotFromLocalDb } from '@/lib/db';
 import { CACHE_TTL } from '@/config/apiLimits';
-import { checkAndPublishScheduled } from '@/services/newsManager';
+import { dispatchDueEditorialJobs } from '@/services/editorialJobs';
 
 const API_SECRET = process.env.CRON_API_SECRET || '';
 
@@ -208,14 +209,16 @@ async function publishScheduledArticles() {
   console.log('[Cron] Starting scheduled articles publishing check...');
   
   try {
-    const count = await checkAndPublishScheduled();
-    console.log(`[Cron] Published ${count} scheduled articles`);
+    const result = await dispatchDueEditorialJobs(50);
+    console.log(`[Cron] Published ${result.published} scheduled articles`);
     
     return NextResponse.json({
       success: true,
       action: 'publish-scheduled',
-      count,
-      message: count > 0 ? `Published ${count} scheduled articles` : 'No articles to publish',
+      count: result.published,
+      processed: result.processed,
+      failed: result.failed,
+      message: result.published > 0 ? `Published ${result.published} scheduled articles` : 'No articles to publish',
       timestamp: new Date().toISOString()
     });
   } catch (error) {

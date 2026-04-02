@@ -9,13 +9,16 @@ export interface NewsArticle {
   slug: string;
   title: string;
   titleEn?: string;
+  seoTitle?: string;
   excerpt: string;
   excerptEn?: string;
+  metaDescription?: string;
   content: string;
   contentEn?: string;
   category: 'geopolitica' | 'economia' | 'tecnologia';
   author: string;
   authorId: string;
+  status?: 'draft' | 'scheduled' | 'published';
   publishedAt: string;
   updatedAt: string;
   readingTime: number;
@@ -27,6 +30,34 @@ export interface NewsArticle {
   likes: number;
   shares: number;
   comments: number;
+  faqItems?: ArticleFaqItem[];
+  sources?: ArticleSource[];
+  editorialStatus?:
+    | 'draft'
+    | 'generated'
+    | 'enriched'
+    | 'review_pending'
+    | 'approved'
+    | 'scheduled'
+    | 'published'
+    | 'distribution_pending'
+    | 'archived';
+}
+
+export interface ArticleFaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface ArticleSource {
+  id?: string;
+  sourceType: string;
+  sourceName: string;
+  sourceUrl?: string;
+  publisher?: string;
+  country?: string;
+  language?: string;
+  accessedAt?: string;
 }
 
 export interface NewsCard {

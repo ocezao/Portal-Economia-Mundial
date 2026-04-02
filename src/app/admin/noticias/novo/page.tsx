@@ -30,12 +30,8 @@ import {
 } from 'lucide-react';
 
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
-import { 
-  generateSlug, 
-  isSlugAvailable,
-  scheduleArticle,
-} from '@/services/newsManager';
-import { createArticleApi } from '@/services/articleApi';
+import { generateSlug } from '@/services/newsManager';
+import { type ArticleSource, uploadEditorialImageApi } from '@/services/articleApi';
 import { listAdminAuthors } from '@/services/adminAuthors';
 import { CONTENT_CONFIG } from '@/config/content';
 import { ALL_CATEGORIES } from '@/config/routes';
@@ -64,10 +60,16 @@ import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { secureStorage } from '@/config/storage';
+import {
+  buildScheduledAtIso,
+  isEditorialSlugAvailable,
+  normalizeFaqItems,
+  normalizeSources,
+  persistEditorialArticle,
+} from '@/app/admin/noticias/editorialForm';
 
 export default function AdminNewsNewPage() {
   const router = useRouter();
-  const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
@@ -92,7 +94,8 @@ export default function AdminNewsNewPage() {
     breaking: false,
     featured: false,
     // FAQ
-    faqs: [] as Array<{ question: string; answer: string }>,
+    faqs: [] as { question: string; answer: string }[],
+    sources: [] as ArticleSource[],
     // Agendamento
     scheduledDate: '',
     scheduledTime: '',
@@ -221,7 +224,37 @@ export default function AdminNewsNewPage() {
     setHasChanges(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const addSource = () => {
+    setFormData((prev) => ({
+      ...prev,
+      sources: [
+        ...prev.sources,
+        { sourceType: 'reference', sourceName: '', sourceUrl: '', publisher: '' },
+      ],
+    }));
+    setHasChanges(true);
+    if (errors.sources) setErrors((prev) => ({ ...prev, sources: '' }));
+  };
+
+  const updateSource = (index: number, field: keyof ArticleSource, value: string) => {
+    setFormData((prev) => {
+      const sources = [...prev.sources];
+      sources[index] = { ...sources[index], [field]: value };
+      return { ...prev, sources };
+    });
+    setHasChanges(true);
+    if (errors.sources) setErrors((prev) => ({ ...prev, sources: '' }));
+  };
+
+  const removeSource = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sources: prev.sources.filter((_, sourceIndex) => sourceIndex !== index),
+    }));
+    setHasChanges(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -234,71 +267,35 @@ export default function AdminNewsNewPage() {
       toast.error('A imagem deve ter no maximo 5MB');
       return;
     }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setFormData(prev => ({ ...prev, coverImage: result }));
+
+    try {
+      const payload = new FormData();
+      payload.append('file', file);
+      const result = await uploadEditorialImageApi(payload) as { file?: { url?: string } };
+      const imageUrl = result.file?.url;
+      if (!imageUrl) throw new Error('URL da imagem nao retornada');
+
+      setFormData(prev => ({ ...prev, coverImage: imageUrl }));
       setHasChanges(true);
       toast.success('Imagem carregada com sucesso!');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const insertFormat = (format: string) => {
-    const textarea = contentRef.current;
-    if (!textarea) return;
-    
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = formData.content;
-    const selectedText = text.substring(start, end);
-    
-    let formattedText = '';
-    switch (format) {
-      case 'bold':
-        formattedText = `<strong>${selectedText || 'texto em negrito'}</strong>`;
-        break;
-      case 'italic':
-        formattedText = `<em>${selectedText || 'texto em italico'}</em>`;
-        break;
-      case 'h2':
-        formattedText = `<h2>${selectedText || 'Titulo'}</h2>`;
-        break;
-      case 'h3':
-        formattedText = `<h3>${selectedText || 'Subtitulo'}</h3>`;
-        break;
-      case 'quote':
-        formattedText = `<blockquote>${selectedText || 'Citacao'}</blockquote>`;
-        break;
-      case 'list':
-        formattedText = `<ul>\n  <li>${selectedText || 'Item'}</li>\n</ul>`;
-        break;
-      case 'link':
-        formattedText = `<a href="https://">${selectedText || 'link'}</a>`;
-        break;
-      default:
-        formattedText = selectedText;
+      if (errors.coverImage) setErrors((prev) => ({ ...prev, coverImage: '' }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro no upload da imagem';
+      toast.error(message);
+    } finally {
+      e.target.value = '';
     }
-    
-    const newContent = text.substring(0, start) + formattedText + text.substring(end);
-    setFormData(prev => ({ ...prev, content: newContent }));
-    setHasChanges(true);
-    
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
-    }, 0);
   };
 
   const validate = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
+    const normalizedSources = normalizeSources(formData.sources);
     
     if (!formData.title.trim()) newErrors.title = 'Titulo e obrigatorio';
     else if (formData.title.length < 10) newErrors.title = 'Titulo deve ter pelo menos 10 caracteres';
     
     if (!formData.slug.trim()) newErrors.slug = 'Slug e obrigatorio';
-    else if (!isSlugAvailable(formData.slug, undefined)) newErrors.slug = 'Este slug ja esta em uso';
+    else if (!(await isEditorialSlugAvailable(formData.slug))) newErrors.slug = 'Este slug ja esta em uso';
     
     if (!formData.excerpt.trim()) newErrors.excerpt = 'Resumo e obrigatorio';
     else if (formData.excerpt.length < 50) newErrors.excerpt = 'Resumo deve ter pelo menos 50 caracteres';
@@ -310,6 +307,7 @@ export default function AdminNewsNewPage() {
     if (!formData.authorId.trim()) newErrors.author = 'Perfil profissional obrigatório';
     
     if (!formData.coverImage.trim()) newErrors.coverImage = 'Imagem de capa e obrigatoria';
+    if (normalizedSources.length === 0) newErrors.sources = 'Adicione pelo menos uma fonte editorial';
     
     // Validar agendamento
     if (publishMode === 'schedule') {
@@ -351,7 +349,9 @@ export default function AdminNewsNewPage() {
       const articleData = {
         title: formData.title,
         slug: formData.slug,
+        seoTitle: formData.seoTitle.trim() || undefined,
         excerpt: formData.excerpt,
+        metaDescription: formData.seoDescription.trim() || undefined,
         content: formData.content,
         category: formData.category as 'economia' | 'geopolitica' | 'tecnologia',
         author: selectedAuthor.name,
@@ -365,19 +365,23 @@ export default function AdminNewsNewPage() {
         likes: 0,
         shares: 0,
         comments: 0,
+        faqItems: normalizeFaqItems(formData.faqs),
+        sources: normalizeSources(formData.sources),
       };
       
       if (publishMode === 'schedule') {
-        await scheduleArticle(
+        const publishedAt = buildScheduledAtIso(formData.scheduledDate, formData.scheduledTime, formData.timezone);
+        await persistEditorialArticle({
           articleData,
-          formData.scheduledDate,
-          formData.scheduledTime,
-          formData.timezone
-        );
+          mode: 'schedule',
+          publishedAt,
+        });
         toast.success(`Artigo agendado para ${formData.scheduledDate} às ${formData.scheduledTime}!`);
       } else {
-        // Publicar imediatamente via API (bypass RLS)
-        await createArticleApi(articleData);
+        await persistEditorialArticle({
+          articleData,
+          mode: 'publish',
+        });
         toast.success('Artigo publicado com sucesso!');
       }
        
@@ -447,7 +451,7 @@ export default function AdminNewsNewPage() {
                 Crie um novo artigo ou agende para depois
                 {lastSaved && (
                   <span className="ml-2 text-xs text-[#6b6b6b]">
-                    - Auto-salvo A s {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    - Auto-salvo as {lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </p>
@@ -1115,6 +1119,63 @@ export default function AdminNewsNewPage() {
                       )}
                     </fieldset>
 
+                    <fieldset className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
+                      <section className="flex items-center justify-between mb-3">
+                        <section>
+                          <h3 className="text-sm font-medium text-[#111111]">Fontes Editoriais</h3>
+                          <p className="text-xs text-[#6b6b6b]">Pelo menos uma fonte e obrigatoria para publicar ou agendar.</p>
+                        </section>
+                        <Button type="button" variant="outline" size="sm" onClick={addSource}>
+                          + Adicionar fonte
+                        </Button>
+                      </section>
+                      {formData.sources.length > 0 ? (
+                        <section className="space-y-3">
+                          {formData.sources.map((source, index) => (
+                            <section key={`${source.sourceName}-${index}`} className="p-3 bg-white rounded-lg border border-[#e5e5e5]">
+                              <section className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-[#6b6b6b]">Fonte #{index + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeSource(index)}
+                                  className="text-[#ef4444] hover:text-[#dc2626]"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </section>
+                              <Input
+                                value={source.sourceName}
+                                onChange={(e) => updateSource(index, 'sourceName', e.target.value)}
+                                placeholder="Nome da fonte"
+                                className="mb-2"
+                              />
+                              <Input
+                                value={source.sourceUrl ?? ''}
+                                onChange={(e) => updateSource(index, 'sourceUrl', e.target.value)}
+                                placeholder="https://fonte.com/materia"
+                                className="mb-2"
+                              />
+                              <Input
+                                value={source.publisher ?? ''}
+                                onChange={(e) => updateSource(index, 'publisher', e.target.value)}
+                                placeholder="Veiculo / publisher"
+                              />
+                            </section>
+                          ))}
+                        </section>
+                      ) : (
+                        <p className="text-xs text-[#6b6b6b]">
+                          Adicione as referencias usadas para embasar a publicacao.
+                        </p>
+                      )}
+                      {errors.sources && (
+                        <p className="mt-2 text-xs text-[#ef4444] flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {errors.sources}
+                        </p>
+                      )}
+                    </fieldset>
+
                     <section className="mt-6 p-4 bg-[#f8fafc] rounded-lg">
                       <p className="text-xs text-[#6b6b6b] mb-2">Preview nos resultados de busca:</p>
                       <section className="max-w-[600px]">
@@ -1419,7 +1480,3 @@ export default function AdminNewsNewPage() {
     </>
   );
 }
-
-
-
-
