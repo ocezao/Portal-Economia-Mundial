@@ -24,7 +24,7 @@ test -f .env || { echo "ERRO: arquivo .env não encontrado em ${APP_DIR}"; exit 
 chmod 600 .env
 
 echo "[4/8] Subindo containers"
-docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+docker compose -f docker-compose.yml --env-file .env up -d --build
 
 echo "[5/8] Copiando configuração Nginx"
 cp deploy/nginx/portal.conf /etc/nginx/sites-available/portal
@@ -45,7 +45,7 @@ certbot --nginx \
   -d metabase.cenariointernacional.com.br
 
 echo "[8/8] Verificações finais"
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.yml ps
 curl -I http://cenariointernacional.com.br
 curl -I https://cenariointernacional.com.br
 curl -I https://www.cenariointernacional.com.br
@@ -53,4 +53,3 @@ curl -I https://api.cenariointernacional.com.br
 curl -I https://metabase.cenariointernacional.com.br
 
 echo "Deploy concluído."
-

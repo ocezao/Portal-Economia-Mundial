@@ -9,7 +9,7 @@ set -e
 
 DOMAIN="cenariointernacional.com.br"
 EMAIL="contato@cenariointernacional.com.br"
-PROJECT_DIR="/var/www/pem"
+PROJECT_DIR="/var/www/portal"
 
 echo "=========================================="
 echo "  Nginx Setup - Cenario Internacional"
@@ -89,7 +89,7 @@ echo ""
 echo "Next steps:"
 echo "1. Make sure DNS is pointing to this server"
 echo "2. Run: sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN"
-echo "3. Start your Next.js app: pm2 start ecosystem.config.js"
+echo "3. Start the application stack: docker compose -f $PROJECT_DIR/docker-compose.yml up -d --build"
 echo ""
 echo "To check status:"
 echo "  sudo systemctl status nginx"

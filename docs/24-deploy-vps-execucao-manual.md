@@ -130,7 +130,7 @@ curl -X POST "https://cenariointernacional.com.br/api/cron?type=editorial-jobs" 
 - Reinicio: `docker compose -f docker-compose.yml restart web api collector`
 - Logs: `docker compose -f docker-compose.yml logs -f`
 - Status: `docker compose -f docker-compose.yml ps`
-- Backup: `scripts/backup-local-db.sh`
+- Backup: `scripts/backup.sh`
 
 ## 13) O que nao usar mais
 

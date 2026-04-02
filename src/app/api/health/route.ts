@@ -28,7 +28,7 @@ interface HealthStatus {
   };
 }
 
-export async function GET(_request: NextRequest): Promise<NextResponse> {
+async function buildHealthStatus(): Promise<{ healthStatus: HealthStatus; statusCode: number }> {
   const startTime = Date.now();
   const checks: HealthStatus['checks'] = {
     server: {
@@ -81,6 +81,12 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
   const statusCode = overallStatus === 'unhealthy' ? 503 : 200;
 
+  return { healthStatus, statusCode };
+}
+
+export async function GET(_request: NextRequest): Promise<NextResponse> {
+  const { healthStatus, statusCode } = await buildHealthStatus();
+
   return NextResponse.json(healthStatus, {
     status: statusCode,
     headers: {
@@ -92,5 +98,14 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 }
 
 export async function HEAD(): Promise<NextResponse> {
-  return new NextResponse(null, { status: 200 });
+  const { statusCode } = await buildHealthStatus();
+
+  return new NextResponse(null, {
+    status: statusCode,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+    },
+  });
 }

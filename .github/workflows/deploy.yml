@@ -14,7 +14,7 @@ jobs:
     name: Deploy to VPS
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,49 +33,22 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          PROJECT_DIR: /var/www/pem
         run: |
           ssh $VPS_USER@$VPS_HOST << 'ENDSSH'
             set -e
-            cd /var/www/pem
-            
+            cd /var/www/portal
             echo "Starting deployment..."
-            
-            # Pull latest code
-            git pull origin main
-            
-            # Install dependencies
-            npm ci --ignore-scripts
-            
-            # Build application
-            npm run build
-            
-            # Reload PM2 (zero-downtime)
-            pm2 reload ecosystem.config.js --env production
-            
-            # Wait for health check
-            sleep 10
-            
-            # Verify deployment
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health)
-            if [ "$HTTP_CODE" != "200" ]; then
-              echo "Health check failed! HTTP $HTTP_CODE"
-              pm2 logs --lines 50
-              exit 1
-            fi
-            
-            echo "Deployment successful!"
-            pm2 list
+            bash ./scripts/deploy.sh main
           ENDSSH
 
       - name: Notify on success
         if: success()
         run: |
-          echo "✅ Deployment successful!"
+          echo "Deployment successful!"
           echo "URL: https://cenariointernacional.com.br"
 
       - name: Notify on failure
         if: failure()
         run: |
-          echo "❌ Deployment failed!"
-          echo "Check logs on VPS: pm2 logs portal-economico"
+          echo "Deployment failed!"
+          echo "Check logs on VPS: docker compose -f /var/www/portal/docker-compose.yml logs --tail=200"

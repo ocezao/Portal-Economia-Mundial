@@ -182,10 +182,18 @@ Use `.env.example` como base.
 
 ```bash
 NEXT_PUBLIC_SITE_URL=
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_UPLOAD_BUCKET=
+NEXT_PUBLIC_API_BASE_URL=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+METABASE_DB_PASSWORD=
+LOCAL_AUTH_SECRET=
+CRON_API_SECRET=
+EDITORIAL_API_KEY=
+GNEWS_API_KEY=
+NEXT_PUBLIC_FINNHUB_API_KEY=
+FINNHUB_API_KEY=
+CORS_ALLOWED_ORIGINS=
 
 SMTP_HOST=
 SMTP_PORT=
@@ -204,6 +212,7 @@ Notas:
 
 - `BUTTONDOWN_API_KEY` Ã© opcional
 - nÃ£o commitar `.env` com credenciais reais
+- `DATABASE_URL` e montada pelo `docker-compose.yml` a partir de `DB_NAME`, `DB_USER` e `DB_PASSWORD`
 
 ---
 
@@ -221,8 +230,8 @@ The official production flow uses Docker Compose with local PostgreSQL on the VP
 |------------|------|-------------|
 | Docker | `docker-compose.yml` | Official production stack with `database`, `web`, `api`, `collector`, and `metabase` |
 | Nginx | `nginx/pem.conf` | Reverse proxy with SSL, CSP, and cache |
-| Backup | `scripts/backup-local-db.sh` | Backup for local PostgreSQL and uploads |
-| Deploy | `scripts/vps/deploy-docker-nginx.sh` | Official Docker deploy on the VPS |
+| Backup | `scripts/backup.sh` | Backup for local PostgreSQL and uploads |
+| Deploy | `scripts/deploy.sh` | Official in-place Docker deploy on the VPS |
 | Validation | `docs/22-deploy-producao-checklist.md` | Operational readiness checklist |
 
 ### First Deploy

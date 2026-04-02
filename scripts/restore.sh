@@ -10,10 +10,12 @@
 set -e
 
 RESTORE_TYPE=${1:-"db"}
-BACKUP_DIR="/var/www/pem-backups"
-
-# Supabase credentials
-SUPABASE_DB_URL=${SUPABASE_DB_URL:-""}
+PROJECT_DIR="/var/www/portal"
+BACKUP_DIR="/var/www/portal-backups"
+DB_CONTAINER="${DB_CONTAINER:-portal-database}"
+DB_NAME="${DB_NAME:-portal}"
+DB_USER="${DB_USER:-portal_user}"
+UPLOADS_DIR="$PROJECT_DIR/public/uploads"
 
 echo "=========================================="
 echo "  Restore - Cenario Internacional"
@@ -64,40 +66,19 @@ fi
 # Execute restore
 case $RESTORE_TYPE in
     "db")
-        echo "Restoring database..."
-        
-        if [ -z "$SUPABASE_DB_URL" ]; then
-            if [ -f "/var/www/pem/.env" ]; then
-                SUPABASE_DB_URL=$(grep SUPABASE_DB_URL /var/www/pem/.env | cut -d'=' -f2- | tr -d '"' | tr -d "'")
-            fi
-        fi
-        
-        if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "ERROR: SUPABASE_DB_URL not set"
-            exit 1
-        fi
-        
-        echo "Dropping existing tables..."
-        # WARNING: This is destructive
-        gunzip -c $BACKUP_FILE | psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1
-        
+        echo "Restoring database into container $DB_CONTAINER..."
+        gunzip -c "$BACKUP_FILE" | docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
         echo "Database restored successfully!"
         ;;
         
     "uploads")
         echo "Restoring uploads..."
-        
-        # Create temp directory
-        TEMP_DIR=$(mktemp -d)
-        tar -xzf $BACKUP_FILE -C $TEMP_DIR
-        
-        echo "Files extracted to: $TEMP_DIR"
-        echo "Manual upload to Supabase Storage required:"
-        echo "  1. Go to Supabase Dashboard > Storage > uploads"
-        echo "  2. Upload files from $TEMP_DIR"
-        echo ""
-        echo "Or use Supabase CLI:"
-        echo "  supabase storage upload uploads $TEMP_DIR/*"
+
+        mkdir -p "$UPLOADS_DIR"
+        find "$UPLOADS_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+        tar -xzf "$BACKUP_FILE" -C "$UPLOADS_DIR"
+
+        echo "Uploads restored to $UPLOADS_DIR"
         ;;
         
     *)
