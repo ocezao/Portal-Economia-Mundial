@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { query, queryOne } from '@/lib/db';
 import { isEmailConfigured, sendEmailSafe } from '@/lib/server/email';
 import {
   newsletterConfirmTemplate,
@@ -77,95 +77,57 @@ export async function POST(req: Request): Promise<Response> {
 
     const input = parsed.data;
     const email = input.email.toLowerCase();
-    const admin = getSupabaseAdminClient();
-
     let alreadySubscribed = false;
     const token = generateConfirmationToken();
     const tokenExpiresAt = getTokenExpiryDate().toISOString();
 
-    // Check if email already has a confirmed subscription
-    const existingCheck = await admin
-      .from('leads')
-      .select('id, status')
-      .eq('email', email)
-      .eq('source', input.source)
-      .limit(1);
+    const existing = await queryOne<{ id: string; status: string }>(
+      `select id, status
+       from leads
+       where lower(email) = lower($1)
+         and source = $2
+       limit 1`,
+      [email, input.source],
+    );
 
-    if (existingCheck.error) {
-      const leadsMissing = /Could not find the table 'public\.leads'/i.test(existingCheck.error.message);
-      if (!leadsMissing) {
-        return json({ error: existingCheck.error.message }, 500);
-      }
-    } else if (existingCheck.data && existingCheck.data.length > 0) {
-      const existing = existingCheck.data[0];
-      if (existing.status === 'active') {
-        alreadySubscribed = true;
-      }
-      // If status is 'pending', we'll update with new token
+    if (existing?.status === 'active') {
+      alreadySubscribed = true;
     }
 
     if (!alreadySubscribed) {
-      const leadsInsert = await admin.from('leads').insert({
-        source: input.source,
-        email,
-        consent: true,
-        status: 'pending',
-        confirmation_token: token,
-        token_expires_at: tokenExpiresAt,
-        meta: {
-          path: input.path ?? null,
-          channel: 'newsletter',
-        },
-      });
-
-      if (leadsInsert.error) {
-        const duplicate = (leadsInsert.error as { code?: string }).code === '23505';
-        const leadsMissing = /Could not find the table 'public\.leads'/i.test(leadsInsert.error.message);
-
-        if (duplicate) {
-          // Update existing record with new token (resend confirmation)
-          const updateResult = await admin
-            .from('leads')
-            .update({
-              confirmation_token: token,
-              token_expires_at: tokenExpiresAt,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('email', email)
-            .eq('source', input.source);
-
-          if (updateResult.error) {
-            return json({ error: updateResult.error.message }, 500);
-          }
-        } else if (leadsMissing) {
-          const newsletterSubject = `[Newsletter] ${input.source}`;
-          const lookup = await admin
-            .from('contact_messages')
-            .select('id')
-            .eq('email', email)
-            .eq('subject', newsletterSubject)
-            .limit(1);
-
-          if (lookup.error) return json({ error: lookup.error.message }, 500);
-
-          if (lookup.data && lookup.data.length > 0) {
-            alreadySubscribed = true;
-          } else {
-            const fallbackInsert = await admin.from('contact_messages').insert({
-              name: email.split('@')[0].slice(0, 120) || 'newsletter',
-              email,
-              phone: null,
-              subject: newsletterSubject,
-              category: 'outro',
-              message: `newsletter opt-in from ${input.path ?? '/'} - pending confirmation`,
-              user_id: null,
-            });
-
-            if (fallbackInsert.error) return json({ error: fallbackInsert.error.message }, 500);
-          }
-        } else {
-          return json({ error: leadsInsert.error.message }, 500);
-        }
+      if (existing?.id) {
+        await query(
+          `update leads
+           set confirmation_token = $1,
+               token_expires_at = $2,
+               updated_at = now()
+           where id = $3`,
+          [token, tokenExpiresAt, existing.id],
+        );
+      } else {
+        await query(
+          `insert into leads (
+            source,
+            email,
+            consent,
+            status,
+            confirmation_token,
+            token_expires_at,
+            meta
+          ) values ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+          [
+            input.source,
+            email,
+            true,
+            'pending',
+            token,
+            tokenExpiresAt,
+            JSON.stringify({
+              path: input.path ?? null,
+              channel: 'newsletter',
+            }),
+          ],
+        );
       }
     }
 

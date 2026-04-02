@@ -2,7 +2,7 @@
 
 import { RefreshCw, User, Download, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SUPABASE_FREE_LIMITS } from '@/config/supabaseLimits';
+import { LOCAL_INFRA_REFERENCE_LIMITS } from '@/config/localInfraLimits';
 import type { SettingsPanelProps } from '../types';
 
 export function SettingsPanel({
@@ -17,61 +17,37 @@ export function SettingsPanel({
         <h2 className="text-lg font-bold text-[#111111] mb-4">Configuracoes do Sistema</h2>
         <section className="space-y-3">
           <section className="p-4 bg-[#f8fafc] rounded-lg">
-            <h3 className="font-medium text-sm mb-3">Limites do Plano Free (Supabase)</h3>
+            <h3 className="font-medium text-sm mb-3">Referencias da Infra Local</h3>
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
               <section className="p-3 bg-white border rounded-md">
                 <p className="text-[#6b6b6b]">Banco de dados</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.databaseSizeMb} MB</p>
+                <p className="font-medium">{LOCAL_INFRA_REFERENCE_LIMITS.databaseSizeMb} MB</p>
               </section>
               <section className="p-3 bg-white border rounded-md">
                 <p className="text-[#6b6b6b]">Storage</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.fileStorageGb} GB</p>
+                <p className="font-medium">{LOCAL_INFRA_REFERENCE_LIMITS.fileStorageGb} GB</p>
               </section>
               <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Egress</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.egressGb} GB</p>
-              </section>
-              <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Egress cache</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.cachedEgressGb} GB</p>
-              </section>
-              <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Funcoes (mes)</p>
-                <p className="font-medium">
-                  {SUPABASE_FREE_LIMITS.edgeFunctionInvocations.toLocaleString('pt-BR')}
-                </p>
-              </section>
-              <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Tempo max. funcao</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMaxDurationSeconds}s</p>
-              </section>
-              <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">CPU max. funcao</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMaxCpuSeconds}s</p>
-              </section>
-              <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Memoria funcao</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.edgeFunctionMemoryMb} MB</p>
+                <p className="text-[#6b6b6b]">Egress mensal</p>
+                <p className="font-medium">{LOCAL_INFRA_REFERENCE_LIMITS.monthlyEgressGb} GB</p>
               </section>
               <section className="p-3 bg-white border rounded-md">
                 <p className="text-[#6b6b6b]">Arquivo max.</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.maxFileSizeMb} MB</p>
+                <p className="font-medium">{LOCAL_INFRA_REFERENCE_LIMITS.maxUploadFileSizeMb} MB</p>
               </section>
               <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Funcoes/projeto</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.maxFunctionsPerProject}</p>
+                <p className="text-[#6b6b6b]">Jobs/hora</p>
+                <p className="font-medium">
+                  {LOCAL_INFRA_REFERENCE_LIMITS.scheduledJobsPerHour.toLocaleString('pt-BR')}
+                </p>
               </section>
               <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Projetos ativos</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.maxActiveProjects}</p>
-              </section>
-              <section className="p-3 bg-white border rounded-md">
-                <p className="text-[#6b6b6b]">Auto-pause</p>
-                <p className="font-medium">{SUPABASE_FREE_LIMITS.freeProjectAutoPauseDays} dias</p>
+                <p className="text-[#6b6b6b]">Retencao de backup</p>
+                <p className="font-medium">{LOCAL_INFRA_REFERENCE_LIMITS.recommendedBackupRetentionDays} dias</p>
               </section>
             </section>
             <p className="text-xs text-[#6b6b6b] mt-3">
-              Valores de referencia do plano Free. Verifique no painel do Supabase, pois podem mudar.
+              Valores de referencia para a VPS local. Ajuste conforme disco, RAM e politica de backup do ambiente.
             </p>
           </section>
 

@@ -131,7 +131,7 @@ export default function PerfilPage() {
     joinedDate: user?.createdAt || '',
   });
 
-  // Load stats from Supabase data
+  // Load stats from local user data
   useEffect(() => {
     startTransition(() => {
       setStats({

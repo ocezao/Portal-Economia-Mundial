@@ -42,7 +42,7 @@ export function OptimizedImage({
   const isStaticExport = process.env.NODE_ENV === 'production';
 
   // Para imagens externas ou quando em export estático, usar img padrão
-  if ((isExternal && !src.includes('supabase')) || (isStaticExport && isExternal)) {
+  if (isExternal || (isStaticExport && isExternal)) {
     return (
       <div className={cn('relative overflow-hidden', containerClassName)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}

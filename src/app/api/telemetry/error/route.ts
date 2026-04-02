@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+
+import { query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -36,9 +37,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!process.env.DATABASE_URL) {
     return NextResponse.json({ ok: false }, { status: 503 });
   }
 
@@ -69,20 +68,23 @@ export async function POST(req: NextRequest) {
   const userAgent = limitText(req.headers.get('user-agent'), 512);
   const referrer = limitText(req.headers.get('referer'), 2048);
 
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  await client.from('app_errors').insert({
-    source: 'web',
-    message,
-    stack,
-    digest,
-    url,
-    pathname,
-    user_agent: userAgent,
-    referrer,
-  });
+  try {
+    await query(
+      `insert into app_errors (
+         source,
+         message,
+         stack,
+         digest,
+         url,
+         pathname,
+         user_agent,
+         referrer
+       ) values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      ['web', message, stack, digest, url, pathname, userAgent, referrer],
+    );
+  } catch {
+    return NextResponse.json({ ok: false }, { status: 503 });
+  }
 
   // Always respond OK to avoid loops.
   return NextResponse.json({ ok: true }, { status: 200 });

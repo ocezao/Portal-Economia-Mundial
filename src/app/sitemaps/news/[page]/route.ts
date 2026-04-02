@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 
 import { ROUTES } from '@/config/routes';
+import { queryRows } from '@/lib/db';
 import { getSiteUrl } from '@/lib/siteUrl';
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { absoluteUrl, escXml, resolveAbsoluteUrl } from '@/lib/sitemaps';
 
 export const revalidate = 1800; // 30 min
 
 const NEWS_PER_SITEMAP = 2000;
+
+interface NewsSitemapRow {
+  slug: string;
+  updated_at: string | null;
+  published_at: string | null;
+  created_at: string | null;
+  cover_image: string | null;
+}
 
 function parsePage(param: string | undefined) {
   const n = Number(param);
@@ -27,7 +35,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ page?: string 
   const siteUrl = getSiteUrl();
   const now = new Date().toISOString();
 
-  if (!isSupabaseConfigured) {
+  let rows: NewsSitemapRow[] = [];
+  try {
+    rows = await queryRows<NewsSitemapRow>(
+      `select slug, updated_at, published_at, created_at, cover_image
+         from news_articles
+        where status = $1
+        order by published_at desc nulls last
+        offset $2
+        limit $3`,
+      ['published', (page - 1) * NEWS_PER_SITEMAP, NEWS_PER_SITEMAP],
+    );
+  } catch {
     const xml =
       `<?xml version="1.0" encoding="UTF-8"?>` +
       `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">` +
@@ -41,32 +60,20 @@ export async function GET(_req: Request, ctx: { params: Promise<{ page?: string 
     });
   }
 
-  const from = (page - 1) * NEWS_PER_SITEMAP;
-  const to = from + NEWS_PER_SITEMAP - 1;
-
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('slug, updated_at, published_at, created_at, cover_image')
-    .eq('status', 'published')
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .range(from, to);
-
-  const rows = !error && Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
-
   const urlEntries = rows
     .map((row) => {
-      const slug = (row?.slug as string | undefined) ?? '';
+      const slug = row.slug ?? '';
       if (!slug) return '';
 
       const lastMod =
-        (row?.updated_at as string | undefined) ??
-        (row?.published_at as string | undefined) ??
-        (row?.created_at as string | undefined) ??
+        row.updated_at ??
+        row.published_at ??
+        row.created_at ??
         now;
 
       const loc = absoluteUrl(siteUrl, ROUTES.noticia(slug));
 
-      const cover = resolveAbsoluteUrl(siteUrl, String(row?.cover_image ?? ''));
+      const cover = resolveAbsoluteUrl(siteUrl, row.cover_image ?? '');
       const imageXml = cover
         ? `<image:image><image:loc>${escXml(cover)}</image:loc></image:image>`
         : '';

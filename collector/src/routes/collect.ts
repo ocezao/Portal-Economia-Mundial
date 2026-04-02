@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { insertCollectorEvents } from '../supabase';
+import { insertCollectorEvents } from '../db';
 
 interface CollectBody {
   v: string;
@@ -47,7 +47,7 @@ export async function collectRoutes(server: FastifyInstance) {
       }));
 
       const inserted = await insertCollectorEvents(rows);
-      server.log.info(`Eventos recebidos e gravados no Supabase: ${inserted}`);
+      server.log.info(`Eventos recebidos e gravados no PostgreSQL local: ${inserted}`);
 
       // Return 204 No Content on success
       return reply.status(204).send();

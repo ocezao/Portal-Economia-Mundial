@@ -42,7 +42,6 @@ import { toast } from 'sonner';
 import { STORAGE_KEYS, secureStorage, publicStorage } from '@/config/storage';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useReadingHistory } from '@/hooks/useReadingHistory';
-import { supabase } from '@/lib/supabaseClient';
 import {
   Dialog,
   DialogContent,
@@ -226,8 +225,16 @@ export default function ConfiguracoesPage() {
     });
     
     if (user) {
-      await supabase.from('reading_history').delete().eq('user_id', user.id);
-      await supabase.from('reading_progress').delete().eq('user_id', user.id);
+      await Promise.allSettled([
+        fetch('/api/user/reading-history', {
+          method: 'DELETE',
+          credentials: 'same-origin',
+        }),
+        fetch('/api/user/reading-progress', {
+          method: 'DELETE',
+          credentials: 'same-origin',
+        }),
+      ]);
       await clearAllBookmarks();
       await reloadHistory();
     }

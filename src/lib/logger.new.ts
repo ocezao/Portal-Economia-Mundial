@@ -17,8 +17,8 @@ const REDACT_KEYS = [
   'cookie',
   'session',
   'credential',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'SUPABASE_DB_PASSWORD',
+  'database_url',
+  'db_password',
 ];
 
 function sanitize(value: unknown, depth = 0): unknown {

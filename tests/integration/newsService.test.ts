@@ -1,20 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Supabase
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
-const mockOrder = vi.fn();
-const mockLimit = vi.fn();
-const mockRange = vi.fn();
-const mockFrom = vi.fn();
-const mockSingle = vi.fn();
-
-vi.mock('@/lib/supabaseClient', () => ({
-  supabase: {
-    from: (table: string) => mockFrom(table),
-  },
-}));
-
 // Importar funções que serão testadas
 // Como as funções são internas aos serviços, vamos testar a estrutura esperada
 describe('News Service Integration', () => {
@@ -153,9 +138,8 @@ describe('News Service Integration', () => {
   });
 });
 
-describe('Supabase Queries', () => {
+describe('Queries de artigos', () => {
   it('deve construir query de listagem corretamente', () => {
-    // Simular query builder do Supabase
     const query = {
       from: 'news_articles',
       select: '*',
@@ -173,10 +157,7 @@ describe('Supabase Queries', () => {
   it('deve construir query de busca por slug corretamente', () => {
     const query = {
       from: 'news_articles',
-      select: `*, 
-        news_article_categories(categories(*)), 
-        news_article_authors(authors(*))
-      `,
+      select: '*',
       eq: { column: 'slug', value: 'test-article' },
       single: true,
     };

@@ -224,4 +224,4 @@ export async function requireEditorialRequest(req: Request) {
   return requireAdminRequest(req);
 }
 
-export type AdminSupabase = null;
+export type AdminClient = null;

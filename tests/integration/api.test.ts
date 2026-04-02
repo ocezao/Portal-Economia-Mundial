@@ -102,15 +102,13 @@ describe('API Integration', () => {
 });
 
 describe('External Services Integration', () => {
-  describe('Supabase', () => {
+  describe('Local Database', () => {
     it('should have required environment variables', () => {
-      // Verify that required config is defined
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      
-      // These may be undefined in test environment, but we check the structure
-      expect(typeof supabaseUrl === 'string' || supabaseUrl === undefined).toBe(true);
-      expect(typeof supabaseKey === 'string' || supabaseKey === undefined).toBe(true);
+      const databaseUrl = process.env.DATABASE_URL;
+      const authSecret = process.env.LOCAL_AUTH_SECRET;
+
+      expect(typeof databaseUrl === 'string' || databaseUrl === undefined).toBe(true);
+      expect(typeof authSecret === 'string' || authSecret === undefined).toBe(true);
     });
   });
 

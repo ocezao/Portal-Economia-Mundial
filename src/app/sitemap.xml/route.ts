@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { queryOne } from '@/lib/db';
 import { getSiteUrl } from '@/lib/siteUrl';
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { escXml } from '@/lib/sitemaps';
 
 export const revalidate = 3600; // 1 hour
@@ -9,15 +9,15 @@ export const revalidate = 3600; // 1 hour
 const NEWS_PER_SITEMAP = 2000;
 
 async function getPublishedNewsCount(): Promise<number> {
-  if (!isSupabaseConfigured) return 0;
-
-  const { error, count } = await supabase
-    .from('news_articles')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'published') as { error: Error | null; count: number | null };
-
-  if (error || typeof count !== 'number') return 0;
-  return count;
+  try {
+    const row = await queryOne<{ count: number }>(
+      'select count(*)::int as count from news_articles where status = $1',
+      ['published'],
+    );
+    return row?.count ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function GET() {
@@ -54,4 +54,3 @@ export async function GET() {
     },
   });
 }
-

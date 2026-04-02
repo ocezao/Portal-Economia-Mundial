@@ -16,7 +16,7 @@
   "include": [
     "src/server.ts",
     "src/logger.ts",
-    "src/supabase.ts",
+    "src/db.ts",
     "src/routes/**/*.ts",
     "src/plugins/**/*.ts"
   ],

@@ -1,18 +1,17 @@
-# Collector API - Analytics (Supabase)
+# Collector API - Analytics (PostgreSQL Local)
 
-API de coleta de eventos first-party com Fastify gravando direto no Supabase.
+API de coleta de eventos first-party com Fastify gravando direto no PostgreSQL local.
 
 ## Stack
 
 - Runtime: Node.js 18+
 - Framework: Fastify
-- Persistência: Supabase (`analytics_events`)
+- Persistencia: PostgreSQL (`analytics_events`)
 
-## Variáveis obrigatórias
+## Variaveis obrigatorias
 
 ```bash
-SUPABASE_URL=https://seu-projeto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/portal
 CORS_ALLOWED_ORIGINS=https://cenariointernacional.com.br,https://www.cenariointernacional.com.br
 PORT=4010
 LOG_LEVEL=info

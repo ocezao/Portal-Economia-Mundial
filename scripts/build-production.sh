@@ -63,8 +63,8 @@ echo ""
 echo "🟢 Verificando variáveis de ambiente..."
 
 REQUIRED_VARS=(
-    "NEXT_PUBLIC_SUPABASE_URL"
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    "DATABASE_URL"
+    "LOCAL_AUTH_SECRET"
 )
 
 MISSING_VARS=()

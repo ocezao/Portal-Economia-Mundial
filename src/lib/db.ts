@@ -1,4 +1,4 @@
-import type { Pool } from 'pg';
+import type { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 let pool: Pool | null = null;
 
@@ -11,7 +11,7 @@ if (typeof window === 'undefined' && process.env.DATABASE_URL) {
   });
 }
 
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: unknown[]) {
   if (!pool) {
     throw new Error('Database pool not available. DATABASE_URL may not be configured.');
   }
@@ -31,6 +31,42 @@ export async function getClient() {
   }
   return pool.connect();
 }
+
+export async function queryRows<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: unknown[],
+): Promise<T[]> {
+  const result = await query(text, params);
+  return result.rows as T[];
+}
+
+export async function queryOne<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: unknown[],
+): Promise<T | null> {
+  const rows = await queryRows<T>(text, params);
+  return rows[0] ?? null;
+}
+
+export async function withTransaction<T>(
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export type DbClient = PoolClient;
+export type DbQueryResult<T extends QueryResultRow = QueryResultRow> = QueryResult<T>;
 
 export interface SnapshotData {
   key: string;

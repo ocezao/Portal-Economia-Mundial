@@ -1,6 +1,6 @@
 /**
- * Logger seguro para produção
- * Apenas loga em ambiente de desenvolvimento
+ * Logger seguro para producao.
+ * Apenas loga em ambiente de desenvolvimento.
  */
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -22,7 +22,7 @@ export const logger = {
       console.log(...args);
     }
   },
-  
+
   warn: (...args: unknown[]): void => {
     if (isDev) {
       // eslint-disable-next-line no-console
@@ -30,28 +30,24 @@ export const logger = {
     }
   },
 
-  // Avoid flooding dev server logs when a dependency is down (e.g. Supabase 502).
+  // Avoid flooding dev server logs when an external dependency is down.
   warnRateLimit: (key: string, intervalMs: number, ...args: unknown[]): void => {
     if (!isDev) return;
     if (!shouldLog(`warn:${key}`, intervalMs)) return;
     // eslint-disable-next-line no-console
     console.warn(...args);
   },
-  
+
   error: (...args: unknown[]): void => {
-    // Erros sempre logam, mas sem dados sensíveis
     if (isDev) {
       // eslint-disable-next-line no-console
       console.error(...args);
     } else {
-      // Em produção, enviar para serviço de monitoring (Sentry, etc)
-      // ou logar apenas mensagens genéricas
-      const sanitized = args.map(arg => {
+      const sanitized = args.map((arg) => {
         if (arg instanceof Error) {
           return arg.message;
         }
         if (typeof arg === 'object' && arg !== null) {
-          // Sanitizar objetos para não expor dados sensíveis
           return '[Object]';
         }
         return arg;
@@ -72,8 +68,7 @@ export const logger = {
     if (!shouldLog(`error:${key}`, intervalMs)) return;
     logger.error(...args);
   },
-  
-  // Método específico para debugging (desabilitado em prod)
+
   debug: (...args: unknown[]): void => {
     if (isDev) {
       // eslint-disable-next-line no-console
@@ -81,5 +76,3 @@ export const logger = {
     }
   },
 };
-
-export default logger;
