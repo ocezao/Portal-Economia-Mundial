@@ -122,11 +122,9 @@ export async function POST(request: NextRequest) {
       return editorialError(auth.message, auth.status, { code: 'UNAUTHORIZED' });
     }
 
-    const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
     const month = new Date().toISOString().slice(0, 7).replace('-', '/');
 
-    if (contentType.includes('application/json')) {
-      const payload = await request.json() as {
+    let jsonPayload: {
         filename?: string;
         contentType?: string;
         base64?: string;
@@ -143,7 +141,19 @@ export async function POST(request: NextRequest) {
         creditText?: string;
         focusKeywords?: string[];
         promptText?: string;
-      };
+      } | null = null;
+
+    try {
+      const candidate = await request.clone().json() as Record<string, unknown>;
+      if (candidate && typeof candidate === 'object' && ('base64' in candidate || 'filename' in candidate || 'contentType' in candidate)) {
+        jsonPayload = candidate as typeof jsonPayload;
+      }
+    } catch {
+      jsonPayload = null;
+    }
+
+    if (jsonPayload) {
+      const payload = jsonPayload;
 
       if (!payload.base64?.trim()) {
         return editorialError('Envie base64 no corpo JSON para upload remoto', 400, { code: 'MISSING_BASE64' });
