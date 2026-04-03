@@ -123,8 +123,10 @@ export async function POST(request: NextRequest) {
     }
 
     const month = new Date().toISOString().slice(0, 7).replace('-', '/');
+    const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
 
-    let jsonPayload: {
+    if (contentType.includes('application/json')) {
+      let payload: {
         filename?: string;
         contentType?: string;
         base64?: string;
@@ -141,19 +143,22 @@ export async function POST(request: NextRequest) {
         creditText?: string;
         focusKeywords?: string[];
         promptText?: string;
-      } | null = null;
+      };
 
-    try {
-      const candidate = await request.clone().json() as Record<string, unknown>;
-      if (candidate && typeof candidate === 'object' && ('base64' in candidate || 'filename' in candidate || 'contentType' in candidate)) {
-        jsonPayload = candidate as typeof jsonPayload;
+      try {
+        const rawBody = await request.text();
+        payload = JSON.parse(rawBody) as typeof payload;
+      } catch {
+        return editorialError('Corpo JSON invalido para upload editorial', 400, {
+          code: 'INVALID_JSON_UPLOAD_PAYLOAD',
+        });
       }
-    } catch {
-      jsonPayload = null;
-    }
 
-    if (jsonPayload) {
-      const payload = jsonPayload;
+      if (!payload || typeof payload !== 'object') {
+        return editorialError('Envie um objeto JSON valido para upload editorial', 400, {
+          code: 'INVALID_JSON_UPLOAD_PAYLOAD',
+        });
+      }
 
       if (!payload.base64?.trim()) {
         return editorialError('Envie base64 no corpo JSON para upload remoto', 400, { code: 'MISSING_BASE64' });
@@ -298,6 +303,14 @@ export async function POST(request: NextRequest) {
       });
 
       return editorialSuccess(response);
+    }
+
+    if (!contentType.includes('multipart/form-data') && !contentType.includes('application/x-www-form-urlencoded')) {
+      return editorialError(
+        'Content-Type nao suportado para upload editorial. Use application/json com base64 ou multipart/form-data com file.',
+        415,
+        { code: 'UNSUPPORTED_UPLOAD_CONTENT_TYPE' },
+      );
     }
 
     const formData = await request.formData();

@@ -1003,3 +1003,46 @@ Observacao importante:
 
 - isso melhora fortemente o padrao tecnico de SEO e imagem
 - mas nao existe garantia honesta de “nota maxima de ranqueamento no Google”, porque ranking depende de fatores externos e competitivos fora do controle da API
+## 7.2.9. Robustez do upload JSON/base64 na VPS
+
+### O que precisava ser alterado
+
+Mesmo com o novo contrato de assets editoriais, o upload remoto por `application/json` com `base64` ainda falhava em producao:
+
+- a rota tentava inferir JSON e, se o parse falhasse, caia para `request.formData()`
+- isso gerava erro estrutural enganoso de `multipart/form-data`
+- na pratica, um agente externo ainda nao conseguia subir imagem gerada remotamente de forma confiavel
+
+### O que foi feito
+
+1. A rota `POST /api/v1/editorial/uploads` passou a tratar `application/json` como branch obrigatorio:
+   - se vier JSON, a rota processa JSON
+   - se o corpo JSON estiver invalido, retorna erro claro
+   - nao ha mais fallback silencioso para `formData()`
+
+2. Foi adicionada validacao explicita de `Content-Type`:
+   - `application/json` com `base64`
+   - `multipart/form-data`
+   - `application/x-www-form-urlencoded`
+   - qualquer outro tipo agora retorna `415`
+
+3. O objetivo foi tornar o fluxo previsivel para qualquer agente externo:
+   - erro correto quando o payload estiver invalido
+   - upload remoto realmente util quando o payload estiver correto
+
+### Como foi feito
+
+- leitura dos logs da VPS do `portal-web`
+- revisao do route handler de upload editorial
+- remocao do fallback ambiguo entre JSON e `formData`
+- endurecimento do branch por `Content-Type`
+
+### Tecnologias usadas
+
+- Next.js route handlers
+- TypeScript
+- PowerShell
+
+### Se conseguiu arrumar
+
+**Corrigido no repositorio; validacao final em producao depende do redeploy e do novo teste remoto.**
