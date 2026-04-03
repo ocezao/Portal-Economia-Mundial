@@ -5,7 +5,7 @@ import {
 } from '@/lib/server/editorialAdmin';
 import { formatZodError, parseEditorialPayload } from '@/lib/server/editorialApi';
 import { requireEditorialRequest } from '@/lib/server/adminApi';
-import { editorialError, editorialSuccess } from '@/lib/server/editorialHttp';
+import { editorialError, editorialSuccess, mapEditorialError } from '@/lib/server/editorialHttp';
 import { z } from 'zod';
 
 function getLookupMode(request: Request): 'id' | 'slug' {
@@ -25,10 +25,8 @@ export async function GET(
     const article = await getEditorialArticle(auth.admin, id, getLookupMode(req));
     return editorialSuccess(article);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro interno do servidor';
-    return editorialError(message, message === 'Artigo nao encontrado' ? 404 : 500, {
-      code: message === 'Artigo nao encontrado' ? 'NOT_FOUND' : 'EDITORIAL_ERROR',
-    });
+    const mapped = mapEditorialError(error);
+    return editorialError(mapped.message, mapped.status, { code: mapped.code });
   }
 }
 
@@ -49,9 +47,7 @@ export async function PATCH(
       return editorialError(formatZodError(error), 400, { code: 'INVALID_PAYLOAD' });
     }
 
-    const message = error instanceof Error ? error.message : 'Erro interno do servidor';
-    return editorialError(message, message === 'Artigo nao encontrado' ? 404 : 500, {
-      code: message === 'Artigo nao encontrado' ? 'NOT_FOUND' : 'EDITORIAL_ERROR',
-    });
+    const mapped = mapEditorialError(error);
+    return editorialError(mapped.message, mapped.status, { code: mapped.code });
   }
 }

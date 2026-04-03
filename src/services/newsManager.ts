@@ -1,5 +1,4 @@
 import { query, queryOne, queryRows, type DbClient, withTransaction } from '@/lib/db';
-import { toWebpUrl } from '@/lib/image';
 import { escapeLikePattern } from '@/lib/security';
 import type { NewsArticle } from '@/types';
 
@@ -154,7 +153,7 @@ function mapDbRowToArticle(row: ArticleDbRow): NewsArticle {
     excerptEn: row.excerpt_en ?? undefined,
     content: row.content ?? '',
     contentEn: row.content_en ?? undefined,
-    coverImage: row.cover_image ? toWebpUrl(row.cover_image) : '/images/news/default.webp',
+    coverImage: row.cover_image || '/images/news/default.webp',
     authorId: row.author_id ?? 'unknown',
     author: row.author_name ?? 'Desconhecido',
     category: (row.category ?? 'economia') as NewsArticle['category'],
