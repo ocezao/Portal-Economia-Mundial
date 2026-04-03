@@ -1045,7 +1045,15 @@ Mesmo com o novo contrato de assets editoriais, o upload remoto por `application
 
 ### Se conseguiu arrumar
 
-**Corrigido no repositorio; validacao final em producao depende do redeploy e do novo teste remoto.**
+**Sim no repositorio e na VPS.**
+
+Validacao pratica em producao:
+
+- upload real por `application/json` + `base64` funcionando
+- asset persistido em `editorial_media_assets`
+- resposta com `asset.id`, `publicUrl` e metadados editoriais
+- `PATCH /api/v1/editorial/uploads` funcionando para enriquecimento posterior
+- `GET /api/v1/editorial/uploads/library` retornando o asset salvo
 
 ## 7.2.10. Correcao do registro SQL da biblioteca de imagens
 
@@ -1080,4 +1088,15 @@ Depois do redeploy da rota de upload, o request passou a entrar no branch certo 
 
 ### Se conseguiu arrumar
 
-**Corrigido no repositorio; a validacao final depende do novo redeploy e do reteste do endpoint.**
+**Sim no repositorio e na VPS.**
+
+Validacao pratica em producao:
+
+- o upload deixou de falhar no parse de JSON
+- o `INSERT` do asset passou a persistir normalmente no PostgreSQL
+- a biblioteca editorial no banco ficou funcional de ponta a ponta
+- a validacao editorial passou a bloquear capa gerenciada sem:
+  - `titleText`
+  - `altText`
+  - `caption`
+  - `creditText`
