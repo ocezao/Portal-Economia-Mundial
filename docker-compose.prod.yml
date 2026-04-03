@@ -13,6 +13,8 @@ services:
         NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${NEXT_PUBLIC_ADSENSE_CLIENT_ID}
         NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE: ${NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE}
     container_name: portal-web
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -32,6 +34,8 @@ services:
       - AUTH_SESSION_SECRET=${AUTH_SESSION_SECRET}
       - EDITORIAL_API_KEY=${EDITORIAL_API_KEY}
       - UPLOADS_DIR=${UPLOADS_DIR}
+    volumes:
+      - /var/www/shared/uploads:/app/public/uploads
     ports:
       - '3000:3000'
     restart: unless-stopped
@@ -54,6 +58,8 @@ services:
         NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${NEXT_PUBLIC_ADSENSE_CLIENT_ID}
         NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE: ${NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE}
     container_name: portal-api
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=4000
@@ -73,6 +79,8 @@ services:
       - AUTH_SESSION_SECRET=${AUTH_SESSION_SECRET}
       - EDITORIAL_API_KEY=${EDITORIAL_API_KEY}
       - UPLOADS_DIR=${UPLOADS_DIR}
+    volumes:
+      - /var/www/shared/uploads:/app/public/uploads
     ports:
       - '4000:4000'
     restart: unless-stopped
@@ -88,6 +96,8 @@ services:
       context: ./collector
       dockerfile: Dockerfile
     container_name: portal-collector
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=4010
