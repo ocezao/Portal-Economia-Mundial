@@ -1,5 +1,7 @@
 # Checklist de Deploy em Producao
 
+> Este checklist complementa a execução oficial descrita em `docs/24-deploy-vps-execucao-manual.md`.
+
 ## Escopo
 
 Checklist realista para subir o portal com:

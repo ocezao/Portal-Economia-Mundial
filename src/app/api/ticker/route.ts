@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalIndicesSnapshot, getCommoditiesSnapshot } from '@/services/economics/snapshots';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
     
   } catch (error) {
-    console.error('[API /ticker] Error:', error);
+    logger.error('[API /ticker] Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch ticker data' },
       { status: 500 }

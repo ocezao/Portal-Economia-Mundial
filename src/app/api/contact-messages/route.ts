@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { getSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+
+import { query } from '@/lib/db';
 import { isEmailConfigured, sendEmailSafe } from '@/lib/server/email';
 import { contactAckTemplate, contactInternalTemplate } from '@/lib/server/emailTemplates';
 
@@ -28,21 +29,23 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const input = parsed.data;
-    const admin = getSupabaseAdminClient();
 
-    const { error } = await admin.from('contact_messages').insert({
-      name: input.name,
-      email: input.email,
-      phone: input.phone ?? null,
-      subject: input.subject,
-      category: input.category,
-      message: input.message,
-      user_id: input.userId ?? null,
-    });
+    await query(
+      `insert into public.contact_messages (
+        name, email, phone, subject, category, message, user_id
+      ) values ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        input.name,
+        input.email,
+        input.phone ?? null,
+        input.subject,
+        input.category,
+        input.message,
+        input.userId ?? null,
+      ],
+    );
 
-    if (error) return json({ error: error.message }, 500);
-
-    let emailWarnings: string[] = [];
+    const emailWarnings: string[] = [];
     if (isEmailConfigured()) {
       const internal = contactInternalTemplate(input);
       const ack = contactAckTemplate(input.name);

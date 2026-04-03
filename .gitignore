@@ -19,6 +19,10 @@ out/
 *.err
 logs/
 
+# local worktrees / release bundles
+.codex-worktrees/
+deploy/*.tar.gz
+
 # misc
 .DS_Store
 

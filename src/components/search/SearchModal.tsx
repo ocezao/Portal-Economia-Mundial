@@ -6,10 +6,16 @@ import Link from 'next/link';
 import { Search, X, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { useSearch } from '@/contexts/SearchContext';
 
-function highlightMatch(text: string, query: string): string {
-  if (!query.trim()) return text;
+function getHighlightedParts(text: string, query: string): Array<{ value: string; match: boolean }> {
+  if (!query.trim()) return [{ value: text, match: false }];
+
   const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return text.replace(regex, '<mark class="bg-yellow-200 text-gray-900">$1</mark>');
+  const parts = text.split(regex).filter((part) => part.length > 0);
+
+  return parts.map((part) => ({
+    value: part,
+    match: part.toLowerCase() === query.toLowerCase(),
+  }));
 }
 
 export function SearchModal() {
@@ -144,14 +150,28 @@ export function SearchModal() {
                     <img src={result.item.coverImage} alt="" className="w-16 h-12 object-cover rounded" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 
-                      className="font-medium text-gray-900 line-clamp-1"
-                      dangerouslySetInnerHTML={{ __html: highlightMatch(result.item.title, query) }}
-                    />
-                    <p 
-                      className="text-sm text-gray-500 line-clamp-1"
-                      dangerouslySetInnerHTML={{ __html: highlightMatch(result.item.excerpt, query) }}
-                    />
+                    <h4 className="font-medium text-gray-900 line-clamp-1">
+                      {getHighlightedParts(result.item.title, query).map((part, partIndex) => (
+                        part.match ? (
+                          <mark key={`${result.item.id}-title-${partIndex}`} className="bg-yellow-200 text-gray-900">
+                            {part.value}
+                          </mark>
+                        ) : (
+                          <span key={`${result.item.id}-title-${partIndex}`}>{part.value}</span>
+                        )
+                      ))}
+                    </h4>
+                    <p className="text-sm text-gray-500 line-clamp-1">
+                      {getHighlightedParts(result.item.excerpt, query).map((part, partIndex) => (
+                        part.match ? (
+                          <mark key={`${result.item.id}-excerpt-${partIndex}`} className="bg-yellow-200 text-gray-900">
+                            {part.value}
+                          </mark>
+                        ) : (
+                          <span key={`${result.item.id}-excerpt-${partIndex}`}>{part.value}</span>
+                        )
+                      ))}
+                    </p>
                     <span className="text-xs text-gray-400">{result.item.category}</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-2" />

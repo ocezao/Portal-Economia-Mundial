@@ -1,16 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+
+import { query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-// Best-effort in-memory rate limiter.
-// TODO: Em produção com múltiplas instâncias, usar Redis para rate limiting centralizado
-// Exemplo: Redis com ioredis ou @upstash/redis para persistência entre nodes
 const rl = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000;
-const MAX = 60; // events/min per IP
-const MAX_BODY_BYTES = 20_000; // prevent abuse (best-effort)
+const MAX = 60;
+const MAX_BODY_BYTES = 20_000;
 
 function limitText(value: unknown, max: number): string | null {
   if (typeof value !== 'string') return null;
@@ -34,12 +32,6 @@ export async function POST(req: NextRequest) {
     if (bucket.count > MAX) {
       return NextResponse.json({ ok: false }, { status: 429 });
     }
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ ok: false }, { status: 503 });
   }
 
   let body: Record<string, unknown> | null = null;
@@ -67,23 +59,13 @@ export async function POST(req: NextRequest) {
   const url = limitText(body?.url, 2048);
   const pathname = limitText(body?.pathname, 512);
   const userAgent = limitText(req.headers.get('user-agent'), 512);
-  const referrer = limitText(req.headers.get('referer'), 2048);
 
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  await query(
+    `insert into public.app_errors (
+      source, message, stack, digest, url, pathname, user_agent
+    ) values ($1, $2, $3, $4, $5, $6, $7)`,
+    ['web', message, stack, digest, url, pathname, userAgent],
+  );
 
-  await client.from('app_errors').insert({
-    source: 'web',
-    message,
-    stack,
-    digest,
-    url,
-    pathname,
-    user_agent: userAgent,
-    referrer,
-  });
-
-  // Always respond OK to avoid loops.
   return NextResponse.json({ ok: true }, { status: 200 });
 }

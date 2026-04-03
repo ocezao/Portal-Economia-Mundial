@@ -1,6 +1,6 @@
 /**
  * Componente de Imagem Otimizado
- * Wrapper do next/image com configurações padrão para o projeto
+ * Wrapper do next/image com configuracoes padrao para o projeto
  */
 
 import Image from 'next/image';
@@ -37,12 +37,10 @@ export function OptimizedImage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Fallback para imagens externas que não podem usar next/image
   const isExternal = src?.startsWith('http') || src?.startsWith('data:');
   const isStaticExport = process.env.NODE_ENV === 'production';
 
-  // Para imagens externas ou quando em export estático, usar img padrão
-  if ((isExternal && !src.includes('supabase')) || (isStaticExport && isExternal)) {
+  if (isExternal || (isStaticExport && isExternal)) {
     return (
       <div className={cn('relative overflow-hidden', containerClassName)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,7 +53,7 @@ export function OptimizedImage({
             'transition-opacity duration-300',
             isLoading ? 'opacity-0' : 'opacity-100',
             `object-${objectFit}`,
-            className
+            className,
           )}
           loading={priority ? 'eager' : 'lazy'}
           onLoad={() => {
@@ -67,9 +65,7 @@ export function OptimizedImage({
             setError(true);
           }}
         />
-        {isLoading && (
-          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-        )}
+        {isLoading && <div className="absolute inset-0 bg-gray-200 animate-pulse" />}
       </div>
     );
   }
@@ -88,7 +84,7 @@ export function OptimizedImage({
           'transition-opacity duration-300',
           isLoading ? 'opacity-0' : 'opacity-100',
           `object-${objectFit}`,
-          className
+          className,
         )}
         onLoad={() => {
           setIsLoading(false);
@@ -99,38 +95,24 @@ export function OptimizedImage({
           setError(true);
         }}
       />
-      {isLoading && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-      )}
+      {isLoading && <div className="absolute inset-0 bg-gray-200 animate-pulse" />}
       {error && (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">Imagem indisponível</span>
+          <span className="text-gray-400 text-sm">Imagem indisponivel</span>
         </div>
       )}
     </div>
   );
 }
 
-/**
- * Componente para imagens com lazy loading automático
- * Ideal para imagens abaixo da dobra
- */
 export function LazyImage(props: Omit<OptimizedImageProps, 'priority'>) {
   return <OptimizedImage {...props} priority={false} />;
 }
 
-/**
- * Componente para imagens prioritárias (LCP)
- * Ideal para hero images e imagens acima da dobra
- */
 export function PriorityImage(props: Omit<OptimizedImageProps, 'priority'>) {
   return <OptimizedImage {...props} priority />;
 }
 
-/**
- * Componente para thumbnails pequenos
- * Com tamanhos otimizados
- */
 export function ThumbnailImage({
   src,
   alt,
@@ -157,9 +139,6 @@ export function ThumbnailImage({
   );
 }
 
-/**
- * Componente para avatares de usuários
- */
 export function AvatarImage({
   src,
   alt,
@@ -176,7 +155,7 @@ export function AvatarImage({
       <div
         className={cn(
           'bg-gray-200 rounded-full flex items-center justify-center',
-          className
+          className,
         )}
         style={{ width: size, height: size }}
       >

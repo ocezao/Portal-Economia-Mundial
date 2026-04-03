@@ -1,22 +1,7 @@
-/**
- * Serviço de Notícias - Supabase + PostgreSQL Local
- * CRUD + consultas via banco de dados
- * 
- * NOTA: Migração em progresso - usando PostgreSQL local para leitura,
- * Supabase mantido para Auth e Storage
- */
-
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
-import { query } from '@/lib/db';
+import { query, queryOne, queryRows, type DbClient, withTransaction } from '@/lib/db';
 import { toWebpUrl } from '@/lib/image';
-import { logger } from '@/lib/logger';
 import { escapeLikePattern } from '@/lib/security';
 import type { NewsArticle } from '@/types';
-
-// Flag para usar PostgreSQL local (se DATABASE_URL estiver configurada)
-const useLocalDb = !!process.env.DATABASE_URL;
-
-// ==================== TIPOS ====================
 
 export interface ScheduledArticle {
   id: string;
@@ -47,211 +32,119 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-// ==================== TIPOS DO SUPABASE ====================
-
-interface CategoryRow {
-  categories?: { slug?: string } | null;
-}
-
-interface TagRow {
-  tags?: { name?: string } | null;
-}
-
-interface ArticleRow {
+type ArticleDbRow = {
   id: string;
   slug: string;
   title: string;
-  title_en?: string | null;
-  excerpt?: string | null;
-  excerpt_en?: string | null;
-  content?: string | null;
-  content_en?: string | null;
-  cover_image?: string | null;
-  author_id?: string | null;
-  author_name?: string | null;
-  status?: string | null;
-  published_at?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  reading_time?: number | null;
-  is_featured?: boolean | null;
-  is_breaking?: boolean | null;
-  views?: number | null;
-  likes?: number | null;
-  shares?: number | null;
-  comments_count?: number | null;
-  news_article_categories?: CategoryRow[] | null;
-  news_article_tags?: TagRow[] | null;
-}
+  title_en: string | null;
+  excerpt: string | null;
+  excerpt_en: string | null;
+  content: string | null;
+  content_en: string | null;
+  cover_image: string | null;
+  author_id: string | null;
+  author_name: string | null;
+  status: string | null;
+  published_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  reading_time: number | null;
+  is_featured: boolean | null;
+  is_breaking: boolean | null;
+  views: number | null;
+  likes: number | null;
+  shares: number | null;
+  comments_count: number | null;
+  category: string | null;
+  tags: string[] | null;
+};
 
-interface SearchResultRow {
-  id?: string;
-}
-
-interface AuthorProfileRow {
+type AuthorProfileRow = {
   slug: string;
   name: string;
-  is_active?: boolean | null;
-}
+  is_active: boolean | null;
+};
 
-// Type guard para verificar se um valor é um objeto
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-// Type guard para verificar se um valor é um array
-function isArray(value: unknown): value is unknown[] {
-  return Array.isArray(value);
-}
-
-// Type guard para ArticleRow
-function isArticleRow(value: unknown): value is ArticleRow {
-  if (!isRecord(value)) return false;
-  return typeof value.id === 'string' && typeof value.slug === 'string' && typeof value.title === 'string';
-}
-
-// Type guard para SearchResultRow
-function isSearchResultRow(value: unknown): value is SearchResultRow {
-  return isRecord(value) && (value.id === undefined || typeof value.id === 'string');
-}
-
-// ==================== HELPERS PARA POSTGRESQL LOCAL ====================
-
-function mapDbRowToArticle(row: any): NewsArticle {
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    titleEn: row.title_en || undefined,
-    excerpt: row.excerpt || '',
-    excerptEn: row.excerpt_en || undefined,
-    content: row.content || '',
-    contentEn: row.content_en || undefined,
-    coverImage: row.cover_image ? toWebpUrl(row.cover_image) : '/images/news/default.webp',
-    authorId: row.author_id || 'unknown',
-    author: row.author_name || 'Desconhecido',
-    category: (row.category as 'geopolitica' | 'economia' | 'tecnologia') || 'economia',
-    tags: row.tags || [],
-    publishedAt: row.published_at || row.created_at,
-    updatedAt: row.updated_at,
-    readingTime: row.reading_time || 4,
-    featured: row.is_featured || false,
-    breaking: row.is_breaking || false,
-    views: row.views || 0,
-    likes: row.likes || 0,
-    shares: row.shares || 0,
-    comments: row.comments_count || 0,
-  };
-}
-
-// ==================== HELPERS ====================
-
-const WARN_INTERVAL_MS = 60_000;
-// OTIMIZAÇÃO: Cache de 60 segundos para reduzir chamadas ao banco
-const QUERY_CACHE_TTL_MS = 60_000;
-
-const queryCache = new Map<string, { expiresAt: number; promise: Promise<unknown> }>();
-
-function withQueryCache<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
-  const now = Date.now();
-  const cached = queryCache.get(key);
-  if (cached && cached.expiresAt > now) {
-    return cached.promise as Promise<T>;
+function isPublicReadFailure(error: unknown): boolean {
+  if (error instanceof AggregateError) {
+    return error.errors.some((nested) => isPublicReadFailure(nested));
   }
-  const promise = fn();
-  queryCache.set(key, { expiresAt: now + ttlMs, promise });
-  return promise;
+
+  if (!(error instanceof Error)) return false;
+
+  const errorWithCode = error as Error & { code?: string; cause?: unknown };
+  if (errorWithCode.code === 'ECONNREFUSED' || errorWithCode.code === 'ECONNRESET' || errorWithCode.code === 'ENOTFOUND') {
+    return true;
+  }
+
+  if (errorWithCode.cause && isPublicReadFailure(errorWithCode.cause)) {
+    return true;
+  }
+
+  return (
+    error.message.includes('Database pool not available')
+    || error.message.includes('connect ECONNREFUSED')
+    || error.message.includes('getaddrinfo ENOTFOUND')
+    || error.message.includes('ECONNRESET')
+  );
 }
 
-function summarizeError(err: unknown): unknown {
-  if (err instanceof Error) return err.message;
-  if (!isRecord(err)) return err;
-  const message = typeof err.message === 'string' ? err.message : undefined;
-  const code = typeof err.code === 'string' ? err.code : undefined;
-  const status = typeof err.status === 'number' ? err.status : undefined;
-  if (!message) return err;
+async function withPublicReadFallback<T>(fallback: T, action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (error) {
+    if (isPublicReadFailure(error)) {
+      return fallback;
+    }
 
-  const short = message.length > 300 ? `${message.slice(0, 300)}...` : message;
-  return { status, code, message: short };
+    throw error;
+  }
 }
 
 const ARTICLE_SELECT = `
-  id,
-  slug,
-  title,
-  title_en,
-  excerpt,
-  excerpt_en,
-  content,
-  content_en,
-  cover_image,
-  author_id,
-  author_name,
-  status,
-  published_at,
-  created_at,
-  updated_at,
-  reading_time,
-  is_featured,
-  is_breaking,
-  views,
-  likes,
-  shares,
-  comments_count,
-  news_article_categories (
-    categories ( slug, name )
-  ),
-  news_article_tags (
-    tags ( name, slug )
-  )
+  select
+    na.id,
+    na.slug,
+    na.title,
+    na.title_en,
+    na.excerpt,
+    na.excerpt_en,
+    na.content,
+    na.content_en,
+    na.cover_image,
+    na.author_id,
+    na.author_name,
+    na.status,
+    na.published_at,
+    na.created_at,
+    na.updated_at,
+    na.reading_time,
+    na.is_featured,
+    na.is_breaking,
+    na.views,
+    na.likes,
+    na.shares,
+    na.comments_count,
+    cat.slug as category,
+    coalesce(tags.tags, array[]::text[]) as tags
+  from public.news_articles na
+  left join lateral (
+    select c.slug
+    from public.news_article_categories nac
+    inner join public.categories c on c.id = nac.category_id
+    where nac.article_id = na.id
+    order by c.priority asc, c.name asc
+    limit 1
+  ) cat on true
+  left join lateral (
+    select array_agg(t.name order by t.name) as tags
+    from public.news_article_tags nat
+    inner join public.tags t on t.id = nat.tag_id
+    where nat.article_id = na.id
+  ) tags on true
 `;
 
-const slugify = (value: string): string => {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 60);
-};
-
-const extractCategorySlug = (row: ArticleRow): string => {
-  const categories = row.news_article_categories;
-  if (!isArray(categories) || categories.length === 0) return 'economia';
-  
-  const firstCategory = categories[0];
-  if (!isRecord(firstCategory)) return 'economia';
-  
-  const categoryData = firstCategory.categories;
-  if (!isRecord(categoryData)) return 'economia';
-  
-  return typeof categoryData.slug === 'string' ? categoryData.slug : 'economia';
-};
-
-const extractTags = (row: ArticleRow): string[] => {
-  const tags = row.news_article_tags;
-  if (!isArray(tags)) return [];
-  
-  return tags
-    .map((t: unknown) => {
-      if (!isRecord(t)) return null;
-      const tagData = t.tags;
-      if (!isRecord(tagData)) return null;
-      return typeof tagData.name === 'string' ? tagData.name : null;
-    })
-    .filter((name): name is string => name !== null);
-};
-
-const mapArticleRow = (row: unknown): NewsArticle => {
-  if (!isArticleRow(row)) {
-    throw new Error('Invalid article row structure');
-  }
-
-  const categorySlug = extractCategorySlug(row);
-  const tags = extractTags(row);
-
+function mapDbRowToArticle(row: ArticleDbRow): NewsArticle {
   return {
     id: row.id,
     slug: row.slug,
@@ -261,14 +154,14 @@ const mapArticleRow = (row: unknown): NewsArticle => {
     excerptEn: row.excerpt_en ?? undefined,
     content: row.content ?? '',
     contentEn: row.content_en ?? undefined,
-    category: categorySlug as NewsArticle['category'],
-    author: row.author_name ?? 'Redação CIN',
-    authorId: row.author_id ?? '',
+    coverImage: row.cover_image ? toWebpUrl(row.cover_image) : '/images/news/default.webp',
+    authorId: row.author_id ?? 'unknown',
+    author: row.author_name ?? 'Desconhecido',
+    category: (row.category ?? 'economia') as NewsArticle['category'],
+    tags: row.tags ?? [],
     publishedAt: row.published_at ?? row.created_at ?? new Date().toISOString(),
     updatedAt: row.updated_at ?? row.created_at ?? new Date().toISOString(),
-    readingTime: row.reading_time ?? 0,
-    coverImage: toWebpUrl(row.cover_image ?? '/images/news/hero.webp'),
-    tags,
+    readingTime: row.reading_time ?? 4,
     featured: Boolean(row.is_featured),
     breaking: Boolean(row.is_breaking),
     views: row.views ?? 0,
@@ -276,645 +169,371 @@ const mapArticleRow = (row: unknown): NewsArticle => {
     shares: row.shares ?? 0,
     comments: row.comments_count ?? 0,
   };
-};
+}
 
-const getArticleMetaBySlug = async (
-  slug: string,
-): Promise<{ id: string; authorId: string | null } | null> => {
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('id,author_id')
-    .eq('slug', slug)
-    .single();
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 60);
+}
 
-  if (error) return null;
-  if (!isRecord(data) || typeof data.id !== 'string') return null;
+async function fetchArticles(
+  whereSql = '',
+  params: unknown[] = [],
+  options?: { orderBy?: string; limit?: number; offset?: number },
+): Promise<NewsArticle[]> {
+  const values = [...params];
+  let sql = ARTICLE_SELECT;
+  if (whereSql) sql += ` where ${whereSql}`;
+  sql += ` order by ${options?.orderBy ?? 'na.published_at desc nulls last'}`;
+  if (typeof options?.limit === 'number') {
+    values.push(options.limit);
+    sql += ` limit $${values.length}`;
+  }
+  if (typeof options?.offset === 'number') {
+    values.push(options.offset);
+    sql += ` offset $${values.length}`;
+  }
 
-  const authorId = typeof data.author_id === 'string' ? data.author_id : null;
-  return { id: data.id, authorId };
-};
+  const rows = await queryRows<ArticleDbRow>(sql, values);
+  return rows.map(mapDbRowToArticle);
+}
 
-const requireActiveAuthor = async (authorId: string): Promise<AuthorProfileRow> => {
+async function fetchArticleBySlug(slug: string, includeDrafts = false): Promise<NewsArticle | null> {
+  const where = includeDrafts ? 'na.slug = $1' : `na.slug = $1 and na.status = 'published'`;
+  const rows = await fetchArticles(where, [slug], { limit: 1 });
+  return rows[0] ?? null;
+}
+
+async function fetchArticleById(id: string): Promise<NewsArticle | null> {
+  const rows = await fetchArticles('na.id = $1', [id], { limit: 1 });
+  return rows[0] ?? null;
+}
+
+async function getArticleMetaBySlug(slug: string) {
+  return queryOne<{ id: string; author_id: string | null }>(
+    `select id, author_id
+     from public.news_articles
+     where slug = $1
+     limit 1`,
+    [slug],
+  );
+}
+
+async function requireActiveAuthor(authorId: string): Promise<AuthorProfileRow> {
   const slug = authorId.trim();
   if (!slug) {
     throw new Error('Autor profissional obrigatorio');
   }
 
-  const { data, error } = await supabase
-    .from('authors')
-    .select('slug,name,is_active')
-    .eq('slug', slug)
-    .maybeSingle();
+  const row = await queryOne<AuthorProfileRow>(
+    `select slug, name, is_active
+     from public.authors
+     where slug = $1
+     limit 1`,
+    [slug],
+  );
 
-  if (error || !data) {
+  if (!row || row.is_active === false || !row.slug || !row.name) {
     throw new Error('Autor profissional invalido');
   }
 
-  const row = data as AuthorProfileRow;
-  if (row.is_active === false || !row.slug || !row.name) {
-    throw new Error('Autor profissional inativo');
-  }
-
   return row;
-};
+}
 
-// ==================== QUERIES ====================
+async function syncCategory(client: DbClient, articleId: string, categorySlug?: string) {
+  if (!categorySlug) return;
+
+  await client.query('delete from public.news_article_categories where article_id = $1', [articleId]);
+
+  const category = await client.query<{ id: string }>(
+    `select id
+     from public.categories
+     where slug = $1
+     limit 1`,
+    [categorySlug],
+  );
+
+  if (category.rows[0]?.id) {
+    await client.query(
+      `insert into public.news_article_categories (article_id, category_id)
+       values ($1, $2)
+       on conflict do nothing`,
+      [articleId, category.rows[0].id],
+    );
+  }
+}
+
+async function syncTags(client: DbClient, articleId: string, tags?: string[]) {
+  if (!tags) return;
+
+  await client.query('delete from public.news_article_tags where article_id = $1', [articleId]);
+
+  for (const tag of tags) {
+    const trimmed = tag.trim();
+    if (!trimmed) continue;
+
+    const tagRow = await client.query<{ id: string }>(
+      `insert into public.tags (name, slug)
+       values ($1, $2)
+       on conflict (slug) do update set name = excluded.name
+       returning id`,
+      [trimmed, slugify(trimmed)],
+    );
+
+    if (tagRow.rows[0]?.id) {
+      await client.query(
+        `insert into public.news_article_tags (article_id, tag_id)
+         values ($1, $2)
+         on conflict do nothing`,
+        [articleId, tagRow.rows[0].id],
+      );
+    }
+  }
+}
 
 export async function getAllArticles(options?: { includeDrafts?: boolean }): Promise<NewsArticle[]> {
   const includeDrafts = options?.includeDrafts ?? false;
-
-  if (!isSupabaseConfigured) return [];
-
-  let query = supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .order('published_at', { ascending: false, nullsFirst: false });
-
-  if (!includeDrafts) {
-    query = query.eq('status', 'published');
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    logger.warnRateLimit('newsManager.getAllArticles', WARN_INTERVAL_MS, '[newsManager] getAllArticles failed:', summarizeError(error));
-    return [];
-  }
-  
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+  const where = includeDrafts ? '' : `na.status = 'published'`;
+  return withPublicReadFallback([], () => fetchArticles(where));
 }
 
 export async function getArticleBySlug(
   slug: string,
-  options?: { includeDrafts?: boolean }
+  options?: { includeDrafts?: boolean },
 ): Promise<NewsArticle | null> {
-  const includeDrafts = options?.includeDrafts ?? false;
-
-  // 1. Tentar PostgreSQL local primeiro
-  if (useLocalDb) {
-    try {
-      const statusFilter = includeDrafts ? '' : "AND status = 'published'";
-      const result = await query(
-        `SELECT * FROM news_articles 
-         WHERE slug = $1 ${statusFilter} 
-         LIMIT 1`,
-        [slug]
-      );
-      
-      if (result.rows.length > 0) {
-        return mapDbRowToArticle(result.rows[0]);
-      }
-    } catch (error) {
-      logger.error('[newsManager] getArticleBySlug (local DB) failed:', error);
-    }
-  }
-
-  // 2. Fallback para Supabase
-  if (!isSupabaseConfigured) return null;
-
-  let queryBuilder = supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('slug', slug);
-
-  if (!includeDrafts) {
-    queryBuilder = queryBuilder.eq('status', 'published');
-  }
-
-  const { data, error } = await queryBuilder.single();
-  if (error) return null;
-  return data ? mapArticleRow(data) : null;
+  return withPublicReadFallback(null, () => fetchArticleBySlug(slug, options?.includeDrafts ?? false));
 }
 
 export async function getArticlesByCategory(category: string): Promise<NewsArticle[]> {
-  // 1. Tentar Supabase (suporta filtragem por categoria via relationship table)
-  if (isSupabaseConfigured) {
-    try {
-      // Filtra via relacionamento (categories.slug) para evitar "baixar tudo e filtrar em memória".
-      // Obs: depende de join table news_article_categories -> categories.
-      const selectWithInnerCategory = ARTICLE_SELECT
-        .replace('news_article_categories (', 'news_article_categories!inner (')
-        .replace('categories (', 'categories!inner (');
-
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select(selectWithInnerCategory)
-        .eq('status', 'published')
-        .eq('news_article_categories.categories.slug', category)
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .limit(60);
-
-      if (!error && isArray(data) && data.length > 0) {
-        return data.map(mapArticleRow);
-      }
-    } catch (err) {
-      logger.warnRateLimit('newsManager.getArticlesByCategory', WARN_INTERVAL_MS, '[newsManager] getArticlesByCategory (Supabase) failed:', summarizeError(err));
-    }
-  }
-
-  // 2. Fallback: PostgreSQL local não tem suporte a categorias (relationship table vazia)
-  // Retorna array vazio para forçar outras partes do site a funcionarem
-  return [];
+  return withPublicReadFallback([], () => fetchArticles(`na.status = 'published' and cat.slug = $1`, [category], { limit: 60 }));
 }
 
 export async function getFeaturedArticles(limit = 3): Promise<NewsArticle[]> {
-  // Usar PostgreSQL local se DATABASE_URL estiver configurada
-  if (useLocalDb) {
-    try {
-      const result = await query(
-        `SELECT * FROM news_articles 
-         WHERE status = 'published' AND is_featured = true 
-         ORDER BY published_at DESC NULLS LAST 
-         LIMIT $1`,
-        [limit]
-      );
-      return result.rows.map(mapDbRowToArticle);
-    } catch (error) {
-      logger.error('[newsManager] getFeaturedArticles (local DB) failed:', error);
-      return [];
-    }
-  }
-
-  // Fallback para Supabase
-  if (!isSupabaseConfigured) return [];
-
-  return withQueryCache(`newsManager:getFeaturedArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
-    const { data, error } = await supabase
-      .from('news_articles')
-      .select(ARTICLE_SELECT)
-      .eq('status', 'published')
-      .eq('is_featured', true)
-      .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(limit);
-
-    if (error) {
-      logger.warnRateLimit(
-        'newsManager.getFeaturedArticles',
-        WARN_INTERVAL_MS,
-        '[newsManager] getFeaturedArticles failed:',
-        summarizeError(error),
-      );
-      return [];
-    }
-
-    if (!isArray(data)) return [];
-    return data.map(mapArticleRow);
-  });
+  return withPublicReadFallback([], () => fetchArticles(`na.status = 'published' and na.is_featured = true`, [], { limit }));
 }
 
 export async function getBreakingNews(): Promise<NewsArticle[]> {
-  // Usar PostgreSQL local se DATABASE_URL estiver configurada
-  if (useLocalDb) {
-    try {
-      const result = await query(
-        `SELECT * FROM news_articles 
-         WHERE status = 'published' AND is_breaking = true 
-         ORDER BY published_at DESC NULLS LAST`
-      );
-      return result.rows.map(mapDbRowToArticle);
-    } catch (error) {
-      logger.error('[newsManager] getBreakingNews (local DB) failed:', error);
-      return [];
-    }
-  }
-
-  // Fallback para Supabase
-  if (!isSupabaseConfigured) return [];
-
-  return withQueryCache('newsManager:getBreakingNews', QUERY_CACHE_TTL_MS, async () => {
-    const { data, error } = await supabase
-      .from('news_articles')
-      .select(ARTICLE_SELECT)
-      .eq('status', 'published')
-      .eq('is_breaking', true)
-      .order('published_at', { ascending: false, nullsFirst: false });
-
-    if (error) {
-      logger.warnRateLimit(
-        'newsManager.getBreakingNews',
-        WARN_INTERVAL_MS,
-        '[newsManager] getBreakingNews failed:',
-        summarizeError(error),
-      );
-      return [];
-    }
-
-    if (!isArray(data)) return [];
-    return data.map(mapArticleRow);
-  });
+  return withPublicReadFallback([], () => fetchArticles(`na.status = 'published' and na.is_breaking = true`));
 }
 
 export async function getLatestArticles(limit = 10): Promise<NewsArticle[]> {
-  // Usar PostgreSQL local se DATABASE_URL estiver configurada
-  if (useLocalDb) {
-    try {
-      const result = await query(
-        `SELECT * FROM news_articles 
-         WHERE status = 'published' 
-         ORDER BY published_at DESC NULLS LAST 
-         LIMIT $1`,
-        [limit]
-      );
-      return result.rows.map(mapDbRowToArticle);
-    } catch (error) {
-      logger.error('[newsManager] getLatestArticles (local DB) failed:', error);
-      return [];
-    }
-  }
-
-  // Fallback para Supabase
-  if (!isSupabaseConfigured) return [];
-
-  return withQueryCache(`newsManager:getLatestArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
-    const { data, error } = await supabase
-      .from('news_articles')
-      .select(ARTICLE_SELECT)
-      .eq('status', 'published')
-      .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(limit);
-
-    if (error) {
-      logger.warnRateLimit(
-        'newsManager.getLatestArticles',
-        WARN_INTERVAL_MS,
-        '[newsManager] getLatestArticles failed:',
-        summarizeError(error),
-      );
-      return [];
-    }
-
-    if (!isArray(data)) return [];
-    return data.map(mapArticleRow);
-  });
+  return withPublicReadFallback([], () => fetchArticles(`na.status = 'published'`, [], { limit }));
 }
 
 export async function getRelatedArticles(
   currentSlug: string,
   category: string,
   tags: string[] = [],
-  limit = 4
+  limit = 4,
 ): Promise<NewsArticle[]> {
-  if (!isSupabaseConfigured) return [];
+  const items = await fetchArticles(
+    `na.status = 'published' and na.slug <> $1 and cat.slug = $2`,
+    [currentSlug, category],
+    { limit: 20 },
+  );
 
-  const items = await getArticlesByCategory(category);
-  const tagSet = new Set(tags.map((t) => t.toLowerCase().trim()).filter(Boolean));
+  const tagSet = new Set(tags.map((tag) => tag.toLowerCase().trim()).filter(Boolean));
 
-  const scored = items
-    .filter((a) => a.slug !== currentSlug)
-    .map((a) => {
-      const shared = (a.tags ?? []).reduce((acc, t) => {
-        const key = t.toLowerCase().trim();
-        return key && tagSet.has(key) ? acc + 1 : acc;
-      }, 0);
-      return { article: a, score: shared };
-    })
+  return items
+    .map((article) => ({
+      article,
+      score: (article.tags ?? []).reduce((count, tag) => {
+        return tagSet.has(tag.toLowerCase().trim()) ? count + 1 : count;
+      }, 0),
+    }))
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return new Date(b.article.publishedAt).getTime() - new Date(a.article.publishedAt).getTime();
     })
-    .map((x) => x.article);
-
-  return scored.slice(0, limit);
+    .slice(0, limit)
+    .map((item) => item.article);
 }
 
 export async function getTrendingArticles(limit = 5): Promise<NewsArticle[]> {
-  // Usar PostgreSQL local se DATABASE_URL estiver configurada
-  if (useLocalDb) {
-    try {
-      const result = await query(
-        `SELECT * FROM news_articles 
-         WHERE status = 'published' 
-         ORDER BY views DESC 
-         LIMIT $1`,
-        [limit]
-      );
-      return result.rows.map(mapDbRowToArticle);
-    } catch (error) {
-      logger.error('[newsManager] getTrendingArticles (local DB) failed:', error);
-      return [];
-    }
-  }
-
-  // Fallback para Supabase
-  if (!isSupabaseConfigured) return [];
-
-  return withQueryCache(`newsManager:getTrendingArticles:${limit}`, QUERY_CACHE_TTL_MS, async () => {
-    const { data, error } = await supabase
-      .from('news_articles')
-      .select(ARTICLE_SELECT)
-      .eq('status', 'published')
-      .order('views', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      logger.warnRateLimit(
-        'newsManager.getTrendingArticles',
-        WARN_INTERVAL_MS,
-        '[newsManager] getTrendingArticles failed:',
-        summarizeError(error),
-      );
-      return [];
-    }
-
-    if (!isArray(data)) return [];
-    return data.map(mapArticleRow);
-  });
+  return withPublicReadFallback([], () => fetchArticles(`na.status = 'published'`, [], { limit, orderBy: 'na.views desc, na.published_at desc nulls last' }));
 }
 
-export async function searchArticles(query: string): Promise<NewsArticle[]> {
-  if (!isSupabaseConfigured) return [];
-
-  const q = query.trim();
+export async function searchArticles(searchQuery: string): Promise<NewsArticle[]> {
+  const q = searchQuery.trim();
   if (!q) return [];
 
-  // Prefer FTS RPC (ranked). Fallback to ilike.
-  try {
-    const { data: ids, error: rpcError } = await supabase.rpc('search_news_articles_ids', {
-      q,
-      lim: 30,
-    });
-
-    if (!rpcError && isArray(ids) && ids.length > 0) {
-      const orderedIds = ids
-        .map((r: unknown) => isSearchResultRow(r) ? r.id : null)
-        .filter((id): id is string => id !== null);
-
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select(ARTICLE_SELECT)
-        .in('id', orderedIds)
-        .eq('status', 'published');
-
-      if (error) {
-        logger.warnRateLimit('newsManager.searchArticles.fetchByIds', WARN_INTERVAL_MS, '[newsManager] searchArticles fetch-by-ids failed:', summarizeError(error));
-        return [];
-      }
-
-      if (!isArray(data)) return [];
-      const mapped = data.map(mapArticleRow);
-      const byId = new Map(mapped.map((a) => [a.id, a]));
-      return orderedIds.map((id: string) => byId.get(id)).filter((a): a is NewsArticle => a !== undefined);
-    }
-  } catch (err) {
-    logger.warnRateLimit('newsManager.searchArticles.rpc', WARN_INTERVAL_MS, '[newsManager] searchArticles rpc failed:', summarizeError(err));
-  }
-
-  const safeQuery = escapeLikePattern(q);
-  const like = `%${safeQuery}%`;
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'published')
-    .or(`title.ilike.${like},excerpt.ilike.${like},slug.ilike.${like}`)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(30);
-
-  if (error) {
-    logger.warnRateLimit('newsManager.searchArticles.ilike', WARN_INTERVAL_MS, '[newsManager] searchArticles ilike failed:', summarizeError(error));
-    return [];
-  }
-
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+  const like = `%${escapeLikePattern(q)}%`;
+  return withPublicReadFallback([], () => fetchArticles(
+    `na.status = 'published'
+     and (
+       na.search_vector @@ plainto_tsquery('portuguese', $1)
+       or na.title ilike $2
+       or na.excerpt ilike $2
+       or na.slug ilike $2
+     )`,
+    [q, like],
+    { limit: 30 },
+  ));
 }
 
 export async function getArticlesByAuthor(authorSlug: string, limit = 6): Promise<NewsArticle[]> {
-  // 1. Tentar PostgreSQL local primeiro
-  if (useLocalDb) {
-    try {
-      const result = await query(
-        `SELECT * FROM news_articles 
-         WHERE status = 'published' 
-         AND (author_id = $1 OR author_name ILIKE $2)
-         ORDER BY published_at DESC NULLS LAST 
-         LIMIT $3`,
-        [authorSlug, `%${authorSlug.replace('-', '%')}%`, limit]
-      );
-      
-      if (result.rows.length > 0) {
-        return result.rows.map(mapDbRowToArticle);
-      }
-    } catch (error) {
-      logger.error('[newsManager] getArticlesByAuthor (local DB) failed:', error);
-    }
-  }
-
-  // 2. Fallback para Supabase
-  if (!isSupabaseConfigured) return [];
-
-  // Busca por author_id (slug do autor) ou author_name contendo o nome
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'published')
-    .or(`author_id.eq.${authorSlug},author_name.ilike.%${escapeLikePattern(authorSlug.replace('-', '%'))}%`)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(limit);
-
-  if (error) {
-    // Intencionalmente não logamos erros em produção
-    return [];
-  }
-
-  if (!isArray(data)) return [];
-  return data.map(mapArticleRow);
+  return withPublicReadFallback([], () => fetchArticles(
+    `na.status = 'published'
+     and (
+       na.author_id = $1
+       or na.author_name ilike $2
+     )`,
+    [authorSlug, `%${authorSlug.replace(/-/g, '%')}%`],
+    { limit },
+  ));
 }
-
-// ==================== CRUD ADMIN ====================
 
 export async function createArticle(
   articleData: Omit<NewsArticle, 'id' | 'publishedAt' | 'updatedAt'>,
   customPublishedAt?: string,
-  status: 'draft' | 'scheduled' | 'published' = 'published'
+  status: 'draft' | 'scheduled' | 'published' = 'published',
 ): Promise<NewsArticle> {
   const publishedAt = customPublishedAt ?? new Date().toISOString();
   const authorProfile = await requireActiveAuthor(articleData.authorId);
 
-  const { data: inserted, error } = await supabase
-    .from('news_articles')
-    .insert({
-      title: articleData.title,
-      title_en: articleData.titleEn ?? null,
-      excerpt: articleData.excerpt,
-      excerpt_en: articleData.excerptEn ?? null,
-      content: articleData.content,
-      content_en: articleData.contentEn ?? null,
-      slug: articleData.slug,
-      cover_image: articleData.coverImage,
-      author_id: authorProfile.slug,
-      author_name: authorProfile.name,
-      status,
-      published_at: status === 'draft' ? null : publishedAt,
-      reading_time: articleData.readingTime,
-      is_featured: articleData.featured,
-      is_breaking: articleData.breaking,
-      views: articleData.views ?? 0,
-      likes: articleData.likes ?? 0,
-      shares: articleData.shares ?? 0,
-      comments_count: articleData.comments ?? 0,
-    })
-    .select(ARTICLE_SELECT)
-    .single();
+  const articleId = await withTransaction(async (client) => {
+    const inserted = await client.query<{ id: string }>(
+      `insert into public.news_articles (
+        title, title_en, excerpt, excerpt_en, content, content_en, slug, cover_image,
+        author_id, author_name, status, published_at, reading_time,
+        is_featured, is_breaking, views, likes, shares, comments_count
+      ) values (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13,
+        $14, $15, $16, $17, $18, $19
+      )
+      returning id`,
+      [
+        articleData.title,
+        articleData.titleEn ?? null,
+        articleData.excerpt,
+        articleData.excerptEn ?? null,
+        articleData.content,
+        articleData.contentEn ?? null,
+        articleData.slug,
+        articleData.coverImage,
+        authorProfile.slug,
+        authorProfile.name,
+        status,
+        status === 'draft' ? null : publishedAt,
+        articleData.readingTime,
+        articleData.featured,
+        articleData.breaking,
+        articleData.views ?? 0,
+        articleData.likes ?? 0,
+        articleData.shares ?? 0,
+        articleData.comments ?? 0,
+      ],
+    );
 
-  if (error) throw error;
-  if (!inserted) throw new Error('Failed to create article');
+    const id = inserted.rows[0]?.id;
+    if (!id) throw new Error('Falha ao criar artigo');
 
-  // Categoria
-  const categorySlug = articleData.category;
-  const { data: category } = await supabase
-    .from('categories')
-    .select('id')
-    .eq('slug', categorySlug)
-    .single();
+    await syncCategory(client, id, articleData.category);
+    await syncTags(client, id, articleData.tags);
+    return id;
+  });
 
-  if (isRecord(category) && typeof category.id === 'string') {
-    await supabase.from('news_article_categories').insert({
-      article_id: isRecord(inserted) && typeof inserted.id === 'string' ? inserted.id : '',
-      category_id: category.id,
-    });
-  }
-
-  // Tags
-  const tagNames = articleData.tags ?? [];
-  for (const tag of tagNames) {
-    const tagSlug = slugify(tag);
-    const { data: tagRow } = await supabase
-      .from('tags')
-      .upsert({ name: tag, slug: tagSlug }, { onConflict: 'slug' })
-      .select('id')
-      .single();
-
-    if (isRecord(tagRow) && typeof tagRow.id === 'string') {
-      await supabase.from('news_article_tags').insert({
-        article_id: isRecord(inserted) && typeof inserted.id === 'string' ? inserted.id : '',
-        tag_id: tagRow.id,
-      });
-    }
-  }
-
-  return mapArticleRow(inserted);
+  const article = await fetchArticleById(articleId);
+  if (!article) throw new Error('Falha ao carregar artigo criado');
+  return article;
 }
 
 export async function updateArticle(
   slug: string,
-  updates: Partial<NewsArticle>
+  updates: Partial<NewsArticle>,
 ): Promise<NewsArticle | null> {
   const articleMeta = await getArticleMetaBySlug(slug);
   if (!articleMeta) return null;
-  const articleId = articleMeta.id;
 
-  const nextSlug = updates.slug ?? slug;
-  const nextAuthorId = (updates.authorId ?? articleMeta.authorId ?? '').trim();
+  const nextAuthorId = (updates.authorId ?? articleMeta.author_id ?? '').trim();
   const authorProfile = await requireActiveAuthor(nextAuthorId);
+  const nextSlug = updates.slug ?? slug;
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .update({
-      title: updates.title,
-      title_en: updates.titleEn ?? null,
-      excerpt: updates.excerpt,
-      excerpt_en: updates.excerptEn ?? null,
-      content: updates.content,
-      content_en: updates.contentEn ?? null,
-      slug: nextSlug,
-      cover_image: updates.coverImage,
-      author_id: authorProfile.slug,
-      author_name: authorProfile.name,
-      published_at: updates.publishedAt,
-      reading_time: updates.readingTime,
-      is_featured: updates.featured,
-      is_breaking: updates.breaking,
-      views: updates.views,
-      likes: updates.likes,
-      shares: updates.shares,
-      comments_count: updates.comments,
-    })
-    .eq('id', articleId)
-    .select(ARTICLE_SELECT)
-    .single();
+  await withTransaction(async (client) => {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    let index = 1;
 
-  if (error) throw error;
+    const push = (sql: string, value: unknown) => {
+      fields.push(`${sql} = $${index}`);
+      values.push(value);
+      index += 1;
+    };
 
-  // Best-effort: persist 301 redirect when slug changes.
-  // This is optional and should never block article updates.
-  if (nextSlug !== slug) {
-    try {
-      await supabase
-        .from('news_slug_redirects')
-        .upsert(
-          {
-            from_slug: slug,
-            to_slug: nextSlug,
-            article_id: articleId,
-          },
-          { onConflict: 'from_slug' },
-        );
-    } catch (err) {
-        logger.warnRateLimit('newsManager.redirect.upsert', WARN_INTERVAL_MS, '[newsManager] redirect upsert failed:', summarizeError(err));
+    if (updates.title !== undefined) push('title', updates.title);
+    if (updates.titleEn !== undefined) push('title_en', updates.titleEn ?? null);
+    if (updates.excerpt !== undefined) push('excerpt', updates.excerpt);
+    if (updates.excerptEn !== undefined) push('excerpt_en', updates.excerptEn ?? null);
+    if (updates.content !== undefined) push('content', updates.content);
+    if (updates.contentEn !== undefined) push('content_en', updates.contentEn ?? null);
+    if (updates.slug !== undefined) push('slug', updates.slug);
+    if (updates.coverImage !== undefined) push('cover_image', updates.coverImage);
+    if (updates.publishedAt !== undefined) push('published_at', updates.publishedAt);
+    if (updates.readingTime !== undefined) push('reading_time', updates.readingTime);
+    if (updates.featured !== undefined) push('is_featured', updates.featured);
+    if (updates.breaking !== undefined) push('is_breaking', updates.breaking);
+    if (updates.views !== undefined) push('views', updates.views);
+    if (updates.likes !== undefined) push('likes', updates.likes);
+    if (updates.shares !== undefined) push('shares', updates.shares);
+    if (updates.comments !== undefined) push('comments_count', updates.comments);
+
+    push('author_id', authorProfile.slug);
+    push('author_name', authorProfile.name);
+    fields.push('updated_at = now()');
+
+    values.push(articleMeta.id);
+    await client.query(
+      `update public.news_articles
+       set ${fields.join(', ')}
+       where id = $${values.length}`,
+      values,
+    );
+
+    if (updates.category !== undefined) {
+      await syncCategory(client, articleMeta.id, updates.category);
     }
-  }
 
-  if (updates.category) {
-    const { data: category } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', updates.category)
-      .single();
-    if (isRecord(category) && typeof category.id === 'string') {
-      await supabase.from('news_article_categories').delete().eq('article_id', articleId);
-      await supabase.from('news_article_categories').insert({
-        article_id: articleId,
-        category_id: category.id,
-      });
+    if (updates.tags !== undefined) {
+      await syncTags(client, articleMeta.id, updates.tags);
     }
-  }
 
-  if (updates.tags) {
-    await supabase.from('news_article_tags').delete().eq('article_id', articleId);
-    for (const tag of updates.tags) {
-      const slugTag = slugify(tag);
-      const { data: tagRow } = await supabase
-        .from('tags')
-        .upsert({ name: tag, slug: slugTag }, { onConflict: 'slug' })
-        .select('id')
-        .single();
-
-      if (isRecord(tagRow) && typeof tagRow.id === 'string') {
-        await supabase.from('news_article_tags').insert({
-          article_id: articleId,
-          tag_id: tagRow.id,
-        });
-      }
+    if (nextSlug !== slug) {
+      await client.query(
+        `insert into public.news_slug_redirects (from_slug, to_slug, article_id)
+         values ($1, $2, $3)
+         on conflict (from_slug) do update set
+           to_slug = excluded.to_slug,
+           article_id = excluded.article_id`,
+        [slug, nextSlug, articleMeta.id],
+      );
     }
-  }
+  });
 
-  return data ? mapArticleRow(data) : null;
+  return fetchArticleBySlug(nextSlug, true);
 }
 
 export async function getRedirectTargetSlug(fromSlug: string): Promise<string | null> {
-  if (!isSupabaseConfigured) return null;
-  const slug = fromSlug.trim();
-  if (!slug) return null;
+  const row = await queryOne<{ to_slug: string }>(
+    `select to_slug
+     from public.news_slug_redirects
+     where from_slug = $1
+     limit 1`,
+    [fromSlug.trim()],
+  );
 
-  try {
-    const { data, error } = await supabase
-      .from('news_slug_redirects')
-      .select('to_slug')
-      .eq('from_slug', slug)
-      .maybeSingle();
-
-    if (error) return null;
-    const toSlug = isRecord(data) && typeof data.to_slug === 'string' ? data.to_slug : null;
-    if (!toSlug || toSlug === slug) return null;
-    return toSlug;
-  } catch {
-    return null;
-  }
+  return row?.to_slug ?? null;
 }
 
 export async function deleteArticle(slug: string): Promise<boolean> {
-  const { error } = await supabase.from('news_articles').delete().eq('slug', slug);
-  return !error;
+  const result = await query('delete from public.news_articles where slug = $1', [slug]);
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function duplicateArticle(slug: string): Promise<NewsArticle | null> {
@@ -922,7 +541,7 @@ export async function duplicateArticle(slug: string): Promise<NewsArticle | null
   if (!article) return null;
 
   const newSlug = `${article.slug}-copia-${Date.now()}`;
-  const newTitle = `${article.title} (Cópia)`;
+  const newTitle = `${article.title} (Copia)`;
 
   return createArticle({
     ...article,
@@ -933,20 +552,14 @@ export async function duplicateArticle(slug: string): Promise<NewsArticle | null
   });
 }
 
-// ==================== AGENDAMENTO ====================
-
 export async function scheduleArticle(
   articleData: Omit<NewsArticle, 'id' | 'publishedAt' | 'updatedAt'>,
   scheduledDate: string,
   scheduledTime: string,
-  timezone = 'America/Sao_Paulo'
+  timezone = 'America/Sao_Paulo',
 ): Promise<ScheduledArticle> {
   const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-  const created = await createArticle(
-    articleData,
-    scheduledDateTime.toISOString(),
-    'scheduled'
-  );
+  const created = await createArticle(articleData, scheduledDateTime.toISOString(), 'scheduled');
 
   return {
     id: created.id,
@@ -960,17 +573,11 @@ export async function scheduleArticle(
 }
 
 export async function getScheduledArticles(): Promise<ScheduledArticle[]> {
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select(ARTICLE_SELECT)
-    .eq('status', 'scheduled')
-    .order('published_at', { ascending: true, nullsFirst: false });
+  const articles = await fetchArticles(`na.status = 'scheduled'`, [], {
+    orderBy: 'na.published_at asc nulls last',
+  });
 
-  if (error) throw error;
-  if (!isArray(data)) return [];
-
-  return data.map(row => {
-    const article = mapArticleRow(row);
+  return articles.map((article) => {
     const scheduledAt = new Date(article.publishedAt);
     return {
       id: article.id,
@@ -989,117 +596,108 @@ export async function getScheduledArticles(): Promise<ScheduledArticle[]> {
 }
 
 export async function cancelScheduledArticle(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('news_articles')
-    .update({ status: 'draft', published_at: null })
-    .eq('id', id);
-  return !error;
+  const result = await query(
+    `update public.news_articles
+     set status = 'draft',
+         published_at = null,
+         updated_at = now()
+     where id = $1`,
+    [id],
+  );
+
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function updateScheduledArticle(
   id: string,
-  updates: { scheduledDate: string; scheduledTime: string }
+  updates: { scheduledDate: string; scheduledTime: string },
 ): Promise<boolean> {
   const scheduledDateTime = new Date(`${updates.scheduledDate}T${updates.scheduledTime}`);
-  const { error } = await supabase
-    .from('news_articles')
-    .update({ published_at: scheduledDateTime.toISOString() })
-    .eq('id', id);
-  return !error;
+  const result = await query(
+    `update public.news_articles
+     set published_at = $2,
+         updated_at = now()
+     where id = $1`,
+    [id, scheduledDateTime.toISOString()],
+  );
+
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function checkAndPublishScheduled(): Promise<number> {
-  const now = new Date();
-  
-  // 1. Tentar PostgreSQL local primeiro
-  if (useLocalDb) {
-    try {
-      console.log('[checkAndPublishScheduled] Checking local PostgreSQL for scheduled articles...');
-      
-      const result = await query(
-        `UPDATE news_articles 
-         SET status = 'published', updated_at = NOW()
-         WHERE id IN (
-           SELECT id FROM news_articles 
-           WHERE status = 'scheduled' 
-           AND published_at <= $1
-           LIMIT 50
-         )
-         RETURNING id`,
-        [now.toISOString()]
-      );
-      
-      if (result.rowCount && result.rowCount > 0) {
-        console.log(`[checkAndPublishScheduled] ✓ Published ${result.rowCount} articles from local PostgreSQL`);
-        
-        // Also update the timestamp
-        console.log(`[checkAndPublishScheduled] Published article IDs:`, result.rows.map(r => r.id));
-        return result.rowCount;
-      }
-      
-      console.log('[checkAndPublishScheduled] No scheduled articles found in local PostgreSQL');
-    } catch (err) {
-      console.error('[checkAndPublishScheduled] ✗ Local PostgreSQL error:', err);
-    }
-  }
+  const now = new Date().toISOString();
+  const result = await query(
+    `update public.news_articles
+     set status = 'published',
+         updated_at = now()
+     where id in (
+       select id
+       from public.news_articles
+       where status = 'scheduled'
+         and published_at <= $1
+       limit 50
+     )
+     returning id`,
+    [now],
+  );
 
-  // 2. Fallback para Supabase
-  if (isSupabaseConfigured) {
-    try {
-      console.log('[checkAndPublishScheduled] Checking Supabase for scheduled articles...');
-      
-      const { data, error } = await supabase
-        .from('news_articles')
-        .update({ status: 'published' })
-        .eq('status', 'scheduled')
-        .lte('published_at', now.toISOString())
-        .select('id')
-        .limit(50);
-
-      if (error) {
-        console.error('[checkAndPublishScheduled] ✗ Supabase error:', error);
-        throw error;
-      }
-
-      const count = isArray(data) ? data.length : 0;
-      if (count > 0) {
-        console.log(`[checkAndPublishScheduled] ✓ Published ${count} articles from Supabase`);
-      } else {
-        console.log('[checkAndPublishScheduled] No scheduled articles found in Supabase');
-      }
-      return count;
-    } catch (err) {
-      console.error('[checkAndPublishScheduled] ✗ Supabase fallback error:', err);
-    }
-  }
-
-  console.log('[checkAndPublishScheduled] No articles published (no database available)');
-  return 0;
+  return result.rowCount ?? 0;
 }
 
-// ==================== ESTATÍSTICAS ====================
-
 export async function getArticleStats() {
-  const articles = await getAllArticles({ includeDrafts: true });
-  const scheduled = await getScheduledArticles();
+  const [totalRow, publishedRow, breakingRow, featuredRow, scheduledRow, sums] = await Promise.all([
+    queryOne<{ total: string }>('select count(*)::text as total from public.news_articles'),
+    queryOne<{ total: string }>(`select count(*)::text as total from public.news_articles where status = 'published'`),
+    queryOne<{ total: string }>(`select count(*)::text as total from public.news_articles where is_breaking = true`),
+    queryOne<{ total: string }>(`select count(*)::text as total from public.news_articles where is_featured = true`),
+    queryOne<{ total: string }>(`select count(*)::text as total from public.news_articles where status = 'scheduled'`),
+    queryOne<{
+      total_views: string | null;
+      total_likes: string | null;
+      economia: string;
+      geopolitica: string;
+      tecnologia: string;
+    }>(
+      `select
+         coalesce(sum(views), 0)::text as total_views,
+         coalesce(sum(likes), 0)::text as total_likes,
+         count(*) filter (where exists (
+           select 1
+           from public.news_article_categories nac
+           inner join public.categories c on c.id = nac.category_id
+           where nac.article_id = news_articles.id and c.slug = 'economia'
+         ))::text as economia,
+         count(*) filter (where exists (
+           select 1
+           from public.news_article_categories nac
+           inner join public.categories c on c.id = nac.category_id
+           where nac.article_id = news_articles.id and c.slug = 'geopolitica'
+         ))::text as geopolitica,
+         count(*) filter (where exists (
+           select 1
+           from public.news_article_categories nac
+           inner join public.categories c on c.id = nac.category_id
+           where nac.article_id = news_articles.id and c.slug = 'tecnologia'
+         ))::text as tecnologia
+       from public.news_articles`,
+    ),
+  ]);
 
   return {
-    total: articles.length,
-    published: articles.filter(a => a.publishedAt).length,
-    breaking: articles.filter(a => a.breaking).length,
-    featured: articles.filter(a => a.featured).length,
-    scheduled: scheduled.length,
-    totalViews: articles.reduce((sum, a) => sum + a.views, 0),
-    totalLikes: articles.reduce((sum, a) => sum + a.likes, 0),
+    total: Number.parseInt(totalRow?.total ?? '0', 10),
+    published: Number.parseInt(publishedRow?.total ?? '0', 10),
+    breaking: Number.parseInt(breakingRow?.total ?? '0', 10),
+    featured: Number.parseInt(featuredRow?.total ?? '0', 10),
+    scheduled: Number.parseInt(scheduledRow?.total ?? '0', 10),
+    totalViews: Number.parseInt(sums?.total_views ?? '0', 10),
+    totalLikes: Number.parseInt(sums?.total_likes ?? '0', 10),
     byCategory: {
-      economia: articles.filter(a => a.category === 'economia').length,
-      geopolitica: articles.filter(a => a.category === 'geopolitica').length,
-      tecnologia: articles.filter(a => a.category === 'tecnologia').length,
+      economia: Number.parseInt(sums?.economia ?? '0', 10),
+      geopolitica: Number.parseInt(sums?.geopolitica ?? '0', 10),
+      tecnologia: Number.parseInt(sums?.tecnologia ?? '0', 10),
     },
   };
 }
-
-// ==================== FILTROS + PAGINAÇÃO ====================
 
 export async function filterArticles(filters: ArticleFilters): Promise<NewsArticle[]> {
   const result = await getArticlesPaginated(filters, 1, 200, { includeDrafts: true });
@@ -1110,137 +708,139 @@ export async function getArticlesPaginated(
   filters: ArticleFilters,
   page = 1,
   perPage = 10,
-  options?: { includeDrafts?: boolean }
+  options?: { includeDrafts?: boolean },
 ): Promise<PaginatedResult<NewsArticle>> {
-  if (!isSupabaseConfigured) {
-    return { items: [], total: 0, page, perPage, totalPages: 0 };
-  }
-
+  return withPublicReadFallback(
+    {
+      items: [],
+      total: 0,
+      page: Math.max(1, page),
+      perPage: Math.min(Math.max(1, perPage), 100),
+      totalPages: 0,
+    },
+    async () => {
   const includeDrafts = options?.includeDrafts ?? false;
-
   const safePage = Math.max(1, page);
   const safePerPage = Math.min(Math.max(1, perPage), 100);
-  const from = (safePage - 1) * safePerPage;
-  const to = from + safePerPage - 1;
 
-  const hasCategory = Boolean(filters.category && filters.category !== 'all');
-  const selectBase = hasCategory
-    ? ARTICLE_SELECT
-        .replace('news_article_categories (', 'news_article_categories!inner (')
-        .replace('categories (', 'categories!inner (')
-    : ARTICLE_SELECT;
+  const where: string[] = [];
+  const values: unknown[] = [];
+  let index = 1;
 
-  let query = supabase
-    .from('news_articles')
-    .select(selectBase, { count: 'exact' });
+  const push = (condition: string, value: unknown) => {
+    where.push(condition.replace('?', `$${index}`));
+    values.push(value);
+    index += 1;
+  };
 
-  if (!includeDrafts) {
-    query = query.eq('status', 'published');
-  }
+  if (!includeDrafts) where.push(`na.status = 'published'`);
 
-  if (filters.search) {
+  if (filters.search?.trim()) {
     const q = filters.search.trim();
-    if (q) {
-      const like = `%${q}%`;
-      query = query.or(`title.ilike.${like},excerpt.ilike.${like},slug.ilike.${like}`);
-    }
+    const like = `%${escapeLikePattern(q)}%`;
+    where.push(`(
+      na.search_vector @@ plainto_tsquery('portuguese', $${index})
+      or na.title ilike $${index + 1}
+      or na.excerpt ilike $${index + 1}
+      or na.slug ilike $${index + 1}
+    )`);
+    values.push(q, like);
+    index += 2;
   }
 
-  if (hasCategory) {
-    query = query.eq('news_article_categories.categories.slug', filters.category as string);
-  }
+  if (filters.category && filters.category !== 'all') push('cat.slug = ?', filters.category);
+  if (filters.author) push('na.author_id = ?', filters.author);
+  if (filters.dateFrom) push('na.published_at >= ?', filters.dateFrom);
+  if (filters.dateTo) push('na.published_at <= ?', filters.dateTo);
 
   if (filters.status && filters.status !== 'all') {
     switch (filters.status) {
       case 'breaking':
-        query = query.eq('status', 'published').eq('is_breaking', true);
+        where.push(`na.status = 'published' and na.is_breaking = true`);
         break;
       case 'featured':
-        query = query.eq('status', 'published').eq('is_featured', true);
+        where.push(`na.status = 'published' and na.is_featured = true`);
         break;
       case 'published':
-        query = query.eq('status', 'published');
+        where.push(`na.status = 'published'`);
         break;
       case 'scheduled':
-        query = query.eq('status', 'scheduled');
+        where.push(`na.status = 'scheduled'`);
         break;
       case 'draft':
-        query = query.eq('status', 'draft');
+        where.push(`na.status = 'draft'`);
         break;
     }
   }
 
-  if (filters.author) {
-    query = query.eq('author_id', filters.author);
-  }
-
-  if (filters.dateFrom) {
-    query = query.gte('published_at', filters.dateFrom);
-  }
-
-  if (filters.dateTo) {
-    query = query.lte('published_at', filters.dateTo);
-  }
+  const whereSql = where.length > 0 ? ` where ${where.join(' and ')}` : '';
+  const countRow = await queryOne<{ total: string }>(
+    `select count(*)::text as total
+     from (${ARTICLE_SELECT}${whereSql}) counted`,
+    values,
+  );
 
   const sortBy = filters.sortBy || 'date';
   const sortOrder = filters.sortOrder || 'desc';
-  const ascending = sortOrder === 'asc';
+  const ascending = sortOrder === 'asc' ? 'asc' : 'desc';
+  const orderBy =
+    sortBy === 'views'
+      ? `na.views ${ascending}, na.published_at desc nulls last`
+      : sortBy === 'likes'
+        ? `na.likes ${ascending}, na.published_at desc nulls last`
+        : `na.published_at ${ascending} nulls last`;
 
-  if (sortBy === 'views') query = query.order('views', { ascending });
-  else if (sortBy === 'likes') query = query.order('likes', { ascending });
-  else query = query.order('published_at', { ascending, nullsFirst: false });
+  const items = await fetchArticles(where.join(' and '), values, {
+    orderBy,
+    limit: safePerPage,
+    offset: (safePage - 1) * safePerPage,
+  });
 
-  const { data, error, count } = await query.range(from, to) as { data: unknown; error: Error | null; count: number | null };
-  if (error) {
-    logger.warnRateLimit('newsManager.getArticlesPaginated', WARN_INTERVAL_MS, '[newsManager] getArticlesPaginated failed:', summarizeError(error));
-    return { items: [], total: 0, page: safePage, perPage: safePerPage, totalPages: 0 };
-  }
-
-  const total = count ?? 0;
-  const totalPages = Math.ceil(total / safePerPage);
-  const items = isArray(data) ? data.map(mapArticleRow) : [];
-
-  return { items, total, page: safePage, perPage: safePerPage, totalPages };
+  const total = Number.parseInt(countRow?.total ?? '0', 10) || 0;
+  return {
+    items,
+    total,
+    page: safePage,
+    perPage: safePerPage,
+    totalPages: Math.ceil(total / safePerPage),
+  };
+    },
+  );
 }
-
-// ==================== SLUG GENERATOR ====================
 
 export function generateSlug(title: string): string {
   return slugify(title);
 }
 
 export async function isSlugAvailable(slug: string, excludeSlug?: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('slug')
-    .eq('slug', slug)
-    .maybeSingle();
+  const row = await queryOne<{ slug: string }>(
+    `select slug
+     from public.news_articles
+     where slug = $1
+     limit 1`,
+    [slug],
+  );
 
-  if (error && 'code' in error && error.code !== 'PGRST116') return false;
-  if (!data) return true;
-  return isRecord(data) && typeof data.slug === 'string' && data.slug === excludeSlug;
+  if (!row) return true;
+  return row.slug === excludeSlug;
 }
 
 export async function resetToDefault(): Promise<void> {
-  await supabase.from('news_articles').delete().neq('id', '');
+  await query(`delete from public.news_articles where id is not null`);
 }
 
-export async function assignAllArticlesToAuthor(
-  authorId: string,
-): Promise<number> {
+export async function assignAllArticlesToAuthor(authorId: string): Promise<number> {
   const authorProfile = await requireActiveAuthor(authorId);
+  const result = await query(
+    `update public.news_articles
+     set author_id = $1,
+         author_name = $2,
+         updated_at = now()
+     returning id`,
+    [authorProfile.slug, authorProfile.name],
+  );
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .update({
-      author_id: authorProfile.slug,
-      author_name: authorProfile.name,
-    })
-    .select('id');
-
-  if (error) throw error;
-  return isArray(data) ? data.length : 0;
+  return result.rowCount ?? 0;
 }
 
-// Re-exporta tipos para facilitar imports
 export type { NewsArticle } from '@/types';

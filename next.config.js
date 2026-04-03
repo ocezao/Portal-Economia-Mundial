@@ -26,10 +26,6 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.supabase.co',
-      },
-      {
-        protocol: 'https',
         hostname: 'images.unsplash.com',
       },
       {
@@ -79,7 +75,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co https://*.finnhub.io https://api.buttondown.email https://onesignal.com https://*.onesignal.com https://www.google-analytics.com",
+      "connect-src 'self' https://*.finnhub.io https://api.buttondown.email https://onesignal.com https://*.onesignal.com https://www.google-analytics.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

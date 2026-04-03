@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLatestArticles } from '@/services/newsManager';
+import { logger } from '@/lib/logger';
 
 export const revalidate = 300;
 
@@ -41,7 +42,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Search index error:', error);
+    logger.error('Search index error:', error);
     return NextResponse.json({ error: 'Failed to generate search index' }, { status: 500 });
   }
 }

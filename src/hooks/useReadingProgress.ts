@@ -1,10 +1,10 @@
 /**
- * Hook para tracking de progresso de leitura (Supabase)
+ * Hook para tracking de progresso de leitura via API local
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
 
 interface UseReadingProgressReturn {
   progress: number;
@@ -17,34 +17,18 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
   const { user } = useAuth();
   const [progress, setProgress] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
-  const [articleId, setArticleId] = useState<string | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     startTimeRef.current = Date.now();
-    let isMounted = true;
-    const loadArticleId = async () => {
-      if (!articleSlug) return;
-      const { data } = await supabase
-        .from('news_articles')
-        .select('id')
-        .eq('slug', articleSlug)
-        .single();
-      if (isMounted) setArticleId(data?.id ?? null);
-    };
-
-    loadArticleId();
-    return () => {
-      isMounted = false;
-    };
   }, [articleSlug]);
 
-  // Carregar progresso salvo
   useEffect(() => {
     let isMounted = true;
+
     const loadProgress = async () => {
-      if (!user || !articleId) {
+      if (!user || !articleSlug) {
         if (isMounted) {
           setProgress(0);
           setTimeSpent(0);
@@ -52,14 +36,12 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
         return;
       }
 
-      const { data, error } = await supabase
-        .from('reading_progress')
-        .select('progress_pct, last_position, updated_at')
-        .eq('user_id', user.id)
-        .eq('article_id', articleId)
-        .single();
+      const response = await fetch(`/api/reading-progress?articleSlug=${encodeURIComponent(articleSlug)}`, {
+        method: 'GET',
+        credentials: 'same-origin',
+      });
 
-      if (error) {
+      if (!response.ok) {
         if (isMounted) {
           setProgress(0);
           setTimeSpent(0);
@@ -67,20 +49,25 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
         return;
       }
 
-      if (isMounted && data) {
-        setProgress(data.progress_pct ?? 0);
+      const json = (await response.json().catch(() => ({}))) as {
+        progress?: {
+          progress?: number;
+        } | null;
+      };
+
+      if (isMounted && json.progress) {
+        setProgress(json.progress.progress ?? 0);
       }
     };
 
-    loadProgress();
+    void loadProgress();
     return () => {
       isMounted = false;
     };
-  }, [user, articleId]);
+  }, [user, articleSlug]);
 
-  // Tracking de scroll
   useEffect(() => {
-    if (!user || !articleId) return;
+    if (!user || !articleSlug) return;
 
     const handleScroll = () => {
       if (rafRef.current) return;
@@ -90,18 +77,27 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const newProgress = docHeight > 0 ? Math.min(100, Math.round((scrollTop / docHeight) * 100)) : 0;
 
-        setProgress(prev => Math.max(prev, newProgress));
+        setProgress((previous) => Math.max(previous, newProgress));
         const spent = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
         setTimeSpent(spent);
 
-        await supabase
-          .from('reading_progress')
-          .upsert({
-            user_id: user.id,
-            article_id: articleId,
-            progress_pct: Math.max(progress, newProgress),
-            last_position: scrollTop,
-          }, { onConflict: 'article_id,user_id' });
+        const response = await fetch('/api/reading-progress', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            articleSlug,
+            progress: Math.max(progress, newProgress),
+            lastPosition: scrollTop,
+          }),
+        });
+
+        if (!response.ok) {
+          const json = (await response.json().catch(() => ({}))) as { error?: string };
+          logger.error('Erro ao salvar progresso de leitura:', json.error);
+        }
 
         rafRef.current = null;
       });
@@ -112,9 +108,8 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
       window.removeEventListener('scroll', handleScroll);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [user, articleId, progress]);
+  }, [user, articleSlug, progress]);
 
-  // Timer de tempo gasto
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeSpent(Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000));
@@ -129,13 +124,20 @@ export function useReadingProgress(articleSlug: string): UseReadingProgressRetur
 
   const markAsRead = useCallback(() => {
     updateProgress(100);
-    if (!user || !articleId) return;
-    void supabase.from('reading_history').insert({
-      user_id: user.id,
-      article_id: articleId,
-      time_spent: timeSpent,
+    if (!user || !articleSlug) return;
+
+    void fetch('/api/reading-history', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        articleSlug,
+        timeSpent,
+      }),
     });
-  }, [updateProgress, user, articleId, timeSpent]);
+  }, [updateProgress, user, articleSlug, timeSpent]);
 
   return { progress, timeSpent, updateProgress, markAsRead };
 }

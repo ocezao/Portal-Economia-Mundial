@@ -1,21 +1,13 @@
-# Exemplo de configuração do Codex CLI para o Cenario Internacional
-# Copie este conteúdo para ~/.codex/config.toml
+# Exemplo de configuracao local
 
-# Configuração do servidor MCP CIN
-[[servers]]
-name = "cin"
-type = "stdio"
+[servers]
+name = "portal-local"
 command = "node"
-# Ajuste o caminho para onde está o mcp-server no seu servidor
-args = ["/var/www/cenario-internacional/mcp-server/dist/index.js"]
+args = ["/var/www/cenario-internacional/collector/dist/server.js"]
 
-# Variáveis de ambiente (opcional - pode usar .env no servidor)
 [servers.env]
-NEXT_PUBLIC_SUPABASE_URL = "https://seu-projeto.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY = "sua-chave-service-role"
+DATABASE_URL = "postgresql://usuario:senha@localhost:5432/portal"
 NEXT_PUBLIC_FINNHUB_API_KEY = "sua-chave-finnhub"
 NEXT_PUBLIC_SITE_URL = "https://cenariointernacional.com.br"
-
-# Configurações adicionais (opcional)
-[servers.timeout]
-request = 30000  # 30 segundos
+AUTH_SESSION_SECRET = "segredo-da-sessao"
+UPLOADS_DIR = "/var/www/cenariointernacional/public/uploads"

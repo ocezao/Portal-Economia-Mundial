@@ -1,6 +1,10 @@
-# Deploy em VPS (Recomendado)
+# Deploy em VPS (Legado PM2)
 
-Este guia cobre o deploy da aplicação em um VPS (Virtual Private Server) usando Node.js com PM2 para gerenciamento de processos.
+> Legado. Este guia descreve a trilha antiga com PM2 e não é mais a rota oficial do projeto.
+>
+> Para produção atual, usar Docker + Nginx conforme `docs/24-deploy-vps-execucao-manual.md`.
+
+Este guia cobre a trilha histórica da aplicação em VPS usando Node.js com PM2 para gerenciamento de processos.
 
 ## 📋 Pré-requisitos
 

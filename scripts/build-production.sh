@@ -63,8 +63,13 @@ echo ""
 echo "🟢 Verificando variáveis de ambiente..."
 
 REQUIRED_VARS=(
-    "NEXT_PUBLIC_SUPABASE_URL"
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    "DATABASE_URL"
+    "CRON_API_SECRET"
+)
+RECOMMENDED_VARS=(
+    "NEXT_PUBLIC_SITE_URL"
+    "AUTH_SESSION_SECRET"
+    "UPLOADS_DIR"
 )
 
 MISSING_VARS=()
@@ -93,6 +98,20 @@ for var in "${REQUIRED_VARS[@]}"; do
     fi
 done
 log_success "Todas as variáveis obrigatórias estão configuradas"
+
+MISSING_RECOMMENDED=()
+for var in "${RECOMMENDED_VARS[@]}"; do
+    if [ -z "${!var}" ]; then
+        MISSING_RECOMMENDED+=("$var")
+    fi
+done
+
+if [ ${#MISSING_RECOMMENDED[@]} -ne 0 ]; then
+    log_warning "Variaveis recomendadas para producao oficial ausentes:"
+    for var in "${MISSING_RECOMMENDED[@]}"; do
+        echo "  - $var"
+    done
+fi
 
 # 3. Limpar builds anteriores
 echo ""
@@ -192,6 +211,7 @@ echo "     • Saída: .next/standalone/"
 echo ""
 echo "  🚀 Próximos passos:"
 echo "     1. Execute: npm run deploy:check"
-echo "     2. Inicie com: pm2 start ecosystem.config.js"
-echo "     3. Ou com Docker: docker build -t portal-economico ."
+echo "     2. Revise o .env de producao"
+echo "     3. Suba com: docker compose -f docker-compose.prod.yml --env-file .env up -d --build"
+echo "     4. Aplique o Nginx com: cp deploy/nginx/portal.conf /etc/nginx/sites-available/portal"
 echo ""

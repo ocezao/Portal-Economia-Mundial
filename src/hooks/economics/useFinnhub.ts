@@ -29,6 +29,7 @@ import {
   type MarketNews,
   type CompanyProfile,
 } from '@/services/economics/finnhubService';
+import { logger } from '@/lib/logger';
 
 const FINNHUB_FREE_PLAN = process.env.NEXT_PUBLIC_FINNHUB_FREE_PLAN === 'true';
 
@@ -296,7 +297,7 @@ export function useMarketTicker(): UseMarketTickerReturn {
       setData(tickerData);
       setLastUpdate(new Date(result.updatedAt));
     } catch (err) {
-      console.error('[useMarketTicker] Error:', err);
+      logger.error('[useMarketTicker] Error:', err);
       setError(err instanceof Error ? err : new Error('Erro ao carregar ticker'));
     } finally {
       setIsLoading(false);

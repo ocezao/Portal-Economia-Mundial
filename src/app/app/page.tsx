@@ -32,7 +32,7 @@ import {
   Archive
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { publicStorage, secureStorage, storage } from '@/config/storage';
+import { publicStorage, secureStorage, storage } from '@/lib/storage';
 import { getAllArticles } from '@/services/newsManager';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useReadingHistory } from '@/hooks/useReadingHistory';

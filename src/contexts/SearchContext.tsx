@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import Fuse from 'fuse.js';
+import { logger } from '@/lib/logger';
 
 interface SearchResult {
   item: SearchIndexItem;
@@ -82,7 +83,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
             setSearchIndex(data);
           }
         })
-        .catch(console.error);
+        .catch((error) => logger.error('Search index preload failed', error));
     }
   }, [searchIndex.length]);
 

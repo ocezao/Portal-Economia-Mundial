@@ -3,11 +3,6 @@
 # VPS Provisioning Script (EXEMPLO SEM SECRETS)
 # Portal Economico Mundial
 # ============================================
-#
-# ATENCAO:
-# - Este arquivo e seguro para versionar (nao contem chaves reais).
-# - Crie um arquivo local `scripts/vps-provision.sh` com valores reais.
-#   Esse arquivo real esta no `.gitignore` e NAO deve ser commitado.
 
 set -e
 
@@ -32,11 +27,10 @@ cat > "$APP_DIR/.env" << 'EOF'
 NEXT_PUBLIC_SITE_URL=https://SEU_DOMINIO
 NEXT_PUBLIC_API_BASE_URL=https://SEU_DOMINIO/api
 
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://SEU_PROJETO.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=INSIRA_AQUI
-SUPABASE_SERVICE_ROLE_KEY=INSIRA_AQUI
-SUPABASE_UPLOAD_BUCKET=media
+# Banco local e auth
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/portal
+AUTH_SESSION_SECRET=INSIRA_AQUI
+UPLOADS_DIR=/var/www/cenariointernacional/public/uploads
 
 # APIs Externas
 GNEWS_API_KEY=INSIRA_AQUI
@@ -54,7 +48,7 @@ NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE=INSIRA_AQUI
 # CORS
 CORS_ALLOWED_ORIGINS=https://SEU_DOMINIO,https://www.SEU_DOMINIO
 
-# PostgreSQL (para Analytics local, se usar)
+# PostgreSQL
 POSTGRES_PASSWORD=INSIRA_AQUI_SENHA_FORTE
 EOF
 
@@ -62,4 +56,3 @@ chmod 600 "$APP_DIR/.env"
 chown root:root "$APP_DIR/.env"
 
 echo "OK. Proximo passo: docker compose -f docker-compose.prod.yml up -d"
-

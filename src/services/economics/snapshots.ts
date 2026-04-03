@@ -8,6 +8,7 @@
  */
 
 import { getSnapshotFromLocalDb } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import {
   getMarketNews,
   getEconomicCalendar,
@@ -74,7 +75,7 @@ export async function getMarketNewsSnapshot(category: string = 'general'): Promi
   try {
     return await getMarketNews(category);
   } catch (err) {
-    console.warn('[Snapshots] marketNews fallback failed:', err);
+    logger.warnRateLimit('snapshots-market-news-fallback', 60000, '[Snapshots] marketNews fallback failed:', err);
     return [];
   }
 }
@@ -98,7 +99,7 @@ export async function getEarningsNext7DaysSnapshot(): Promise<EarningsEvent[]> {
   try {
     return await getEarningsCalendar(today, nextWeek);
   } catch (err) {
-    console.warn('[Snapshots] earnings fallback failed:', err);
+    logger.warnRateLimit('snapshots-earnings-fallback', 60000, '[Snapshots] earnings fallback failed:', err);
     return [];
   }
 }
@@ -146,7 +147,7 @@ export async function getGlobalIndicesSnapshot(): Promise<SnapshotQuote[]> {
       },
     }));
   } catch (err) {
-    console.warn('[Snapshots] indices fallback failed:', err);
+    logger.warnRateLimit('snapshots-indices-fallback', 60000, '[Snapshots] indices fallback failed:', err);
     return [];
   }
 }
@@ -182,7 +183,7 @@ export async function getCommoditiesSnapshot(): Promise<SnapshotQuote[]> {
       },
     }));
   } catch (err) {
-    console.warn('[Snapshots] commodities fallback failed:', err);
+    logger.warnRateLimit('snapshots-commodities-fallback', 60000, '[Snapshots] commodities fallback failed:', err);
     return [];
   }
 }
@@ -225,7 +226,7 @@ export async function getSectorsSnapshot(): Promise<SnapshotSector[]> {
       },
     }));
   } catch (err) {
-    console.warn('[Snapshots] sectors fallback failed:', err);
+    logger.warnRateLimit('snapshots-sectors-fallback', 60000, '[Snapshots] sectors fallback failed:', err);
     return [];
   }
 }
@@ -248,7 +249,7 @@ export async function getEconomicCalendarNext7DaysSnapshot(): Promise<EconomicCa
   try {
     return await getEconomicCalendar(today, nextWeek);
   } catch (err) {
-    console.warn('[Snapshots] economicCalendar fallback failed:', err);
+    logger.warnRateLimit('snapshots-economic-calendar-fallback', 60000, '[Snapshots] economicCalendar fallback failed:', err);
     return [];
   }
 }

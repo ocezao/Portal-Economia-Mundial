@@ -24,7 +24,7 @@ import { EarningsCalendar } from '@/components/economics/EarningsCalendarWrapper
 import { ROUTES, CATEGORIES } from '@/config/routes';
 import { CONTENT_CONFIG } from '@/config/content';
 import type { EarningsEvent, MarketNews } from '@/services/economics/finnhubService';
-import { publicStorage } from '@/config/storage';
+import { publicStorage } from '@/lib/storage';
 import { subscribeNewsletter } from '@/services/newsletterService';
 
 const ADSENSE_SLOT_HOME_INLINE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_INARTICLE;

@@ -1,5 +1,9 @@
 # Deploy no Hostinger
 
+> Legado. Este guia serve apenas como referência para hospedagem estática e não é a rota oficial do projeto atual.
+>
+> O estado atual do aplicativo depende de API Routes, auth local, uploads e runtime Node.js. A rota oficial está em `docs/24-deploy-vps-execucao-manual.md`.
+
 ## Pré-requisitos
 
 - Conta Hostinger ativa

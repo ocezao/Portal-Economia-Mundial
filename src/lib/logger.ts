@@ -30,7 +30,7 @@ export const logger = {
     }
   },
 
-  // Avoid flooding dev server logs when a dependency is down (e.g. Supabase 502).
+  // Avoid flooding dev server logs when an external dependency is down.
   warnRateLimit: (key: string, intervalMs: number, ...args: unknown[]): void => {
     if (!isDev) return;
     if (!shouldLog(`warn:${key}`, intervalMs)) return;

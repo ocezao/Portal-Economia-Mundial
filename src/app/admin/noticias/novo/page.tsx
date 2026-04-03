@@ -63,7 +63,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { sanitizeHtml } from '@/lib/sanitize';
-import { secureStorage } from '@/config/storage';
+import { secureStorage } from '@/lib/storage';
 
 export default function AdminNewsNewPage() {
   const router = useRouter();
@@ -1419,7 +1419,6 @@ export default function AdminNewsNewPage() {
     </>
   );
 }
-
 
 
 

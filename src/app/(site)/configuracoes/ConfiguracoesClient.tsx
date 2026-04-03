@@ -39,10 +39,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { STORAGE_KEYS, secureStorage, publicStorage } from '@/config/storage';
+import { STORAGE_KEYS, secureStorage, publicStorage } from '@/lib/storage';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useReadingHistory } from '@/hooks/useReadingHistory';
-import { supabase } from '@/lib/supabaseClient';
 import {
   Dialog,
   DialogContent,
@@ -226,8 +225,14 @@ export default function ConfiguracoesPage() {
     });
     
     if (user) {
-      await supabase.from('reading_history').delete().eq('user_id', user.id);
-      await supabase.from('reading_progress').delete().eq('user_id', user.id);
+      await fetch('/api/reading-history', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      });
+      await fetch('/api/reading-progress', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      });
       await clearAllBookmarks();
       await reloadHistory();
     }

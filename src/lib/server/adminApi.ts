@@ -1,4 +1,5 @@
 import { requireAdminUser } from '@/lib/server/localAuth';
+import { logger } from '@/lib/logger';
 
 export function getBearerToken(req: Request): string | null {
   const auth = req.headers.get('authorization') ?? '';
@@ -219,9 +220,7 @@ export async function requireEditorialRequest(req: Request) {
   }
 
   const diagnostics = await getEditorialAuthDiagnostics(req);
-  console.warn('[editorial-auth] unauthorized', diagnostics);
+  logger.warnRateLimit('editorial-auth-unauthorized', 60000, '[editorial-auth] unauthorized', diagnostics);
 
   return requireAdminRequest(req);
 }
-
-export type AdminSupabase = null;

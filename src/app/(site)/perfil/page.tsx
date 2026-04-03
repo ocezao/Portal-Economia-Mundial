@@ -131,7 +131,7 @@ export default function PerfilPage() {
     joinedDate: user?.createdAt || '',
   });
 
-  // Load stats from Supabase data
+  // Load stats from local reading data
   useEffect(() => {
     startTransition(() => {
       setStats({
@@ -202,21 +202,24 @@ export default function PerfilPage() {
     }
     
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    updateUser({
-      name: formData.name.trim(),
-      region: formData.region,
-      bio: formData.bio.trim(),
-      profession: formData.profession.trim(),
-      company: formData.company.trim(),
-      avatar: formData.avatar,
-      socialLinks,
-    });
-    
-    setIsSaving(false);
-    setHasChanges(false);
-    toast.success('Perfil atualizado com sucesso!');
+    try {
+      await updateUser({
+        name: formData.name.trim(),
+        region: formData.region,
+        bio: formData.bio.trim(),
+        profession: formData.profession.trim(),
+        company: formData.company.trim(),
+        avatar: formData.avatar,
+        socialLinks,
+      });
+
+      setHasChanges(false);
+      toast.success('Perfil atualizado com sucesso!');
+    } catch {
+      toast.error('Erro ao atualizar perfil');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAvatarClick = () => {
@@ -259,12 +262,30 @@ export default function PerfilPage() {
       return;
     }
     
-    // Simulate password change
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success('Senha alterada com sucesso!');
-    setShowPasswordDialog(false);
-    setPasswordData({ current: '', new: '', confirm: '' });
+    try {
+      const response = await fetch('/api/auth/password', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.current,
+          newPassword: passwordData.new,
+        }),
+      });
+
+      const payload = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error || 'Erro ao alterar senha');
+      }
+
+      toast.success('Senha alterada com sucesso!');
+      setShowPasswordDialog(false);
+      setPasswordData({ current: '', new: '', confirm: '' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao alterar senha');
+    }
   };
 
   const getPasswordStrength = (password: string): { strength: number; label: string; color: string } => {

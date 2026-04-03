@@ -280,9 +280,9 @@ jobs:
         if: false  # Habilitar quando configurar secrets
         run: |
           echo "Deploy steps would go here"
-          # Exemplo com rsync:
-          # rsync -avz --delete ./dist/ user@server:/var/www/app/
-          # ssh user@server "pm2 reload ecosystem.config.js"
+          # Exemplo para a rota oficial Docker + Nginx:
+          # ssh user@server "cd /var/www/portal && git pull --ff-only origin main"
+          # ssh user@server "cd /var/www/portal && docker compose -f docker-compose.prod.yml --env-file .env up -d --build"
 
       - name: Deployment notification
         run: |

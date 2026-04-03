@@ -17,7 +17,7 @@ import {
   FileText,
   Settings
 } from 'lucide-react';
-import { publicStorage, secureStorage, storage, STORAGE_KEYS } from '@/config/storage';
+import { publicStorage, secureStorage, storage, STORAGE_KEYS } from '@/lib/storage';
 import { getAllArticles } from '@/services/newsManager';
 import { Button } from '@/components/ui/button';
 

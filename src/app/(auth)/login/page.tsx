@@ -32,7 +32,7 @@ export default function LoginPage() {
     if (isAuthLoading) return;
     if (!isAuthenticated) return;
 
-    const next = searchParams.get('next');
+    const next = searchParams.get('next') ?? searchParams.get('redirect');
     const isSafeNext = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.includes('://');
     router.replace(isSafeNext ? next : isAdmin ? '/admin' : '/app');
   }, [isAuthenticated, isAdmin, isAuthLoading, router, searchParams]);

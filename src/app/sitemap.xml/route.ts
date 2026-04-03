@@ -1,23 +1,25 @@
 import { NextResponse } from 'next/server';
 
+import { queryOne } from '@/lib/db';
 import { getSiteUrl } from '@/lib/siteUrl';
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { escXml } from '@/lib/sitemaps';
 
-export const revalidate = 3600; // 1 hour
+export const revalidate = 3600;
 
 const NEWS_PER_SITEMAP = 2000;
 
 async function getPublishedNewsCount(): Promise<number> {
-  if (!isSupabaseConfigured) return 0;
+  try {
+    const row = await queryOne<{ total: string }>(
+      `select count(*)::text as total
+       from public.news_articles
+       where status = 'published'`,
+    );
 
-  const { error, count } = await supabase
-    .from('news_articles')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'published') as { error: Error | null; count: number | null };
-
-  if (error || typeof count !== 'number') return 0;
-  return count;
+    return Number.parseInt(row?.total ?? '0', 10) || 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function GET() {
@@ -40,10 +42,7 @@ export async function GET() {
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
     sitemapUrls
-      .map(
-        (loc) =>
-          `<sitemap><loc>${escXml(loc)}</loc><lastmod>${escXml(lastmod)}</lastmod></sitemap>`,
-      )
+      .map((loc) => `<sitemap><loc>${escXml(loc)}</loc><lastmod>${escXml(lastmod)}</lastmod></sitemap>`)
       .join('') +
     `</sitemapindex>`;
 
@@ -54,4 +53,3 @@ export async function GET() {
     },
   });
 }
-

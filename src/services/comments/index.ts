@@ -3,4 +3,4 @@
  */
 
 export * from './types';
-export { commentService } from './supabaseService';
+export { commentService } from './commentService';

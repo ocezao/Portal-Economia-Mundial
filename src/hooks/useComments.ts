@@ -1,6 +1,5 @@
 /**
- * Hook para gerenciamento de comentários
- * Abstração para futura substituição por API
+ * Hook para gerenciamento de comentarios.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -27,7 +26,6 @@ export function useComments(articleSlug: string): UseCommentsReturn {
   const [canSubmit] = useState(true);
   const [cooldownSeconds] = useState(0);
 
-  // Buscar comentários
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -35,23 +33,19 @@ export function useComments(articleSlug: string): UseCommentsReturn {
       const data = await commentService.getComments({ articleSlug, sortBy: 'newest' });
       setComments(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar comentários');
+      setError(err instanceof Error ? err.message : 'Erro ao carregar comentarios');
     } finally {
       setIsLoading(false);
     }
   }, [articleSlug]);
 
-  // Cooldown nÃ£o implementado no Supabase
-
-  // Carregar comentários ao montar
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
 
-  // Adicionar comentário
   const addComment = useCallback(async (
     content: string,
-    author: { id: string; name: string; avatar?: string }
+    author: { id: string; name: string; avatar?: string },
   ): Promise<boolean> => {
     setSubmitError(null);
     try {
@@ -59,19 +53,18 @@ export function useComments(articleSlug: string): UseCommentsReturn {
       await fetchComments();
       return true;
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Erro ao enviar comentário');
+      setSubmitError(err instanceof Error ? err.message : 'Erro ao enviar comentario');
       return false;
     }
   }, [articleSlug, fetchComments]);
 
-  // Deletar comentário
   const deleteComment = useCallback(async (commentId: string, userId: string): Promise<boolean> => {
     try {
       await commentService.deleteComment({ commentId, authorId: userId });
       await fetchComments();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir comentário');
+      setError(err instanceof Error ? err.message : 'Erro ao excluir comentario');
       return false;
     }
   }, [fetchComments]);

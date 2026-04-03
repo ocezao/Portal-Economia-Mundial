@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { getSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+
+import { query } from '@/lib/db';
 import { isEmailConfigured, sendEmailSafe } from '@/lib/server/email';
 import { careerAckTemplate, careerInternalTemplate } from '@/lib/server/emailTemplates';
 
@@ -31,28 +32,38 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const input = parsed.data;
-    const admin = getSupabaseAdminClient();
 
-    const { error } = await admin.from('career_applications').insert({
-      name: input.name,
-      email: input.email,
-      phone: input.phone ?? null,
-      role: input.role,
-      location: input.location ?? null,
-      linkedin_url: input.linkedinUrl ?? null,
-      portfolio_url: input.portfolioUrl ?? null,
-      resume_url: input.resumeUrl ?? null,
-      cover_letter: input.coverLetter,
-      user_id: input.userId ?? null,
-    });
+    await query(
+      `insert into public.job_applications (
+        name, email, area, message, consent, meta
+      ) values ($1, $2, $3, $4, $5, $6::jsonb)`,
+      [
+        input.name,
+        input.email,
+        input.role,
+        input.coverLetter,
+        true,
+        JSON.stringify({
+          phone: input.phone ?? null,
+          location: input.location ?? null,
+          linkedinUrl: input.linkedinUrl ?? null,
+          portfolioUrl: input.portfolioUrl ?? null,
+          resumeUrl: input.resumeUrl ?? null,
+          userId: input.userId ?? null,
+        }),
+      ],
+    );
 
-    if (error) return json({ error: error.message }, 500);
-
-    let emailWarnings: string[] = [];
+    const emailWarnings: string[] = [];
     if (isEmailConfigured()) {
       const internal = careerInternalTemplate(input);
       const ack = careerAckTemplate(input.name);
-      const inbox = process.env.CAREERS_INBOX_EMAIL || process.env.CONTACT_INBOX_EMAIL || process.env.FROM_EMAIL || process.env.SMTP_USER || input.email;
+      const inbox =
+        process.env.CAREERS_INBOX_EMAIL ||
+        process.env.CONTACT_INBOX_EMAIL ||
+        process.env.FROM_EMAIL ||
+        process.env.SMTP_USER ||
+        input.email;
 
       const [internalResult, ackResult] = await Promise.all([
         sendEmailSafe({

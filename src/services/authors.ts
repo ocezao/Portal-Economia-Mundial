@@ -1,25 +1,22 @@
 /**
  * Public author directory (DB-backed with static fallback)
- *
- * Source of truth (when available): Supabase table `authors`
- * Fallback: `src/config/authors.ts`
  */
 
 import { cache } from 'react';
 
 import type { Author } from '@/config/authors';
 import { AUTHORS } from '@/config/authors';
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { queryOne, queryRows } from '@/lib/db';
 
 type AuthorRow = {
   slug: string;
   name: string;
-  short_name: string;
-  title: string;
-  bio: string;
-  long_bio: string;
-  photo: string;
-  email: string;
+  short_name: string | null;
+  title: string | null;
+  bio: string | null;
+  long_bio: string | null;
+  photo: string | null;
+  email: string | null;
   social: Record<string, unknown> | null;
   website: string | null;
   location: string | null;
@@ -41,12 +38,12 @@ const staticAuthors = () => Object.values(AUTHORS);
 const mapAuthorRow = (row: AuthorRow): Author => ({
   slug: row.slug,
   name: row.name,
-  shortName: row.short_name,
-  title: row.title,
-  bio: row.bio,
-  longBio: row.long_bio,
-  photo: row.photo,
-  email: row.email,
+  shortName: row.short_name ?? row.name,
+  title: row.title ?? '',
+  bio: row.bio ?? '',
+  longBio: row.long_bio ?? '',
+  photo: row.photo ?? '',
+  email: row.email ?? '',
   social: (row.social ?? {}) as Author['social'],
   website: row.website ?? undefined,
   location: row.location ?? undefined,
@@ -64,66 +61,64 @@ const mapAuthorRow = (row: AuthorRow): Author => ({
 });
 
 export const getActiveAuthors = cache(async (): Promise<Author[]> => {
-  if (!isSupabaseConfigured) {
-    return staticAuthors().filter((a) => a.isActive);
+  try {
+    const rows = await queryRows<AuthorRow>(
+      `select *
+       from public.authors
+       where is_active = true
+       order by editor desc, fact_checker desc, name asc`,
+    );
+
+    if (rows.length === 0) {
+      return staticAuthors().filter((author) => author.isActive);
+    }
+
+    return rows.map(mapAuthorRow);
+  } catch {
+    return staticAuthors().filter((author) => author.isActive);
   }
-
-  const { data, error } = await supabase
-    .from('authors')
-    .select('*')
-    .eq('is_active', true)
-    .order('editor', { ascending: false })
-    .order('fact_checker', { ascending: false })
-    .order('name', { ascending: true });
-
-  if (error || !Array.isArray(data)) {
-    return staticAuthors().filter((a) => a.isActive);
-  }
-
-  return (data as AuthorRow[]).map(mapAuthorRow);
 });
 
 export const getAuthorBySlug = cache(async (slug: string): Promise<Author | null> => {
   if (!slug) return null;
 
-  if (!isSupabaseConfigured) {
+  try {
+    const row = await queryOne<AuthorRow>(
+      `select *
+       from public.authors
+       where slug = $1
+       limit 1`,
+      [slug],
+    );
+
+    if (!row) {
+      return AUTHORS[slug] ?? null;
+    }
+
+    const author = mapAuthorRow(row);
+    if (!author.isActive) return null;
+    return author;
+  } catch {
     return AUTHORS[slug] ?? null;
   }
-
-  const { data, error } = await supabase
-    .from('authors')
-    .select('*')
-    .eq('slug', slug)
-    .maybeSingle();
-
-  if (error || !data) {
-    return AUTHORS[slug] ?? null;
-  }
-
-  const author = mapAuthorRow(data as AuthorRow);
-  if (!author.isActive) return null;
-  return author;
 });
 
 export const getPrimaryFactChecker = cache(async (): Promise<Pick<Author, 'slug' | 'name'> | null> => {
-  if (!isSupabaseConfigured) {
-    const fc = staticAuthors().find((a) => a.factChecker && a.isActive);
-    return fc ? { slug: fc.slug, name: fc.name } : null;
+  try {
+    const row = await queryOne<{ slug: string; name: string }>(
+      `select slug, name
+       from public.authors
+       where is_active = true
+         and fact_checker = true
+       order by joined_at asc nulls last
+       limit 1`,
+    );
+
+    if (row) return row;
+  } catch {
+    // fallback below
   }
 
-  const { data, error } = await supabase
-    .from('authors')
-    .select('slug,name')
-    .eq('is_active', true)
-    .eq('fact_checker', true)
-    .order('joined_at', { ascending: true, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) {
-    const fc = staticAuthors().find((a) => a.factChecker && a.isActive);
-    return fc ? { slug: fc.slug, name: fc.name } : null;
-  }
-
-  return { slug: data.slug as string, name: data.name as string };
+  const factChecker = staticAuthors().find((author) => author.factChecker && author.isActive);
+  return factChecker ? { slug: factChecker.slug, name: factChecker.name } : null;
 });

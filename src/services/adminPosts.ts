@@ -1,15 +1,8 @@
-import { supabase } from '@/lib/supabaseClient';
-
 const callAdminPosts = async (action: string, payload: Record<string, unknown> = {}) => {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-
-  if (!token) throw new Error('Sessao invalida');
-
   const response = await fetch('/api/admin-posts', {
     method: 'POST',
+    credentials: 'same-origin',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ action, ...payload }),

@@ -73,7 +73,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { sanitizeHtml } from '@/lib/sanitize';
-import { secureStorage } from '@/config/storage';
+import { secureStorage } from '@/lib/storage';
 
 interface PageProps {
   params: {
@@ -1315,4 +1315,3 @@ export default function AdminNewsEditPage({ params }: PageProps) {
     </>
   );
 }
-

@@ -3,6 +3,8 @@
  * Categorias, tags e metadados de conteúdo
  */
 
+import { AUTHORS } from './authors';
+
 export const CONTENT_CONFIG = {
   categories: {
     geopolitica: {
@@ -136,49 +138,6 @@ export const CONTENT_CONFIG = {
     { id: 'startups', name: 'Startups', nameEn: 'Startups' },
   ],
   
-  authors: {
-    'ana-silva': {
-      id: 'ana-silva',
-      name: 'Ana Silva',
-      role: 'Editora Chefe',
-      bio: 'Jornalista com 15 anos de experiência em cobertura econômica internacional.',
-      avatar: '/images/authors/ana-silva.webp',
-      social: { twitter: '@anasilvajornal', linkedin: 'ana-silva' },
-    },
-    'carlos-mendes': {
-      id: 'carlos-mendes',
-      name: 'Carlos Mendes',
-      role: 'Analista de Mercados',
-      bio: 'Economista e especialista em mercados emergentes.',
-      avatar: '/images/authors/carlos-mendes.webp',
-      social: { twitter: '@cmendeseco', linkedin: 'carlos-mendes' },
-    },
-    'maria-oliveira': {
-      id: 'maria-oliveira',
-      name: 'Maria Oliveira',
-      role: 'Correspondente Internacional',
-      bio: 'Baseada em Bruxelas, cobre União Europeia e relações transatlânticas.',
-      avatar: '/images/authors/maria-oliveira.webp',
-      social: { twitter: '@mariaoliveirabr', linkedin: 'maria-oliveira' },
-    },
-    'pedro-santos': {
-      id: 'pedro-santos',
-      name: 'Pedro Santos',
-      role: 'Editor de Tecnologia',
-      bio: 'Especialista em IA, cibersegurança e transformação digital.',
-      avatar: '/images/authors/pedro-santos.webp',
-      social: { twitter: '@pedrosantostech', linkedin: 'pedro-santos' },
-    },
-    'julia-costa': {
-      id: 'julia-costa',
-      name: 'Julia Costa',
-      role: 'Analista Política',
-      bio: 'Doutora em Relações Internacionais pela Universidade de São Paulo.',
-      avatar: '/images/authors/julia-costa.webp',
-      social: { twitter: '@juliacostari', linkedin: 'julia-costa' },
-    },
-  },
-  
   readingTime: {
     wordsPerMinute: 200,
     calculate: (content: string): number => {
@@ -200,7 +159,7 @@ export const CONTENT_CONFIG = {
 } as const;
 
 export type CategorySlug = keyof typeof CONTENT_CONFIG.categories;
-export type AuthorId = keyof typeof CONTENT_CONFIG.authors;
+export type AuthorId = keyof typeof AUTHORS;
 
 // Helper para acessar categorias dinamicamente
 export const getCategory = (slug: string) => {

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Search, FileImage, File, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { supabase } from '@/lib/supabaseClient';
 import { ImageUploader } from '@/components/upload/ImageUploader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,18 +37,9 @@ export default function AdminArquivosPage() {
     else setRefreshing(true);
 
     try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) {
-        toast.error('Sessão inválida. Faça login novamente.');
-        return;
-      }
-
       const response = await fetch('/api/admin-files', {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'same-origin',
       });
 
       const json = (await response.json()) as FilesResponse & { error?: string };
@@ -100,45 +90,35 @@ export default function AdminArquivosPage() {
       await navigator.clipboard.writeText(url);
       toast.success('URL copiada');
     } catch {
-      toast.error('Não foi possível copiar a URL');
+      toast.error('Nao foi possivel copiar a URL');
     }
   }, []);
 
-  const deleteFile = useCallback(
-    async (path: string) => {
-      if (!confirm(`Excluir arquivo?\n${path}`)) return;
+  const deleteFile = useCallback(async (path: string) => {
+    if (!confirm(`Excluir arquivo?\n${path}`)) return;
 
-      try {
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) {
-          toast.error('Sessão inválida. Faça login novamente.');
-          return;
-        }
+    try {
+      const response = await fetch('/api/admin-files', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path }),
+      });
 
-        const response = await fetch('/api/admin-files', {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ path }),
-        });
-
-        const json = (await response.json()) as { ok?: boolean; error?: string };
-        if (!response.ok) {
-          throw new Error(json.error || 'Erro ao excluir arquivo');
-        }
-
-        setFiles((prev) => prev.filter((f) => f.path !== path));
-        toast.success('Arquivo excluído');
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Erro ao excluir arquivo';
-        toast.error(message);
+      const json = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok) {
+        throw new Error(json.error || 'Erro ao excluir arquivo');
       }
-    },
-    []
-  );
+
+      setFiles((prev) => prev.filter((file) => file.path !== path));
+      toast.success('Arquivo excluido');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao excluir arquivo';
+      toast.error(message);
+    }
+  }, []);
 
   return (
     <main className="max-w-[1400px] mx-auto space-y-6">
@@ -170,32 +150,16 @@ export default function AdminArquivosPage() {
             className="max-w-xl"
           />
           <section className="flex items-center gap-2">
-            <Button
-              variant={typeFilter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTypeFilter('all')}
-            >
+            <Button variant={typeFilter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setTypeFilter('all')}>
               Todos
             </Button>
-            <Button
-              variant={typeFilter === 'webp' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTypeFilter('webp')}
-            >
+            <Button variant={typeFilter === 'webp' ? 'default' : 'outline'} size="sm" onClick={() => setTypeFilter('webp')}>
               WebP
             </Button>
-            <Button
-              variant={typeFilter === 'vector' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTypeFilter('vector')}
-            >
+            <Button variant={typeFilter === 'vector' ? 'default' : 'outline'} size="sm" onClick={() => setTypeFilter('vector')}>
               Vetor
             </Button>
-            <Button
-              variant={typeFilter === 'other' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTypeFilter('other')}
-            >
+            <Button variant={typeFilter === 'other' ? 'default' : 'outline'} size="sm" onClick={() => setTypeFilter('other')}>
               Outros
             </Button>
           </section>
@@ -233,21 +197,11 @@ export default function AdminArquivosPage() {
                     <section className="flex items-center gap-2 shrink-0">
                       {file.publicUrl ? (
                         <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 gap-1"
-                            onClick={() => void copyUrl(file.publicUrl)}
-                          >
+                          <Button variant="outline" size="sm" className="h-8 gap-1" onClick={() => void copyUrl(file.publicUrl)}>
                             <Copy className="w-3.5 h-3.5" />
                             URL
                           </Button>
-                          <a
-                            href={file.publicUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm text-[#c40000] hover:underline"
-                          >
+                          <a href={file.publicUrl} target="_blank" rel="noreferrer" className="text-sm text-[#c40000] hover:underline">
                             Abrir
                           </a>
                         </>

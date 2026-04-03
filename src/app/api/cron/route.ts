@@ -12,6 +12,7 @@ import { getMarketNews, getEarningsCalendar, getGlobalIndicesData, getCommoditie
 import { saveSnapshotToLocalDb, getSnapshotFromLocalDb } from '@/lib/db';
 import { CACHE_TTL } from '@/config/apiLimits';
 import { checkAndPublishScheduled } from '@/services/newsManager';
+import { logger } from '@/lib/logger';
 
 const API_SECRET = process.env.CRON_API_SECRET || '';
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unknown refresh type. Use: market-news, earnings, indices, commodities, sectors, economic-calendar, publish-scheduled, all' }, { status: 400 });
     }
   } catch (error) {
-    console.error('[Cron] Refresh failed:', error);
+    logger.error('[Cron] Refresh failed:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -63,7 +64,7 @@ async function refreshMarketNews() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.log(`[Cron] Market news updated: ${data.length} items`);
+      logger.log(`[Cron] Market news updated: ${data.length} items`);
       return NextResponse.json({ 
         success: true, 
         key, 
@@ -74,7 +75,7 @@ async function refreshMarketNews() {
     
     return NextResponse.json({ success: false, message: 'No data fetched' });
   } catch (error) {
-    console.error('[Cron] Market news refresh failed:', error);
+    logger.error('[Cron] Market news refresh failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
@@ -90,7 +91,7 @@ async function refreshEarnings() {
     const payload = { from: today, to: nextWeek, data };
     
     await saveSnapshotToLocalDb(key, payload);
-    console.log(`[Cron] Earnings updated: ${data.length} items`);
+    logger.log(`[Cron] Earnings updated: ${data.length} items`);
     
     return NextResponse.json({ 
       success: true, 
@@ -99,7 +100,7 @@ async function refreshEarnings() {
       ttl: CACHE_TTL.EARNINGS / 1000 / 60 + ' hours'
     });
   } catch (error) {
-    console.error('[Cron] Earnings refresh failed:', error);
+    logger.error('[Cron] Earnings refresh failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
@@ -112,7 +113,7 @@ async function refreshIndices() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.log(`[Cron] Indices updated: ${data.length} items`);
+      logger.log(`[Cron] Indices updated: ${data.length} items`);
       
       return NextResponse.json({ 
         success: true, 
@@ -124,7 +125,7 @@ async function refreshIndices() {
     
     return NextResponse.json({ success: false, message: 'No data fetched' });
   } catch (error) {
-    console.error('[Cron] Indices refresh failed:', error);
+    logger.error('[Cron] Indices refresh failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
@@ -137,7 +138,7 @@ async function refreshCommodities() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.log(`[Cron] Commodities updated: ${data.length} items`);
+      logger.log(`[Cron] Commodities updated: ${data.length} items`);
       
       return NextResponse.json({ 
         success: true, 
@@ -149,7 +150,7 @@ async function refreshCommodities() {
     
     return NextResponse.json({ success: false, message: 'No data fetched' });
   } catch (error) {
-    console.error('[Cron] Commodities refresh failed:', error);
+    logger.error('[Cron] Commodities refresh failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
@@ -162,7 +163,7 @@ async function refreshSectors() {
     
     if (data.length > 0) {
       await saveSnapshotToLocalDb(key, data);
-      console.log(`[Cron] Sectors updated: ${data.length} items`);
+      logger.log(`[Cron] Sectors updated: ${data.length} items`);
       
       return NextResponse.json({ 
         success: true, 
@@ -174,7 +175,7 @@ async function refreshSectors() {
     
     return NextResponse.json({ success: false, message: 'No data fetched' });
   } catch (error) {
-    console.error('[Cron] Sectors refresh failed:', error);
+    logger.error('[Cron] Sectors refresh failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
@@ -190,7 +191,7 @@ async function refreshEconomicCalendar() {
     const payload = { from: today, to: nextWeek, data };
     
     await saveSnapshotToLocalDb(key, payload);
-    console.log(`[Cron] Economic calendar updated: ${data.length} items`);
+    logger.log(`[Cron] Economic calendar updated: ${data.length} items`);
     
     return NextResponse.json({ 
       success: true, 
@@ -199,17 +200,17 @@ async function refreshEconomicCalendar() {
       ttl: CACHE_TTL.ECONOMIC_CALENDAR / 1000 / 60 + ' hours'
     });
   } catch (error) {
-    console.error('[Cron] Economic calendar refresh failed:', error);
+    logger.error('[Cron] Economic calendar refresh failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
 
 async function publishScheduledArticles() {
-  console.log('[Cron] Starting scheduled articles publishing check...');
+  logger.log('[Cron] Starting scheduled articles publishing check...');
   
   try {
     const count = await checkAndPublishScheduled();
-    console.log(`[Cron] Published ${count} scheduled articles`);
+    logger.log(`[Cron] Published ${count} scheduled articles`);
     
     return NextResponse.json({
       success: true,
@@ -219,7 +220,7 @@ async function publishScheduledArticles() {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('[Cron] Publish scheduled articles failed:', error);
+    logger.error('[Cron] Publish scheduled articles failed:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

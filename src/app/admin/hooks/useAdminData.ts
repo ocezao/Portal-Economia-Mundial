@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import type { 
   DashboardStats, 
   SystemUser, 
@@ -168,7 +169,7 @@ export function useAdminData() {
         setScheduledArticles((scheduled ?? []).filter((s) => s?.status === 'pending'));
       }
     } catch (error) {
-      console.error('Error loading articles:', error);
+      logger.error('Error loading articles:', error);
       if (isMounted.current) {
         setArticles([]);
         setScheduledArticles([]);
@@ -212,7 +213,7 @@ export function useAdminData() {
         setRecentActivity(activity ?? []);
       }
     } catch (error) {
-      console.error('Error loading analytics:', error);
+      logger.error('Error loading analytics:', error);
       if (isMounted.current) {
         setAnalyticsMetrics(initialAnalyticsMetrics);
         setTopContent([]);
@@ -277,7 +278,7 @@ export function useAdminData() {
       }
       return published;
     } catch (error) {
-      console.error('Error checking scheduled:', error);
+      logger.error('Error checking scheduled:', error);
       return 0;
     }
   }, [loadData]);

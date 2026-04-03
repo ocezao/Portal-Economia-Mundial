@@ -1,11 +1,8 @@
 /**
- * Cliente para operações administrativas de usuários.
+ * Cliente para operacoes administrativas de usuarios.
  *
- * Usa API route same-origin (`/api/admin-users`) para evitar CORS/preflight e
- * não depender do deploy de Edge Function no Supabase.
+ * Usa API route same-origin (`/api/admin-users`) autenticada por cookie.
  */
-
-import { supabase } from '@/lib/supabaseClient';
 
 export type AdminUser = {
   id: string;
@@ -22,15 +19,10 @@ export type AdminUser = {
 };
 
 const callFunction = async (action: string, payload: Record<string, unknown> = {}) => {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-
-  if (!token) throw new Error('Sessão inválida');
-
   const response = await fetch('/api/admin-users', {
     method: 'POST',
+    credentials: 'same-origin',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ action, ...payload }),
@@ -38,7 +30,7 @@ const callFunction = async (action: string, payload: Record<string, unknown> = {
 
   const json = await response.json();
   if (!response.ok) {
-    throw new Error(json.error || 'Erro na função');
+    throw new Error(json.error || 'Erro na funcao');
   }
 
   return json;

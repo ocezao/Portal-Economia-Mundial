@@ -10,6 +10,7 @@ import Script from 'next/script';
 
 import { useConsent } from '@/hooks/useConsent';
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 // Client ID do AdSense - pode vir de env ou usar o valor direto
 const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-6096980902806551';
@@ -54,7 +55,7 @@ function AdSenseInitializer() {
         // Dispatch event to notify ad units that they can retry
         window.dispatchEvent(new Event('adsenseLoaded'));
       } catch (e) {
-        console.error('AdSense init error:', e);
+        logger.error('AdSense init error:', e);
       }
     }
   }, [isLoaded, canUseAdvertising]);

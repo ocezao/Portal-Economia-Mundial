@@ -1,44 +1,44 @@
 'use client';
 
-/**
- * Auth Context - Sistema de Autenticação com Supabase
- * Provider + Hook para gerenciamento global de autenticação
- */
-
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { storage, secureStorage, STORAGE_KEYS } from '@/config/storage';
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
-import { logger } from '@/lib/logger';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { usePathname, useRouter } from 'next/navigation';
+
+import { storage, secureStorage, STORAGE_KEYS } from '@/lib/storage';
+import { logger } from '@/lib/logger';
 import type { User, UserRole, UserPreferences, LoginCredentials, RegisterData, AuthError } from '@/types/user';
 
-// ==================== TIPOS ====================
-// Tipos re-exportados de @/types/user
 export type { UserRole, UserPreferences, LoginCredentials, RegisterData, AuthError };
 
 interface AuthContextType {
-  // Estado
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
   error: AuthError | null;
-
-  // Ações
   login: (credentials: LoginCredentials) => Promise<{ ok: true } | { ok: false; error: AuthError }>;
   register: (data: RegisterData) => Promise<{ ok: true; needsEmailConfirmation: boolean } | { ok: false; error: AuthError }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   clearError: () => void;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
   updatePreferences: (prefs: Partial<UserPreferences>) => void;
-
-  // Helpers
   checkPermission: (requiredRole: UserRole) => boolean;
   getSessionTimeRemaining: () => number;
 }
 
-// ==================== CONFIGURAÇÃO ====================
+type SessionResponse = {
+  authenticated: boolean;
+  user: User | null;
+  expiresAt: string | null;
+  error?: string;
+};
+
+type AuthMutationResponse = {
+  ok: boolean;
+  user?: User;
+  expiresAt?: string | null;
+  needsEmailConfirmation?: boolean;
+  error?: string;
+};
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   categories: [],
@@ -59,78 +59,52 @@ const saveUserPreferences = (userId: string, preferences: UserPreferences) => {
   storage.set(getPreferencesKey(userId), preferences);
 };
 
-const mapSupabaseUser = (supabaseUser: SupabaseUser): User => {
-  const metadata = supabaseUser.user_metadata ?? {};
-  const preferences = loadUserPreferences(supabaseUser.id);
-
+function mergeUserPreferences(user: User | null): User | null {
+  if (!user) return null;
   return {
-    id: supabaseUser.id,
-    name: metadata.name ?? supabaseUser.email ?? 'Usuário',
-    email: supabaseUser.email ?? '',
-    role: (metadata.role as UserRole) ?? 'user',
-    region: metadata.region ?? 'BR',
-    avatar: metadata.avatar ?? metadata.avatar_url,
-    bio: metadata.bio,
-    profession: metadata.profession,
-    company: metadata.company,
-    socialLinks: metadata.socialLinks,
-    twoFactorEnabled: metadata.twoFactorEnabled,
-    createdAt: supabaseUser.created_at ?? new Date().toISOString(),
-    lastLogin: metadata.lastLogin ?? new Date().toISOString(),
-    isActive: true,
-    preferences,
+    ...user,
+    preferences: {
+      ...DEFAULT_PREFERENCES,
+      ...(user.preferences ?? {}),
+      ...loadUserPreferences(user.id),
+    },
   };
-};
+}
 
-const updateSupabaseMetadata = async (updates: Partial<User>) => {
-  if (!isSupabaseConfigured) return;
-  const metadataUpdates: Record<string, unknown> = {};
-
-  if (updates.name !== undefined) metadataUpdates.name = updates.name;
-  if (updates.region !== undefined) metadataUpdates.region = updates.region;
-  if (updates.avatar !== undefined) metadataUpdates.avatar = updates.avatar;
-  if (updates.bio !== undefined) metadataUpdates.bio = updates.bio;
-  if (updates.profession !== undefined) metadataUpdates.profession = updates.profession;
-  if (updates.company !== undefined) metadataUpdates.company = updates.company;
-  if (updates.socialLinks !== undefined) metadataUpdates.socialLinks = updates.socialLinks;
-  if (updates.twoFactorEnabled !== undefined) metadataUpdates.twoFactorEnabled = updates.twoFactorEnabled;
-  if (updates.role !== undefined) metadataUpdates.role = updates.role;
-  if (updates.lastLogin !== undefined) metadataUpdates.lastLogin = updates.lastLogin;
-
-  if (Object.keys(metadataUpdates).length === 0) return;
-
-  const { error } = await supabase.auth.updateUser({ data: metadataUpdates });
-  if (error) {
-    logger.error('Erro ao atualizar metadata do usuário:', error.message);
+async function readJson<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
   }
-};
+}
 
-// ==================== CONTEXT ====================
+function mapApiAuthError(message?: string, fallback = 'Erro ao autenticar. Tente novamente.'): AuthError {
+  const normalized = (message ?? '').toLowerCase();
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-function mapSupabaseAuthError(err: unknown): AuthError {
-  const message =
-    err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : '';
-  const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status?: unknown }).status) : null;
-  const normalized = message.toLowerCase();
-
-  if (normalized.includes('email not confirmed')) {
-    return { code: 'AUTH_EMAIL_NOT_CONFIRMED', message: 'Confirme seu e-mail antes de entrar.' };
-  }
-
-  if (normalized.includes('invalid login credentials') || status === 400) {
+  if (normalized.includes('incorret')) {
     return { code: 'AUTH_INVALID_CREDENTIALS', message: 'E-mail ou senha incorretos.' };
   }
 
-  if (normalized.includes('rate limit') || status === 429) {
-    return { code: 'AUTH_RATE_LIMITED', message: 'Muitas tentativas. Aguarde e tente novamente.' };
+  if (normalized.includes('ja cadastrado')) {
+    return { code: 'AUTH_EMAIL_ALREADY_EXISTS', message: 'Este e-mail ja esta cadastrado.' };
   }
 
-  return { code: 'AUTH_UNKNOWN_ERROR', message: message || 'Erro ao autenticar. Tente novamente.' };
+  if (normalized.includes('nao autenticado') || normalized.includes('sessao')) {
+    return { code: 'AUTH_NO_SESSION', message: 'Sua sessao expirou. Entre novamente.' };
+  }
+
+  if (normalized.includes('desativada')) {
+    return { code: 'AUTH_ACCOUNT_DISABLED', message: 'Sua conta esta desativada.' };
+  }
+
+  return {
+    code: 'AUTH_UNKNOWN_ERROR',
+    message: message || fallback,
+  };
 }
 
-// ==================== PROVIDER ====================
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -138,215 +112,204 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<AuthError | null>(null);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const refreshSession = useCallback(async () => {
+    setIsLoading(true);
 
-    if (!isSupabaseConfigured || !supabase) {
-      queueMicrotask(() => {
-        setUser(null);
-        setSessionExpiresAt(null);
-        setIsLoading(false);
+    try {
+      const response = await fetch('/api/auth/session', {
+        method: 'GET',
+        cache: 'no-store',
+        credentials: 'same-origin',
       });
-      return () => {
-        isMounted = false;
-      };
-    }
 
-    const initAuth = async () => {
-      setIsLoading(true);
-      const { data, error: sessionError } = await supabase.auth.getSession();
-
-      if (!isMounted) return;
-
-      if (sessionError) {
-        setError({
-          code: 'AUTH_SESSION_ERROR',
-          message: 'Erro ao carregar sessão. Tente novamente.',
-        });
-      }
-
-      if (data.session?.user) {
-        const mappedUser = mapSupabaseUser(data.session.user);
-        setUser(mappedUser);
-        setSessionExpiresAt(data.session.expires_at ? data.session.expires_at * 1000 : null);
-      } else {
+      const payload = await readJson<SessionResponse>(response);
+      if (!response.ok) {
+        const authErr = mapApiAuthError(payload?.error, 'Erro ao carregar sessao. Tente novamente.');
+        setError(authErr);
         setUser(null);
         setSessionExpiresAt(null);
+        return;
       }
 
+      const nextUser = mergeUserPreferences(payload?.authenticated ? payload.user ?? null : null);
+      setUser(nextUser);
+      setSessionExpiresAt(payload?.expiresAt ? new Date(payload.expiresAt).getTime() : null);
+    } catch (err) {
+      logger.error('Erro ao carregar sessao local:', err);
+      setUser(null);
+      setSessionExpiresAt(null);
+      setError({
+        code: 'AUTH_SESSION_ERROR',
+        message: 'Erro ao carregar sessao. Tente novamente.',
+      });
+    } finally {
       setIsLoading(false);
-    };
-
-    initAuth();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!isMounted) return;
-
-      if (session?.user) {
-        const mappedUser = mapSupabaseUser(session.user);
-        setUser(mappedUser);
-        setSessionExpiresAt(session.expires_at ? session.expires_at * 1000 : null);
-
-        if (event === 'SIGNED_IN') {
-          const lastLogin = new Date().toISOString();
-          updateSupabaseMetadata({ lastLogin });
-          setUser({ ...mappedUser, lastLogin });
-        }
-      } else {
-        setUser(null);
-        setSessionExpiresAt(null);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      listener.subscription.unsubscribe();
-    };
+    }
   }, []);
 
-  // Login
+  useEffect(() => {
+    void refreshSession();
+  }, [refreshSession]);
+
   const login = useCallback(async (credentials: LoginCredentials): Promise<{ ok: true } | { ok: false; error: AuthError }> => {
     setIsLoading(true);
     setError(null);
 
-    if (!isSupabaseConfigured) {
-      setError({
-        code: 'AUTH_SUPABASE_NOT_CONFIGURED',
-        message: 'Supabase nÃ£o configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.',
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: credentials.email.toLowerCase().trim(),
+          password: credentials.password,
+        }),
       });
-      setIsLoading(false);
-      return { ok: false, error: { code: 'AUTH_SUPABASE_NOT_CONFIGURED', message: 'Supabase nao configurado.' } };
-    }
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: credentials.email.toLowerCase().trim(),
-      password: credentials.password,
-    });
+      const payload = await readJson<AuthMutationResponse>(response);
+      if (!response.ok || !payload?.user) {
+        const authErr = mapApiAuthError(payload?.error);
+        setError(authErr);
+        return { ok: false, error: authErr };
+      }
 
-    if (signInError) {
-      const authErr = mapSupabaseAuthError(signInError);
+      setUser(mergeUserPreferences(payload.user));
+      setSessionExpiresAt(payload.expiresAt ? new Date(payload.expiresAt).getTime() : null);
+      return { ok: true };
+    } catch (err) {
+      logger.error('Erro no login local:', err);
+      const authErr = mapApiAuthError(undefined);
       setError(authErr);
-      setIsLoading(false);
       return { ok: false, error: authErr };
-    }
-
-    if (!data.session?.user) {
-      const authErr: AuthError = {
-        code: 'AUTH_NO_SESSION',
-        message: 'Sessao nao encontrada. Tente novamente.',
-      };
-      setError(authErr);
+    } finally {
       setIsLoading(false);
-      return { ok: false, error: authErr };
     }
-
-
-    const mappedUser = mapSupabaseUser(data.session.user);
-    const lastLogin = new Date().toISOString();
-    setUser({ ...mappedUser, lastLogin });
-    setSessionExpiresAt(data.session.expires_at ? data.session.expires_at * 1000 : null);
-    updateSupabaseMetadata({ lastLogin });
-
-    setIsLoading(false);
-    return { ok: true };
   }, []);
 
-  // Registro
   const register = useCallback(async (data: RegisterData): Promise<{ ok: true; needsEmailConfirmation: boolean } | { ok: false; error: AuthError }> => {
     setIsLoading(true);
     setError(null);
 
-    if (!isSupabaseConfigured) {
-      setError({
-        code: 'AUTH_SUPABASE_NOT_CONFIGURED',
-        message: 'Supabase nÃ£o configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.',
-      });
-      setIsLoading(false);
-      return { ok: false, error: { code: 'AUTH_SUPABASE_NOT_CONFIGURED', message: 'Supabase nao configurado.' } };
-    }
-
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: data.email.toLowerCase().trim(),
-      password: data.password,
-      options: {
-        data: {
-          name: data.name.trim(),
-          region: data.region || 'BR',
-          role: 'user',
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      },
-    });
+        body: JSON.stringify({
+          name: data.name.trim(),
+          email: data.email.toLowerCase().trim(),
+          password: data.password,
+          region: data.region,
+        }),
+      });
 
-    if (signUpError) {
-      const authErr = mapSupabaseAuthError(signUpError);
-      setError(authErr);
-      setIsLoading(false);
-      return { ok: false, error: authErr };
-    }
+      const payload = await readJson<AuthMutationResponse>(response);
+      if (!response.ok || !payload?.user) {
+        const authErr = mapApiAuthError(payload?.error, 'Erro ao cadastrar. Tente novamente.');
+        setError(authErr);
+        return { ok: false, error: authErr };
+      }
 
-
-    if (signUpData.session?.user) {
-      const mappedUser = mapSupabaseUser(signUpData.session.user);
-      setUser(mappedUser);
-      setSessionExpiresAt(signUpData.session.expires_at ? signUpData.session.expires_at * 1000 : null);
-      setIsLoading(false);
+      setUser(mergeUserPreferences(payload.user));
+      setSessionExpiresAt(payload.expiresAt ? new Date(payload.expiresAt).getTime() : null);
       return { ok: true, needsEmailConfirmation: false };
+    } catch (err) {
+      logger.error('Erro no cadastro local:', err);
+      const authErr = mapApiAuthError(undefined, 'Erro ao cadastrar. Tente novamente.');
+      setError(authErr);
+      return { ok: false, error: authErr };
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-    return { ok: true, needsEmailConfirmation: true };
   }, []);
 
-  // Logout
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
-    // Limpa dados sensíveis do sessionStorage primeiro
     secureStorage.clear();
-    
-    if (!isSupabaseConfigured) {
+
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    } catch (err) {
+      logger.error('Erro ao encerrar sessao local:', err);
+    } finally {
       setUser(null);
       setSessionExpiresAt(null);
       setIsLoading(false);
-      return;
     }
-    supabase.auth.signOut().finally(() => {
-      setUser(null);
-      setSessionExpiresAt(null);
-      setIsLoading(false);
-    });
   }, []);
 
-  // Limpar erro
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  // Atualizar usuário
-  const updateUser = useCallback((updates: Partial<User>) => {
+  const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!user) return;
 
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    updateSupabaseMetadata(updates);
+    const previousUser = user;
+    setUser(mergeUserPreferences({ ...user, ...updates }));
+
+    try {
+      const response = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: updates.name,
+          region: updates.region,
+          avatar: updates.avatar,
+          bio: updates.bio,
+          profession: updates.profession,
+          company: updates.company,
+          socialLinks: updates.socialLinks,
+          twoFactorEnabled: updates.twoFactorEnabled,
+        }),
+      });
+
+      const payload = await readJson<AuthMutationResponse>(response);
+      if (!response.ok || !payload?.user) {
+        throw new Error(payload?.error || 'Erro ao atualizar perfil');
+      }
+
+      setUser(mergeUserPreferences(payload.user));
+      setSessionExpiresAt(payload.expiresAt ? new Date(payload.expiresAt).getTime() : null);
+    } catch (err) {
+      logger.error('Erro ao atualizar perfil local:', err);
+      setUser(previousUser);
+      const authErr = {
+        code: 'AUTH_PROFILE_UPDATE_ERROR',
+        message: err instanceof Error ? err.message : 'Erro ao atualizar perfil.',
+      };
+      setError(authErr);
+      throw err;
+    }
   }, [user]);
 
-  // Atualizar preferências
   const updatePreferences = useCallback((prefs: Partial<UserPreferences>) => {
     if (!user) return;
 
-    const updatedPreferences = { ...user.preferences, ...prefs };
+    const updatedPreferences = {
+      ...user.preferences,
+      ...prefs,
+    };
     saveUserPreferences(user.id, updatedPreferences);
-    updateUser({ preferences: updatedPreferences });
-  }, [user, updateUser]);
+    setUser((current) => (current ? { ...current, preferences: updatedPreferences } : current));
+  }, [user]);
 
-  // Verificar permissão
   const checkPermission = useCallback((requiredRole: UserRole): boolean => {
     if (!user) return false;
     if (requiredRole === 'admin') return user.role === 'admin';
     return true;
   }, [user]);
 
-  // Tempo restante da sessão
   const getSessionTimeRemaining = useCallback((): number => {
     if (!sessionExpiresAt) return 0;
     return Math.max(0, sessionExpiresAt - Date.now());
@@ -368,14 +331,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getSessionTimeRemaining,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-// ==================== HOOK ====================
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
@@ -384,8 +341,6 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
-
-// ==================== HOC PARA PROTEÇÃO DE ROTAS ====================
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -421,7 +376,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
       <main className="min-h-screen flex items-center justify-center">
         <section className="flex flex-col items-center gap-4" role="status">
           <span className="w-8 h-8 border-2 border-[#e5e5e5] border-t-[#c40000] rounded-full animate-spin" />
-          <p className="text-sm text-[#6b6b6b]">Verificando sessão...</p>
+          <p className="text-sm text-[#6b6b6b]">Verificando sessao...</p>
         </section>
       </main>
     );

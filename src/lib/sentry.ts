@@ -6,19 +6,21 @@
  * 3. Replace this file with actual Sentry implementation
  */
 
+import { logger } from '@/lib/logger';
+
 export async function initSentry(): Promise<void> {
   // Stub - implement when @sentry/nextjs is installed
 }
 
 export async function captureException(error: Error, context?: Record<string, unknown>): Promise<void> {
   if (process.env.NODE_ENV === 'development') {
-    console.error('[Error]', error.message, context);
+    logger.error('[Error]', error.message, context);
   }
 }
 
 export async function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): Promise<void> {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[${level.toUpperCase()}]`, message);
+    logger.log(`[${level.toUpperCase()}]`, message);
   }
 }
 
