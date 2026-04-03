@@ -12,6 +12,9 @@ Importante:
 - a chave precisa ser provisionada no servidor via `EDITORIAL_API_KEY`
 - para agentes externos, o fluxo correto e receber essa chave por ambiente secreto
 - `CRON_API_SECRET` nao deve ser usado como credencial editorial
+- artigos economicos, geoeconomicos e geopoliticos devem consultar `GET /api/v1/editorial/context/market` antes de escrever ou enriquecer o texto
+- AEO nesta API significa pacote de descoberta com `seoTitle`, `metaDescription`, `faqItems`, revisao em `seo-audit` e revisao em `internal-links`
+- se a imagem de capa nao for first-party, a atribuicao da imagem deve entrar em `sources`
 
 ## Requisitos operacionais
 
@@ -233,12 +236,45 @@ Regras operacionais:
 - nao tentar `publish` ou `schedule` sem `approve`
 - sempre persistir pelo menos uma fonte antes de publicar
 - sempre garantir `seoTitle`, `metaDescription`, `tags` e `faqItems` antes de publicar
+- usar pelo menos `3` tags editoriais antes de publicar
+- usar pelo menos `2` FAQ items antes de publicar
 - `coverImage` precisa resolver para arquivo local existente; se a imagem nao existir, `validate` deve falhar
 - usar `similar` antes de criar novo artigo quando houver risco de canibalizacao
 - usar `seo-audit` e `internal-links` antes de publicar
 - usar `market` para contextualizar artigos economicos e geoeconomicos
+- tratar `sources` como pacote completo de atribuicao: fonte da noticia, fonte de dados e fonte da imagem quando aplicavel
 - tratar `409 VALIDATION_REQUIRED` como sinal para corrigir o fluxo, nao como erro transiente
 - usar `GET /api/v1/editorial/jobs` para acompanhar fila e falhas
+
+## Pacote editorial minimo para agentes genericos
+
+Se o agente nao conhece o projeto, assuma que um artigo publicavel nesta API precisa de:
+
+- `title`
+- `slug`
+- `excerpt`
+- `content`
+- `category`
+- `authorId`
+- `coverImage`
+- `seoTitle`
+- `metaDescription`
+- `tags` com pelo menos 3 itens
+- `faqItems` com pelo menos 2 pares de pergunta/resposta
+- `sources` com pelo menos 1 fonte persistida
+
+Leitura correta por tipo de artigo:
+
+- economia, macroeconomia, mercados, moedas, comercio-global e geopolitica:
+  - chamar `GET /context/market` antes de redigir ou enriquecer
+- AEO:
+  - preencher `faqItems`
+  - revisar `GET /articles/{id}/seo-audit`
+  - revisar `GET /articles/{id}/internal-links`
+- imagem:
+  - obter a capa via `GET /uploads/library` ou `POST /uploads`
+  - nunca usar URL externa em `coverImage`
+  - se a imagem nao for propria, incluir sua atribuicao em `sources`
 
 ## Response format
 

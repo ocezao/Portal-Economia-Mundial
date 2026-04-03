@@ -43,6 +43,16 @@ export async function GET(req: Request) {
     contract: {
       createDraftRequired: ['title', 'slug', 'excerpt', 'content', 'category', 'authorId', 'coverImage'],
       publishRequired: ['seoTitle', 'metaDescription', 'tags', 'faqItems', 'sources', 'approved article', 'valid local coverImage'],
+      publishQualityThresholds: {
+        minTags: 3,
+        minFaqItems: 2,
+        imageSourceRule: 'If the cover image came from a third party, include its attribution inside sources.',
+      },
+      contentPackage: {
+        mandatoryBeforePublish: ['title', 'excerpt', 'content', 'category', 'authorId', 'coverImage', 'seoTitle', 'metaDescription', 'tags', 'faqItems', 'sources'],
+        aeoFields: ['faqItems', 'seoTitle', 'metaDescription', 'internalLinks review', 'seoAudit review'],
+        geoContextRule: 'For economia, macroeconomia, mercados, moedas, comercio-global and geopolitica, call /context/market before writing or enriching.',
+      },
       recommendedSequence: [
         'auth',
         'readiness',

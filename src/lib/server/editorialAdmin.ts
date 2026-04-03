@@ -107,7 +107,9 @@ export interface EditorialValidationResult {
     hasSeoTitle: boolean;
     hasMetaDescription: boolean;
     hasTags: boolean;
+    hasMinimumTags: boolean;
     hasFaqItems: boolean;
+    hasMinimumFaqItems: boolean;
     hasSources: boolean;
     scheduledWithDate: boolean;
     hasApprovedStatus: boolean;
@@ -828,7 +830,9 @@ export async function validateEditorialArticle(
     hasSeoTitle: Boolean(article.seo_title?.trim()),
     hasMetaDescription: Boolean(article.meta_description?.trim()),
     hasTags: tags.length > 0,
+    hasMinimumTags: tags.length >= 3,
     hasFaqItems: faqItems.length > 0,
+    hasMinimumFaqItems: faqItems.length >= 2,
     hasSources: sources.length > 0,
     scheduledWithDate: article.status !== 'scheduled' || Boolean(article.published_at),
     hasApprovedStatus: article.editorial_status === 'approved' || article.editorial_status === 'published',
@@ -894,6 +898,22 @@ export async function validateEditorialArticle(
       severity: options.requireApproval ? 'error' : 'warning',
       message: 'Tags editoriais ausentes',
       field: 'tags',
+    });
+  } else if (!checks.hasMinimumTags) {
+    issues.push({
+      code: 'insufficient_tags',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Forneca pelo menos 3 tags editoriais para SEO e descoberta',
+      field: 'tags',
+    });
+  }
+
+  if (checks.hasFaqItems && !checks.hasMinimumFaqItems) {
+    issues.push({
+      code: 'insufficient_faq',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Forneca pelo menos 2 FAQ items para o pacote AEO',
+      field: 'faqItems',
     });
   }
 

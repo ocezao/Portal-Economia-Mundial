@@ -787,3 +787,73 @@ Limitacoes remanescentes:
 - post real criado e publicado: **concluido**
 - validacao visual com Playwright: **concluida sem screenshot em arquivo, mas com snapshot e leitura do corpo**
 - hardening residual de producao: **ainda pendente**
+
+## 7.2.6. Hardening do contrato da API editorial para agentes genericos
+
+### O que precisava ser alterado
+
+Depois do caso `trump-tax-brasil-2026`, ficou claro que nao bastava bloquear `coverImage` externo e `publish` fora do fluxo. A API ainda precisava comunicar melhor, para qualquer agente sem contexto previo, qual e o pacote editorial minimo esperado antes de publicar:
+
+- titulo
+- resumo
+- conteudo
+- categoria
+- autor
+- imagem de capa local valida
+- `seoTitle`
+- `metaDescription`
+- `tags`
+- `faqItems` para AEO
+- `sources` para atribuicao editorial e, quando aplicavel, atribuicao da imagem
+- uso de `context/market` para artigos de economia/geopolitica
+
+### O que foi feito
+
+1. Endurecida a validacao editorial em `src/lib/server/editorialAdmin.ts`:
+   - erro se houver menos de `3` tags ao publicar/aprovar
+   - erro se houver menos de `2` FAQ items ao publicar/aprovar
+
+2. Expandido o contrato de discovery/meta em:
+   - `src/lib/server/editorialApi.ts`
+   - `src/app/api/v1/editorial/route.ts`
+
+3. Expandido o OpenAPI em:
+   - `src/app/api/v1/editorial/openapi/route.ts`
+   - descricoes explicitas para `seoTitle`, `metaDescription`, `tags`, `faqItems` e `sources`
+   - thresholds de qualidade de publicacao
+   - regra de atribuicao da imagem em `sources`
+   - regra de uso de `context/market` para artigos economicos/geopoliticos
+
+4. Atualizada a documentacao operacional para agentes em:
+   - `docs/api-editorial-llm.md`
+   - com um bloco explicito de `Pacote editorial minimo para agentes genericos`
+
+### Como foi feito
+
+- leitura do contrato atual via discovery, `meta` e OpenAPI na VPS
+- comparacao com os endpoints realmente usados pelo agente que criou o artigo com erro
+- patch local com `apply_patch`
+- reforco simultaneo de documentacao e validacao, para o contrato nao ficar so “no texto”
+
+### Tecnologias usadas
+
+- Next.js route handlers
+- TypeScript
+- Zod
+- PowerShell
+- `curl` na VPS via MCP
+
+### Se conseguiu arrumar
+
+**Sim, no nivel de contrato e de enforcement.**
+
+O que isso resolve:
+
+- agentes genericos passam a receber discovery mais explicito sobre SEO, AEO, tags, fontes, autor e imagem
+- o publish deixa de aceitar pacote editorial fraco com menos de `3` tags ou menos de `2` FAQ items
+- a regra de atribuicao da imagem fica formalizada dentro de `sources`
+- artigos de economia/geopolitica passam a ter uma orientacao clara de consultar `context/market` antes de redigir/enriquecer
+
+Pendencia remanescente:
+
+- ainda e necessario subir esse estado completo para a VPS para que o comportamento real em producao reflita esse contrato reforcado
