@@ -27,6 +27,7 @@ export async function GET(req: Request) {
       slug: `${basePath}/slug?title=Seu%20titulo`,
       uploads: `${basePath}/uploads`,
       uploadLibrary: `${basePath}/uploads/library`,
+      uploadMetadata: `${basePath}/uploads`,
       jobs: `${basePath}/jobs`,
       dispatchJobs: `${basePath}/jobs/dispatch`,
     },
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
         'A chave deve ser provisionada no servidor via EDITORIAL_API_KEY; a API nao emite chaves automaticamente.',
         'Nao publique por PATCH alterando status; use validate + approve + publish/schedule.',
         'coverImage deve vir de /api/v1/editorial/uploads ou /api/v1/editorial/uploads/library.',
+        'Imagens em /uploads exigem metadados editoriais antes de publicar: title, alt, caption e credit.',
       ],
     },
     contract: {
@@ -46,7 +48,10 @@ export async function GET(req: Request) {
       publishQualityThresholds: {
         minTags: 3,
         minFaqItems: 2,
+        minSources: 2,
+        minContentChars: 1200,
         imageSourceRule: 'If the cover image came from a third party, include its attribution inside sources.',
+        coverImageMetadata: ['titleText', 'altText', 'caption', 'creditText'],
       },
       contentPackage: {
         mandatoryBeforePublish: ['title', 'excerpt', 'content', 'category', 'authorId', 'coverImage', 'seoTitle', 'metaDescription', 'tags', 'faqItems', 'sources'],

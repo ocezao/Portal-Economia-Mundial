@@ -1,4 +1,5 @@
 import { query } from '@/lib/db';
+import { listEditorialAssets } from '@/lib/server/editorialAssetStore';
 import { ensureUploadsDir, listStoredFiles } from '@/lib/server/fileStorage';
 import { getEditorialArticle } from '@/lib/server/editorialAdmin';
 import { enrichEditorialArticle } from '@/services/editorialEnrichment';
@@ -350,11 +351,20 @@ export async function listEditorialUploadLibrary(options?: {
   const search = normalizeText(options?.search ?? '');
   const limit = options?.limit ?? 50;
 
-  const files = await listStoredFiles(dir);
-  const filtered = files
-    .filter((file) => (search ? normalizeText(`${file.name} ${file.path}`).includes(search) : true))
-    .sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')))
-    .slice(0, limit);
+  let filtered: unknown[] = [];
+  try {
+    filtered = await listEditorialAssets({
+      dir: dir || undefined,
+      search: options?.search ?? undefined,
+      limit,
+    });
+  } catch {
+    const files = await listStoredFiles(dir);
+    filtered = files
+      .filter((file) => (search ? normalizeText(`${file.name} ${file.path}`).includes(search) : true))
+      .sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')))
+      .slice(0, limit);
+  }
 
   return {
     dir,

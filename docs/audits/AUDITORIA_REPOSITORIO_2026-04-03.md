@@ -910,3 +910,96 @@ Resultado:
 **Sim no repositorio; a reaplicacao na VPS ficou como proximo passo imediato desta frente.**
 
 O problema foi identificado com prova objetiva e corrigido no compose de producao versionado. O passo restante foi reimplantar a VPS com esse compose corrigido para eliminar o `ENOTFOUND database`.
+
+## 7.2.8. Biblioteca editorial de imagens no banco + fluxo SEO obrigatorio
+
+### O que precisava ser alterado
+
+O fluxo de imagem ainda dependia demais de arquivo local e storage em disco:
+
+- um agente externo precisava ter o arquivo fisico para usar `multipart`
+- nao existia uma biblioteca persistida no banco para assets editoriais
+- a API nao permitia atualizar metadados editoriais da imagem depois do upload
+- o fluxo de publicacao ainda nao exigia metadados profissionais da capa
+
+### O que foi feito
+
+1. Criada a camada `editorial_media_assets`:
+   - arquivo de runtime: `src/lib/server/editorialAssetStore.ts`
+   - migracao formal: `database/migrations/20260403223000_create_editorial_media_assets.sql`
+
+2. O endpoint `POST /api/v1/editorial/uploads` passou a:
+   - continuar aceitando `multipart/form-data`
+   - aceitar `application/json` com `base64`
+   - gravar o arquivo na VPS
+   - registrar o asset no PostgreSQL
+   - responder com `asset` + `file`
+
+3. O endpoint `PATCH /api/v1/editorial/uploads` passou a:
+   - atualizar metadados editoriais da imagem por `assetId` ou `publicUrl`
+   - campos suportados:
+     - `titleText`
+     - `altText`
+     - `caption`
+     - `creditText`
+     - `focusKeywords`
+     - `sourceType`
+     - `sourceUrl`
+     - `promptText`
+
+4. O nome fisico do arquivo passou a ser SEO-friendly:
+   - slug do nome original + sufixo curto unico
+   - em vez de UUID puro sem semantica
+
+5. `GET /api/v1/editorial/uploads/library` agora tenta ler primeiro a biblioteca registrada no banco e usa o filesystem como fallback.
+
+6. O `validate/publish` editorial ficou mais rigido:
+   - minimo de `3` tags
+   - minimo de `2` FAQ items
+   - minimo de `2` fontes
+   - minimo de `1200` caracteres de texto util
+   - se `coverImage` estiver em `/uploads`, a imagem precisa estar registrada e conter:
+     - `titleText`
+     - `altText`
+     - `caption`
+     - `creditText`
+
+7. Discovery, OpenAPI e docs foram atualizados para refletir:
+   - upload por `base64`
+   - patch de metadados da imagem
+   - thresholds de publish
+   - exigencias de metadados da capa
+
+### Como foi feito
+
+- leitura do fluxo atual de upload e biblioteca editorial
+- criacao de store de assets persistida em PostgreSQL
+- ampliacao do endpoint de upload para `multipart` e `base64`
+- introducao de endpoint para alteracao de metadados da imagem
+- endurecimento do `validate` editorial antes de `approve/publish`
+- documentacao simultanea do contrato da API
+
+### Tecnologias usadas
+
+- Next.js route handlers
+- PostgreSQL
+- Sharp
+- TypeScript
+- Docker Compose
+- PowerShell
+
+### Se conseguiu arrumar
+
+**Sim no repositorio.**
+
+Resultado pratico:
+
+- outro agente nao precisa mais de acesso direto ao banco
+- outro agente nao precisa obrigatoriamente de arquivo local se puder enviar `base64`
+- a API passa a registrar a imagem no banco e permitir enriquecimento posterior dos metadados
+- o publish fica travado se a capa gerenciada nao tiver metadados editoriais minimos
+
+Observacao importante:
+
+- isso melhora fortemente o padrao tecnico de SEO e imagem
+- mas nao existe garantia honesta de “nota maxima de ranqueamento no Google”, porque ranking depende de fatores externos e competitivos fora do controle da API

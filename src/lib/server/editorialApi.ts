@@ -194,7 +194,10 @@ export async function getEditorialMeta() {
       publishQualityThresholds: {
         minTags: 3,
         minFaqItems: 2,
+        minSources: 2,
+        minContentChars: 1200,
         imageSourceRule: 'If the cover image is not first-party, persist image attribution inside sources.',
+        coverImageMetadata: ['titleText', 'altText', 'caption', 'creditText'],
       },
       coverImageRules: [
         'Use /api/v1/editorial/uploads to send a new file and reuse data.file.url.',

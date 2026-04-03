@@ -149,9 +149,23 @@ Se for necessario zero-downtime na rotacao, o proximo passo tecnico e suportar c
 - `multipart/form-data`
 - campo obrigatorio: `file`
 - campos opcionais: `width`, `height`, `quality`, `watermark`, `keepMetadata`
+- tambem aceita `application/json` com `base64`
+- para fluxo SEO profissional da imagem, envie ou atualize:
+  - `titleText`
+  - `altText`
+  - `caption`
+  - `creditText`
+  - `focusKeywords`
+  - `sourceType`
+  - `sourceUrl`
+  - `promptText`
+
+`PATCH /api/v1/editorial/uploads`
+- atualiza metadados editoriais de uma imagem registrada
+- informe `assetId` ou `publicUrl`
 
 `GET /api/v1/editorial/uploads/library`
-- lista arquivos ja disponiveis em `public/uploads`
+- lista arquivos ja disponiveis em `public/uploads` e assets registrados no banco
 - filtros: `dir`, `search`, `limit`
 
 ## Minimal create example
@@ -238,7 +252,14 @@ Regras operacionais:
 - sempre garantir `seoTitle`, `metaDescription`, `tags` e `faqItems` antes de publicar
 - usar pelo menos `3` tags editoriais antes de publicar
 - usar pelo menos `2` FAQ items antes de publicar
+- usar pelo menos `2` fontes antes de publicar
+- manter corpo com pelo menos `1200` caracteres de texto util antes de publicar
 - `coverImage` precisa resolver para arquivo local existente; se a imagem nao existir, `validate` deve falhar
+- se `coverImage` estiver em `/uploads`, ela deve estar registrada na biblioteca editorial com:
+  - `titleText`
+  - `altText`
+  - `caption`
+  - `creditText`
 - usar `similar` antes de criar novo artigo quando houver risco de canibalizacao
 - usar `seo-audit` e `internal-links` antes de publicar
 - usar `market` para contextualizar artigos economicos e geoeconomicos
@@ -261,7 +282,8 @@ Se o agente nao conhece o projeto, assuma que um artigo publicavel nesta API pre
 - `metaDescription`
 - `tags` com pelo menos 3 itens
 - `faqItems` com pelo menos 2 pares de pergunta/resposta
-- `sources` com pelo menos 1 fonte persistida
+- `sources` com pelo menos 2 fontes persistidas
+- se usar `coverImage` em `/uploads`, a imagem precisa ter `titleText`, `altText`, `caption` e `creditText`
 
 Leitura correta por tipo de artigo:
 

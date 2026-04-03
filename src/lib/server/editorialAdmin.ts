@@ -2,6 +2,7 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 
 import { query, queryOne, queryRows, type DbClient, withTransaction } from '@/lib/db';
+import { getEditorialAssetByPublicUrl } from '@/lib/server/editorialAssetStore';
 import { enrichEditorialArticle } from '@/services/editorialEnrichment';
 import { slugifyText } from '@/lib/server/adminApi';
 import { getUploadsRoot } from '@/lib/server/fileStorage';
@@ -104,6 +105,11 @@ export interface EditorialValidationResult {
     hasAuthor: boolean;
     hasCoverImage: boolean;
     coverImageResolvable: boolean;
+    coverImageManaged: boolean;
+    coverImageHasTitleText: boolean;
+    coverImageHasAltText: boolean;
+    coverImageHasCaption: boolean;
+    coverImageHasCreditText: boolean;
     hasSeoTitle: boolean;
     hasMetaDescription: boolean;
     hasTags: boolean;
@@ -811,6 +817,9 @@ export async function validateEditorialArticle(
   const categories = Array.isArray(article.news_article_categories) ? article.news_article_categories : [];
   const faqItems = Array.isArray(article.faq_items) ? article.faq_items : [];
   const coverImageState = await resolveCoverImageState(article.cover_image);
+  const coverAsset = coverImageState.normalized?.startsWith('/uploads/')
+    ? await getEditorialAssetByPublicUrl(coverImageState.normalized)
+    : null;
   const tags = await queryRows<{ slug: string }>(
     `select t.slug
      from news_article_tags nat
@@ -827,6 +836,11 @@ export async function validateEditorialArticle(
     hasAuthor: Boolean(article.author_id?.trim()),
     hasCoverImage: Boolean(article.cover_image?.trim()),
     coverImageResolvable: coverImageState.resolvable,
+    coverImageManaged: Boolean(coverAsset),
+    coverImageHasTitleText: Boolean(coverAsset?.titleText?.trim()),
+    coverImageHasAltText: Boolean(coverAsset?.altText?.trim()),
+    coverImageHasCaption: Boolean(coverAsset?.caption?.trim()),
+    coverImageHasCreditText: Boolean(coverAsset?.creditText?.trim()),
     hasSeoTitle: Boolean(article.seo_title?.trim()),
     hasMetaDescription: Boolean(article.meta_description?.trim()),
     hasTags: tags.length > 0,
@@ -851,6 +865,46 @@ export async function validateEditorialArticle(
       code: 'invalid_cover_image',
       severity: 'error',
       message: 'Imagem de capa nao esta disponivel no storage local/publico; use uploads/library ou uploads antes de publicar',
+      field: 'coverImage',
+    });
+  }
+  if (coverImageState.normalized?.startsWith('/uploads/') && !checks.coverImageManaged) {
+    issues.push({
+      code: 'unregistered_cover_image_asset',
+      severity: 'error',
+      message: 'Imagem de capa em /uploads precisa estar registrada na biblioteca editorial',
+      field: 'coverImage',
+    });
+  }
+  if (coverImageState.normalized?.startsWith('/uploads/') && checks.coverImageManaged && !checks.coverImageHasTitleText) {
+    issues.push({
+      code: 'missing_cover_image_title',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Metadado title da imagem de capa ausente',
+      field: 'coverImage',
+    });
+  }
+  if (coverImageState.normalized?.startsWith('/uploads/') && checks.coverImageManaged && !checks.coverImageHasAltText) {
+    issues.push({
+      code: 'missing_cover_image_alt',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Metadado alt da imagem de capa ausente',
+      field: 'coverImage',
+    });
+  }
+  if (coverImageState.normalized?.startsWith('/uploads/') && checks.coverImageManaged && !checks.coverImageHasCaption) {
+    issues.push({
+      code: 'missing_cover_image_caption',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Legenda da imagem de capa ausente',
+      field: 'coverImage',
+    });
+  }
+  if (coverImageState.normalized?.startsWith('/uploads/') && checks.coverImageManaged && !checks.coverImageHasCreditText) {
+    issues.push({
+      code: 'missing_cover_image_credit',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Credito da imagem de capa ausente',
       field: 'coverImage',
     });
   }
@@ -881,6 +935,16 @@ export async function validateEditorialArticle(
     });
   } else if (metaDescriptionLength < 140 || metaDescriptionLength > 170) {
     issues.push({ code: 'meta_description_length', severity: 'warning', message: 'Meta description fora da faixa recomendada (140-170)', field: 'metaDescription' });
+  }
+
+  const contentLength = String(article.content ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().length;
+  if (contentLength < 1200) {
+    issues.push({
+      code: 'content_body_short',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Corpo do artigo curto para o padrao SEO editorial minimo (1200+ caracteres de texto)',
+      field: 'content',
+    });
   }
 
   if (!checks.hasFaqItems) {
@@ -919,6 +983,13 @@ export async function validateEditorialArticle(
 
   if (!checks.hasSources) {
     issues.push({ code: 'missing_sources', severity: 'error', message: 'Nenhuma fonte editorial persistida', field: 'sources' });
+  } else if (sources.length < 2) {
+    issues.push({
+      code: 'insufficient_sources',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Forneca pelo menos 2 fontes editoriais para publicacao',
+      field: 'sources',
+    });
   }
 
   return {
