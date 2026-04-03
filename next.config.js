@@ -69,13 +69,45 @@ const nextConfig = {
 
   // Headers de segurança e performance
   async headers() {
+    const scriptSrc = [
+      "'self'",
+      "'unsafe-inline'",
+      "'unsafe-eval'",
+      'https://cdn.onesignal.com',
+      'https://api.onesignal.com',
+      'https://www.googletagmanager.com',
+      'https://www.google-analytics.com',
+      'https://pagead2.googlesyndication.com',
+      'https://www.googleadservices.com',
+      'https://partner.googleadservices.com',
+      'https://www.clarity.ms',
+    ].join(' ');
+
+    const connectSrc = [
+      "'self'",
+      'https://*.finnhub.io',
+      'https://api.buttondown.email',
+      'https://onesignal.com',
+      'https://*.onesignal.com',
+      'https://api.onesignal.com',
+      'https://www.google-analytics.com',
+      'https://region1.google-analytics.com',
+      'https://pagead2.googlesyndication.com',
+      'https://googleads.g.doubleclick.net',
+      'https://www.googleadservices.com',
+      'https://www.clarity.ms',
+      'https://c.clarity.ms',
+    ].join(' ');
+
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.onesignal.com https://www.googletagmanager.com https://www.google-analytics.com",
+      `script-src ${scriptSrc}`,
+      `script-src-elem ${scriptSrc}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.finnhub.io https://api.buttondown.email https://onesignal.com https://*.onesignal.com https://www.google-analytics.com",
+      `connect-src ${connectSrc}`,
+      "frame-src 'self' https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
