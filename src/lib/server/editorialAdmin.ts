@@ -1,6 +1,10 @@
+import { access } from 'node:fs/promises';
+import path from 'node:path';
+
 import { query, queryOne, queryRows, type DbClient, withTransaction } from '@/lib/db';
 import { enrichEditorialArticle } from '@/services/editorialEnrichment';
 import { slugifyText } from '@/lib/server/adminApi';
+import { getUploadsRoot } from '@/lib/server/fileStorage';
 
 export interface EditorialFaqInput {
   question: string;
@@ -99,8 +103,10 @@ export interface EditorialValidationResult {
     hasCategory: boolean;
     hasAuthor: boolean;
     hasCoverImage: boolean;
+    coverImageResolvable: boolean;
     hasSeoTitle: boolean;
     hasMetaDescription: boolean;
+    hasTags: boolean;
     hasFaqItems: boolean;
     hasSources: boolean;
     scheduledWithDate: boolean;
@@ -151,6 +157,92 @@ function normalizeSources(value?: EditorialSourceInput[]) {
       accessedAt: item.accessedAt || null,
     }))
     .filter((item) => item.sourceName);
+}
+
+function getConfiguredSiteOrigin() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.SITE_URL?.trim();
+  if (!raw) return null;
+
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeCoverImageUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.startsWith('/')) return trimmed;
+
+  try {
+    const parsed = new URL(trimmed);
+    const configuredOrigin = getConfiguredSiteOrigin();
+    if (configuredOrigin && parsed.origin === configuredOrigin) {
+      return `${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    return trimmed;
+  }
+
+  return trimmed;
+}
+
+async function fileExists(targetPath: string) {
+  try {
+    await access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveCoverImageState(coverImage?: string | null) {
+  const normalized = typeof coverImage === 'string' ? normalizeCoverImageUrl(coverImage) : undefined;
+  if (!normalized) {
+    return { normalized: undefined, resolvable: false, reason: 'missing' as const };
+  }
+
+  if (!normalized.startsWith('/')) {
+    return { normalized, resolvable: false, reason: 'external' as const };
+  }
+
+  if (normalized.startsWith('/uploads/')) {
+    const relative = normalized.replace(/^\/uploads\//, '');
+    const absolute = path.join(getUploadsRoot(), relative);
+    const exists = await fileExists(absolute);
+    return { normalized, resolvable: exists, reason: exists ? 'ok' as const : 'missing_asset' as const };
+  }
+
+  if (normalized.startsWith('/images/')) {
+    const absolute = path.join(process.cwd(), 'public', normalized.replace(/^\/+/, ''));
+    const exists = await fileExists(absolute);
+    return { normalized, resolvable: exists, reason: exists ? 'ok' as const : 'missing_asset' as const };
+  }
+
+  return { normalized, resolvable: false, reason: 'unsupported_path' as const };
+}
+
+async function assertCoverImageAccepted(coverImage?: string | null) {
+  const state = await resolveCoverImageState(coverImage);
+
+  if (!state.normalized) {
+    throw new Error('Imagem de capa e obrigatoria');
+  }
+
+  if (state.reason === 'external') {
+    throw new Error('coverImage externo nao e aceito; use /api/v1/editorial/uploads ou /api/v1/editorial/uploads/library');
+  }
+
+  if (state.reason === 'unsupported_path') {
+    throw new Error('coverImage invalido; use caminho local em /uploads/... ou /images/...');
+  }
+
+  if (state.reason === 'missing_asset') {
+    throw new Error('Arquivo de capa nao encontrado no storage local; faca upload antes de criar ou atualizar o artigo');
+  }
+
+  return state.normalized;
 }
 
 async function syncCategory(client: DbClient, articleId: string, categorySlug?: string) {
@@ -309,7 +401,7 @@ export async function createEditorialArticle(_admin: unknown, payload: Editorial
   if (!content) throw new Error('Conteudo e obrigatorio');
   if (!category) throw new Error('Categoria e obrigatoria');
   if (!authorId) throw new Error('Autor e obrigatorio');
-  if (!coverImage) throw new Error('Imagem de capa e obrigatoria');
+  const normalizedCoverImage = await assertCoverImageAccepted(coverImage);
   if (status !== 'draft') throw new Error('Fluxo editorial exige criacao inicial como draft');
 
   const nextPublishedAt = publishedAt ?? (status === 'draft' ? null : new Date().toISOString());
@@ -340,7 +432,7 @@ export async function createEditorialArticle(_admin: unknown, payload: Editorial
         excerpt,
         metaDescription || null,
         content,
-        coverImage,
+        normalizedCoverImage,
         authorId,
         author || authorId,
         status,
@@ -392,6 +484,9 @@ export async function updateEditorialArticle(
   payload: EditorialPayload,
 ) {
   const existing = await resolveArticle(identifier, lookup);
+  if (payload.status !== undefined && payload.status !== 'draft') {
+    throw new Error('Atualizacao direta de status para scheduled/published nao e permitida; use approve + publish/schedule');
+  }
 
   return withTransaction(async (client) => {
     const assignments: string[] = [];
@@ -410,7 +505,7 @@ export async function updateEditorialArticle(
     if (payload.excerpt !== undefined) push('excerpt', payload.excerpt);
     if (payload.metaDescription !== undefined) push('meta_description', payload.metaDescription);
     if (payload.content !== undefined) push('content', payload.content);
-    if (payload.coverImage !== undefined) push('cover_image', payload.coverImage);
+    if (payload.coverImage !== undefined) push('cover_image', await assertCoverImageAccepted(payload.coverImage));
     if (payload.authorId !== undefined) {
       push('author_id', payload.authorId);
       push('author_name', payload.author || payload.authorId);
@@ -713,6 +808,14 @@ export async function validateEditorialArticle(
   const sources = Array.isArray(article.article_sources) ? article.article_sources : [];
   const categories = Array.isArray(article.news_article_categories) ? article.news_article_categories : [];
   const faqItems = Array.isArray(article.faq_items) ? article.faq_items : [];
+  const coverImageState = await resolveCoverImageState(article.cover_image);
+  const tags = await queryRows<{ slug: string }>(
+    `select t.slug
+     from news_article_tags nat
+     join tags t on t.id = nat.tag_id
+     where nat.article_id = $1`,
+    [article.id],
+  );
 
   const checks = {
     hasTitle: Boolean(article.title?.trim()),
@@ -721,8 +824,10 @@ export async function validateEditorialArticle(
     hasCategory: categories.length > 0,
     hasAuthor: Boolean(article.author_id?.trim()),
     hasCoverImage: Boolean(article.cover_image?.trim()),
+    coverImageResolvable: coverImageState.resolvable,
     hasSeoTitle: Boolean(article.seo_title?.trim()),
     hasMetaDescription: Boolean(article.meta_description?.trim()),
+    hasTags: tags.length > 0,
     hasFaqItems: faqItems.length > 0,
     hasSources: sources.length > 0,
     scheduledWithDate: article.status !== 'scheduled' || Boolean(article.published_at),
@@ -737,6 +842,14 @@ export async function validateEditorialArticle(
   if (!checks.hasCategory) issues.push({ code: 'missing_category', severity: 'error', message: 'Categoria obrigatoria ausente', field: 'category' });
   if (!checks.hasAuthor) issues.push({ code: 'missing_author', severity: 'error', message: 'Autor obrigatorio ausente', field: 'authorId' });
   if (!checks.hasCoverImage) issues.push({ code: 'missing_cover_image', severity: 'error', message: 'Imagem de capa obrigatoria ausente', field: 'coverImage' });
+  if (checks.hasCoverImage && !checks.coverImageResolvable) {
+    issues.push({
+      code: 'invalid_cover_image',
+      severity: 'error',
+      message: 'Imagem de capa nao esta disponivel no storage local/publico; use uploads/library ou uploads antes de publicar',
+      field: 'coverImage',
+    });
+  }
   if (!checks.scheduledWithDate) issues.push({ code: 'missing_schedule_date', severity: 'error', message: 'Artigo agendado sem publishedAt', field: 'publishedAt' });
   if (options.requireApproval && !checks.hasApprovedStatus) {
     issues.push({ code: 'missing_approval', severity: 'error', message: 'Artigo precisa estar aprovado antes de publicar ou agendar', field: 'editorialStatus' });
@@ -744,20 +857,44 @@ export async function validateEditorialArticle(
 
   const seoTitleLength = article.seo_title?.trim().length ?? 0;
   if (!checks.hasSeoTitle) {
-    issues.push({ code: 'missing_seo_title', severity: 'warning', message: 'SEO title ausente', field: 'seoTitle' });
+    issues.push({
+      code: 'missing_seo_title',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'SEO title ausente',
+      field: 'seoTitle',
+    });
   } else if (seoTitleLength < 45 || seoTitleLength > 65) {
     issues.push({ code: 'seo_title_length', severity: 'warning', message: 'SEO title fora da faixa recomendada (45-65)', field: 'seoTitle' });
   }
 
   const metaDescriptionLength = article.meta_description?.trim().length ?? 0;
   if (!checks.hasMetaDescription) {
-    issues.push({ code: 'missing_meta_description', severity: 'warning', message: 'Meta description ausente', field: 'metaDescription' });
+    issues.push({
+      code: 'missing_meta_description',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Meta description ausente',
+      field: 'metaDescription',
+    });
   } else if (metaDescriptionLength < 140 || metaDescriptionLength > 170) {
     issues.push({ code: 'meta_description_length', severity: 'warning', message: 'Meta description fora da faixa recomendada (140-170)', field: 'metaDescription' });
   }
 
   if (!checks.hasFaqItems) {
-    issues.push({ code: 'missing_faq', severity: 'warning', message: 'FAQ persistido ausente', field: 'faqItems' });
+    issues.push({
+      code: 'missing_faq',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'FAQ persistido ausente',
+      field: 'faqItems',
+    });
+  }
+
+  if (!checks.hasTags) {
+    issues.push({
+      code: 'missing_tags',
+      severity: options.requireApproval ? 'error' : 'warning',
+      message: 'Tags editoriais ausentes',
+      field: 'tags',
+    });
   }
 
   if (!checks.hasSources) {

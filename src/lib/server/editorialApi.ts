@@ -180,6 +180,36 @@ export async function getEditorialMeta() {
       photo: author.photo,
       expertise: author.expertise,
     })),
+    contract: {
+      createDraftRequired: ['title', 'slug', 'excerpt', 'content', 'category', 'authorId', 'coverImage'],
+      publishRequired: [
+        'seoTitle',
+        'metaDescription',
+        'tags',
+        'faqItems',
+        'sources',
+        'approved editorial status',
+        'coverImage resolvable in /uploads or /images',
+      ],
+      coverImageRules: [
+        'Use /api/v1/editorial/uploads to send a new file and reuse data.file.url.',
+        'Or pick an existing asset from /api/v1/editorial/uploads/library.',
+        'External coverImage URLs are rejected.',
+        'Absolute URLs from the same site are normalized to local paths.',
+      ],
+      workflow: [
+        'auth',
+        'readiness',
+        'meta',
+        'uploads.library or uploads',
+        'articles.create as draft',
+        'sources.add',
+        'articles.enrich',
+        'articles.validate',
+        'articles.approve',
+        'articles.publish or articles.schedule',
+      ],
+    },
   };
 }
 

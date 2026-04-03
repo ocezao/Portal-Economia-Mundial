@@ -103,6 +103,7 @@ const openApiDocument = {
       },
       EditorialArticlePayload: {
         type: 'object',
+        required: ['title', 'slug', 'excerpt', 'content', 'category', 'authorId', 'coverImage'],
         properties: {
           title: { type: 'string' },
           slug: { type: 'string' },
@@ -114,7 +115,11 @@ const openApiDocument = {
           authorId: { type: 'string' },
           author: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
-          coverImage: { type: 'string' },
+          coverImage: {
+            type: 'string',
+            description: 'Use data.file.url returned by /uploads or a publicUrl from /uploads/library. External URLs are rejected.',
+            example: '/uploads/2026/04/capa.webp',
+          },
           featured: { type: 'boolean' },
           breaking: { type: 'boolean' },
           readingTime: { type: 'integer' },
@@ -267,7 +272,7 @@ const openApiDocument = {
       },
       post: {
         summary: 'Cria um artigo',
-        description: 'O fluxo editorial exige criacao inicial como draft.',
+        description: 'O fluxo editorial exige criacao inicial como draft. Use coverImage local de /uploads ou /images, nunca URL externa.',
         requestBody: {
           required: true,
           content: {
@@ -299,6 +304,7 @@ const openApiDocument = {
       },
       patch: {
         summary: 'Atualiza um artigo',
+        description: 'Nao use PATCH para publicar ou agendar. Status final deve passar por approve + publish/schedule.',
         responses: {
           200: { '$ref': '#/components/responses/Success' },
           400: { '$ref': '#/components/responses/ValidationRequired' },
@@ -496,6 +502,15 @@ const openApiDocument = {
     'A chave precisa ser provisionada externamente via EDITORIAL_API_KEY.',
     'Esta API nao possui endpoint para emissao automatica de credenciais.',
   ],
+  'x-agent-contract': {
+    draftRequired: ['title', 'slug', 'excerpt', 'content', 'category', 'authorId', 'coverImage'],
+    publishRequired: ['seoTitle', 'metaDescription', 'tags', 'faqItems', 'sources', 'approved status', 'resolvable local coverImage'],
+    coverImageRules: [
+      'Call /uploads or /uploads/library before create/update.',
+      'Do not send external coverImage URLs.',
+      'If you have a same-site absolute URL, the API normalizes it to a local path.',
+    ],
+  },
   'x-workflow': {
     create: 'draft only',
     requiredSequence: [

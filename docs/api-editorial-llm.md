@@ -153,6 +153,17 @@ Se for necessario zero-downtime na rotacao, o proximo passo tecnico e suportar c
 
 ## Minimal create example
 
+Precondicoes importantes para qualquer agente:
+
+- `coverImage` deve apontar para asset local valido em `/uploads/...` ou `/images/...`
+- nao use URL externa em `coverImage`
+- o caminho recomendado e sempre:
+  1. `GET /uploads/library` para tentar reutilizar imagem existente
+  2. `POST /uploads` se precisar subir uma imagem nova
+  3. reutilizar `data.file.url` retornado pelo upload
+- criacao e sempre em `draft`
+- publicacao e agendamento nao devem ser feitos via `PATCH`
+
 ```bash
 curl -X POST "https://seu-dominio/api/v1/editorial/articles" \
   -H "Authorization: Bearer $EDITORIAL_API_KEY" \
@@ -217,9 +228,12 @@ curl -X POST "https://seu-dominio/api/cron?type=editorial-jobs" \
 Regras operacionais:
 
 - nao tentar criar artigo ja em `published`
+- nao tentar publicar ou agendar via `PATCH /articles/{id}`
 - nao tentar `approve` sem antes passar em `validate`
 - nao tentar `publish` ou `schedule` sem `approve`
 - sempre persistir pelo menos uma fonte antes de publicar
+- sempre garantir `seoTitle`, `metaDescription`, `tags` e `faqItems` antes de publicar
+- `coverImage` precisa resolver para arquivo local existente; se a imagem nao existir, `validate` deve falhar
 - usar `similar` antes de criar novo artigo quando houver risco de canibalizacao
 - usar `seo-audit` e `internal-links` antes de publicar
 - usar `market` para contextualizar artigos economicos e geoeconomicos

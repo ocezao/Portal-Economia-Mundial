@@ -26,6 +26,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'cenariointernacional.com.br',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.cenariointernacional.com.br',
+      },
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com',
       },
       {
