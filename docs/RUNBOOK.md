@@ -73,12 +73,15 @@ curl -X POST "https://cenariointernacional.com.br/api/cron?type=editorial-jobs" 
 
 ```bash
 cd /var/www/portal
-git pull origin main
-npm ci
-npm run build
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 ```
 
-Depois, reinicie o processo da aplicacao conforme o gerenciador usado na VPS.
+Observacoes:
+
+- a stack de producao esperada e Docker Compose
+- o banco principal da aplicacao sobe no proprio `docker-compose.prod.yml` como servico `database`
+- `DATABASE_URL` dos containers deve resolver internamente para `database:5432`
+- evitar `git pull` por cima de checkout sujo; preferir release limpo + troca de symlink
 
 ## Troubleshooting
 

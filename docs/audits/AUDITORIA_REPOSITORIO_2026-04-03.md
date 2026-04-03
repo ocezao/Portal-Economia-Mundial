@@ -857,3 +857,56 @@ O que isso resolve:
 Pendencia remanescente:
 
 - ainda e necessario subir esse estado completo para a VPS para que o comportamento real em producao reflita esse contrato reforcado
+
+## 7.2.7. Correcao do compose de producao para alinhar repo e VPS
+
+### O que precisava ser alterado
+
+Ao subir a VPS com o estado completo do repositorio, apareceu um desvio estrutural importante:
+
+- `docker-compose.prod.yml` nao descrevia o banco principal da aplicacao
+- os containers `portal-web`, `portal-api` e `portal-collector` dependiam de `DATABASE_URL`
+- o `.env` da VPS apontava `DATABASE_URL` para `database:5432`
+- mas o servico `database` nao existia no compose de producao
+
+Resultado:
+
+- a VPS atualizava para o release novo
+- mas o health ficava `degraded`
+- erro observado: `getaddrinfo ENOTFOUND database`
+
+### O que foi feito
+
+1. Atualizado `docker-compose.prod.yml` para incluir o servico `database` (PostgreSQL principal)
+2. Alinhado o `DATABASE_URL` dos containers para ser derivado por compose:
+   - `postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_NAME}`
+3. Adicionado `depends_on` com `service_healthy` para:
+   - `web`
+   - `api`
+   - `collector`
+4. Atualizado `docs/RUNBOOK.md` para refletir:
+   - deploy por Docker Compose
+   - banco principal interno no compose de producao
+   - recomendacao de release limpo em vez de `git pull` em checkout sujo
+
+### Como foi feito
+
+- deploy real do release completo na VPS
+- leitura do `health` da aplicacao em producao
+- leitura do `.env` ativo da VPS
+- comparacao entre `docker-compose.yml` e `docker-compose.prod.yml`
+- patch local com `apply_patch`
+
+### Tecnologias usadas
+
+- Docker Compose
+- PostgreSQL
+- Next.js
+- PowerShell
+- MCP `vps_admin_http`
+
+### Se conseguiu arrumar
+
+**Sim no repositorio; a reaplicacao na VPS ficou como proximo passo imediato desta frente.**
+
+O problema foi identificado com prova objetiva e corrigido no compose de producao versionado. O passo restante foi reimplantar a VPS com esse compose corrigido para eliminar o `ENOTFOUND database`.
