@@ -32,6 +32,7 @@ export default [
       file: 'dist/analytics.umd.js',
       format: 'umd',
       name: 'CINAnalytics',
+      exports: 'named',
       sourcemap: true
     },
     plugins: [
@@ -48,6 +49,7 @@ export default [
       file: '../public/analytics/analytics.min.js',
       format: 'iife',
       name: 'CINAnalytics',
+      exports: 'named',
       sourcemap: true
     },
     plugins: [

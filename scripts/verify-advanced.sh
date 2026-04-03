@@ -170,8 +170,8 @@ REQUIRED_COLLECTOR_FILES=(
     "collector/src/server.ts"
     "collector/src/routes/collect.ts"
     "collector/src/routes/health.ts"
-    "collector/src/db/insert.ts"
-    "collector/src/db/migrations/0001_init.sql"
+    "collector/src/db.ts"
+    "collector/src/logger.ts"
 )
 
 COLLECTOR_OK=true

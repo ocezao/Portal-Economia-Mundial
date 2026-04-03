@@ -38,7 +38,7 @@ export class AnalyticsSDK {
   private queue: QueueItem[] = [];
   private isOnline: boolean = true;
   private flushInterval: number | null = null;
-  private debug: boolean = false;
+  protected debug: boolean = false;
   private initialized: boolean = false;
   private sendAttempts: Map<string, number> = new Map();
   private maxRetries: number = 3;
@@ -263,7 +263,7 @@ export class AnalyticsSDK {
 
   // ========== Métodos privados ==========
 
-  private log(message: string): void {
+  protected log(message: string): void {
     sdkLogger.debug(this.debug, `[CIN Analytics] ${message}`);
   }
 

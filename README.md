@@ -7,6 +7,8 @@ Aplicacao Next.js com PostgreSQL local, autenticacao por sessao HTTP-only, uploa
 ```text
 /src
 /collector
+/sdk
+/public/analytics
 /database
 /docs
 /nginx
@@ -48,3 +50,8 @@ npm run build
 ## Referencia
 
 - `docs/audits/AUDITORIA_REPOSITORIO_2026-04-03.md`
+
+## Componentes oficiais adicionais
+
+- `collector/`: servico Fastify de coleta first-party usado no `docker-compose`
+- `sdk/`: fonte oficial do bundle publicado em `public/analytics/analytics.min.js`

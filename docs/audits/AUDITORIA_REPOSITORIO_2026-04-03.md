@@ -448,3 +448,67 @@ Status na consolidacao: **pendente**
 
 - mencoes historicas a `supabase/` permanecem apenas dentro deste proprio relatorio, como registro de auditoria do que foi removido
 - a partir daqui, a unica fase estrutural ainda aberta e a decisao final sobre `collector/` e `sdk` com revalidacao final de codigo morto
+
+## 13. Fase 3 - Decisao final sobre `collector/` e `sdk`
+
+### O que precisava ser alterado
+
+1. decidir se `collector/` continuava como parte oficial da stack ou se era resido legado
+2. decidir se `sdk/` continuava como fonte oficial do analytics ou se havia virado codigo morto
+3. revalidar scripts e documentacao ligados a esses dois componentes
+4. fechar a ultima frente de codigo potencialmente morto ou mal classificado
+
+### O que foi feito
+
+- validado que `collector/` continua oficial porque:
+  - existe como servico no `docker-compose.yml` e no `docker-compose.prod.yml`
+  - tem build proprio funcional
+  - e a trilha suportada para ingestao first-party em `POST /collect`
+- validado que `sdk/` continua oficial porque:
+  - gera o bundle publicado em `public/analytics/analytics.min.js`
+  - e referenciado pelo script de verificacao avancada
+  - documenta a API do analytics first-party e mantem a fonte do artefato publico
+- corrigido `sdk/src/core/analytics.ts` para expor `debug` e `log` como `protected`, removendo os warnings de TypeScript na extensao `CINAnalytics`
+- atualizado `scripts/verify-advanced.sh` para validar a estrutura real atual do `collector`
+- atualizado `README.md` para registrar `collector/`, `sdk/` e `public/analytics/` como partes oficiais da arquitetura atual
+
+### Como foi feito
+
+1. varredura textual por referencias a `collector` e `sdk` no runtime, docs, scripts e Compose
+2. validacao de build propria com:
+   - `collector\\npm run build`
+   - `sdk\\npm run build`
+3. leitura da relacao entre `sdk/` e o artefato publicado em `public/analytics/analytics.min.js`
+4. correcao dos warnings de heranca no SDK
+5. alinhamento da verificacao automatizada e da documentacao principal
+
+### Quais tecnologias foram usadas
+
+- PowerShell
+- Git
+- ripgrep / busca textual recursiva
+- TypeScript
+- Rollup
+- Fastify
+- Docker Compose
+- patches manuais
+- `npm run build`
+
+### Se conseguiu arrumar
+
+**Sim.**
+
+- `collector/` foi classificado como componente oficial ativo, nao como codigo morto
+- `sdk/` foi classificado como componente oficial ativo, nao como codigo morto
+- a validacao avancada deixou de apontar para a estrutura antiga do `collector`
+- os warnings estruturais do build do SDK foram removidos
+- a fase final da auditoria foi encerrada
+
+### Observacoes
+
+- `sdk/` nao e importado diretamente pelo app principal; ele atua como fonte de build do bundle distribuido em `public/analytics/`
+- `collector/` permanece acoplado ao banco local e ao stack Docker, portanto continua dentro do monorepo por decisao tecnica valida
+- a partir desta secao, nao restam fases estruturais abertas da auditoria
+- validacao final:
+  - `collector\\npm run build`: concluido com sucesso
+  - `sdk\\npm run build`: concluido com sucesso, sem warnings
