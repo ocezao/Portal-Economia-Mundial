@@ -512,3 +512,278 @@ Status na consolidacao: **pendente**
 - validacao final:
   - `collector\\npm run build`: concluido com sucesso
   - `sdk\\npm run build`: concluido com sucesso, sem warnings
+
+## 14. Auditoria de compatibilidade Local x VPS apos a consolidacao
+
+### Objetivo
+
+Verificar se o estado atual do repositorio cria dependencias que funcionam apenas em ambiente local ou que podem quebrar quando publicados na VPS.
+
+### Fontes usadas
+
+- codigo atual do repositorio
+- `.env.example`
+- `docker-compose.prod.yml`
+- `Dockerfile`
+- `src/lib/server/localAuth.ts`
+- `src/lib/server/fileStorage.ts`
+- `src/lib/server/email.ts`
+- `src/app/api/upload/route.ts`
+- `src/app/api/contact-messages/route.ts`
+- `src/app/api/career-applications/route.ts`
+- `src/app/api/newsletter/subscribe/route.ts`
+- validacoes locais de imports e variaveis de ambiente
+- inspecao da VPS real via MCP (`system_info`, `docker compose config`, `docker exec`, leitura do `.env` e do checkout em `/var/www/portal`)
+
+### Fatos observados
+
+1. O checkout atual da VPS nao corresponde ao estado consolidado do repositorio.
+   - `/var/www/portal` esta em `HEAD detached`
+   - o checkout esta sujo e cheio de modificacoes locais
+   - o `docker-compose.prod.yml` e o `Dockerfile` da VPS ainda pertencem a arquitetura antiga baseada em variaveis `SUPABASE_*`
+
+2. O contrato de ambiente da VPS ainda nao foi alinhado ao runtime novo.
+   - a VPS atual nao tem `LOCAL_AUTH_SECRET`
+   - a VPS atual nao tem `AUTH_SESSION_SECRET`
+   - a VPS atual nao tem `UPLOADS_DIR`
+
+3. O runtime novo de auth local nao falha sem segredo, mas cai em fallback inseguro.
+   - `src/lib/server/localAuth.ts` usa `change-me-local-auth-secret` quando `LOCAL_AUTH_SECRET` e `AUTH_SESSION_SECRET` nao existem
+   - isso faria a autenticacao funcionar na VPS, mas com segredo previsivel e inadequado para producao
+
+4. O upload local, como esta hoje, tem alto risco de falhar na VPS se subir sem ajuste.
+   - `src/lib/server/fileStorage.ts` usa `UPLOADS_DIR` ou fallback para `process.cwd()/public/uploads`
+   - o container da VPS roda como usuario `nextjs`
+   - a verificacao real dentro do container mostrou que `/app/public` e `root:root` e nao e gravavel pelo usuario da aplicacao
+   - sem `UPLOADS_DIR` externo e gravavel, o upload tende a falhar com permissao negada
+
+5. O `docker-compose.prod.yml` novo do repositorio ainda nao injeta varias variaveis de runtime usadas pelo app.
+   - email: `SMTP_*`, `FROM_*`, `REPLY_TO`
+   - caixas de destino: `CONTACT_INBOX_EMAIL`, `CAREERS_INBOX_EMAIL`, `NEWSLETTER_INBOX_EMAIL`
+   - editorial/ip bypass: `ALLOW_INTERNAL_EDITORIAL_IP_BYPASS`, `EDITORIAL_ALLOWED_IPS`, `EDITORIAL_ALLOWED_CIDRS`, `EDITORIAL_ALLOW_PRIVATE_NETWORKS`
+   - ads/finnhub/metabase opcionais de frontend e painel
+   - isso nao necessariamente derruba o boot, mas desliga funcionalidades ou muda comportamento em producao
+
+6. O `docker compose config` da VPS atual mostrou warnings de variaveis faltando na configuracao ativa.
+   - `FINNHUB_API_KEY` nao esta setada
+   - `METABASE_DB_PASSWORD` nao esta setada
+   - isso ja indica drift operacional no ambiente atual
+
+7. O build local nao mostrou problemas de casing de imports.
+   - a checagem de imports relativos e `@/` nao encontrou divergencias de maiusculas/minusculas escondidas pelo Windows
+   - isso reduz risco de quebra exclusiva de Linux nesse ponto
+
+### Interpretacao
+
+- o principal risco hoje nao e “dependencia que so funciona localmente” no codigo-fonte puro
+- o principal risco e **drift de ambiente e deploy**
+- o repositorio consolidado esta coerente, mas a VPS real ainda esta presa no runtime antigo
+- se o codigo novo for enviado para la sem alinhar compose, secrets e uploads, a chance de quebra funcional e alta
+
+### Riscos classificados
+
+#### P0
+
+- **auth local em producao sem segredo explicito**
+  - impacto: sessao assinada com segredo previsivel
+  - causa: ausencia de `LOCAL_AUTH_SECRET` e `AUTH_SESSION_SECRET` na VPS
+
+- **upload local com diretório default nao gravavel**
+  - impacto: falha em `/api/upload` e rotas administrativas de arquivo
+  - causa: `UPLOADS_DIR` ausente + `/app/public` nao gravavel pelo usuario `nextjs`
+
+- **deploy direto sobre checkout antigo/sujo da VPS**
+  - impacto: estado imprevisivel, mistura de arquiteturas e chance alta de regressao
+  - causa: `/var/www/portal` fora de branch limpa e ainda em stack antiga
+
+#### P1
+
+- **compose novo sem todas as variaveis de runtime usadas pelo app**
+  - impacto: email, newsletter, painéis e bypass editorial podem parar ou degradar
+
+- **VPS atual ainda com compose/Dockerfile antigos de Supabase**
+  - impacto: novo runtime nao sera reproduzido corretamente se o deploy nao substituir essa trilha inteira
+
+- **variaveis opcionais de monetizacao e comportamento de frontend nao injetadas no build de producao**
+  - impacto: blocos de AdSense, flags de Finnhub e partes do Metabase podem degradar silenciosamente
+
+### Conclusao
+
+**Nao encontrei evidência de que o codigo novo dependa de Windows/local paths ou imports que so funcionem localmente.**
+
+**Encontrei evidência forte de que o deploy para a VPS vai quebrar ou degradar se ocorrer sem alinhar ambiente e compose.**
+
+O estado correto e:
+
+- codigo: **majoritariamente portavel para a VPS**
+- ambiente da VPS atual: **ainda incompatível com o runtime consolidado**
+- deploy seguro exige:
+  1. checkout limpo
+  2. compose novo
+  3. segredos de auth local
+  4. `UPLOADS_DIR` gravavel
+  5. variaveis de email/editorial/ads/painel alinhadas
+
+## 15. API editorial e publicacao real na VPS
+
+### O que precisava ser alterado
+
+1. Descobrir por que agentes diziam que publicaram artigos, mas a pagina publica caia em:
+   - `Algo deu errado`
+   - `Tente recarregar a pagina. Se o erro persistir, volte mais tarde.`
+
+2. Validar o fluxo editorial real na producao:
+   - `auth`
+   - `readiness`
+   - `meta`
+   - `create`
+   - `validate`
+   - `approve`
+   - `publish`
+
+3. Criar um artigo real com:
+   - capa
+   - SEO
+   - metadados
+   - FAQ
+   - fontes
+
+4. Confirmar visualmente na VPS, e nao no ambiente local.
+
+### Fatos observados
+
+1. A API editorial viva respondeu normalmente em:
+   - `GET /api/v1/editorial/auth`
+   - `GET /api/v1/editorial/readiness`
+   - `GET /api/v1/editorial/meta`
+
+2. O log real do `portal-web` na VPS mostrava repetidamente:
+   - `TypeError: Cannot read properties of null (reading 'startsWith')`
+   - origem: `.next/server/app/(site)/noticias/[slug]/page.js`
+
+3. O banco de producao tinha ao menos um artigo `published` com `cover_image` nulo/vazio.
+   - contagem antes da correcao: `1`
+   - contagem depois da correcao operacional: `0`
+
+4. O checkout da VPS continuava antigo e inconsistente.
+   - a pagina de artigo ainda tinha a versao vulneravel de `article.coverImage.startsWith('http')`
+
+5. Depois do rebuild inicial do `portal-web`, surgiu outro problema estrutural:
+   - `DATABASE_URL` do container `portal-web` apontava para `db.aszrihpepmdwmggoqirw.supabase.co`
+   - o host falhava com `ENOTFOUND`
+   - a pagina publica do artigo passava a responder como `404`
+
+6. O `.env` da VPS estava corrompido nessa area:
+   - existia uma linha espuria `nDATABASE_URL=...n`
+   - e a linha `DATABASE_URL=` real ainda apontava para o host antigo do Supabase
+
+### Interpretacao
+
+- o erro que o usuario via nao era “fantasma de agente”; havia falha estrutural real na renderizacao publica
+- a causa raiz imediata era a pagina do artigo nao tolerar `coverImage` nulo
+- o ambiente da VPS agravava o problema, porque o `portal-web` estava sendo recriado com `DATABASE_URL` antigo/invalido
+- isso explica por que a API podia parecer funcional em parte, mas a pagina publica quebrava ou voltava `404`
+
+### O que foi feito
+
+1. Corrigido o dado quebrado em producao:
+   - atualizado `cover_image` dos artigos `published` sem capa para um asset interno valido
+
+2. Executado um artigo real via API editorial na VPS:
+   - slug: `o-que-e-estagflacao-e-como-afeta-juros-cambio-e-bolsa-2026`
+   - `id`: `ce410d26-1c88-4dc3-9071-0e93e4c06549`
+   - status final: `published`
+
+3. Persistidos no artigo:
+   - `seoTitle`
+   - `metaDescription`
+   - `coverImage`
+   - `faqItems`
+   - `sources`
+   - categoria editorial valida em producao (`economia`)
+
+4. Aplicado hotfix de null-safety na pagina de artigo da VPS:
+   - fallback para `SEO_CONFIG.og.image` quando `article.coverImage` vier nulo/vazio
+
+5. Aplicado o mesmo hotfix no repositorio local em:
+   - `src/app/(site)/noticias/[slug]/page.tsx`
+
+6. Corrigido o `DATABASE_URL` real da VPS para a base local:
+   - `postgresql://portal_user:***@database:5432/portal`
+
+7. Recriado o container `portal-web` para subir com:
+   - codigo da pagina com fallback
+   - `DATABASE_URL` correto
+
+### Como foi feito
+
+- leitura de codigo local com PowerShell e `rg`
+- leitura operacional da VPS com MCP `vps_admin_http`
+- consultas SQL diretas dentro do container PostgreSQL da VPS
+- chamadas HTTP reais para a API editorial com `curl`
+- validacao visual com Playwright via `page.goto(...)`
+- patch local com `apply_patch`
+
+### Tecnologias usadas
+
+- Next.js
+- PostgreSQL
+- Docker Compose
+- API editorial HTTP
+- Playwright
+- PowerShell
+- Python para patch pontual de arquivo/`.env` na VPS
+
+### Se conseguiu arrumar
+
+**Parcialmente sim, com prova funcional do fluxo editorial e do artigo publicado.**
+
+O que ficou comprovado:
+
+- a API editorial publicou um artigo real na VPS
+- o artigo existe em producao com `status = published`
+- o HTML server-side final da URL publica contem:
+  - titulo
+  - breadcrumb
+  - categoria
+  - selo `Verificado`
+  - autor
+  - imagem
+  - corpo
+  - bloco de fontes
+- o Playwright, usando `page.goto(...)`, conseguiu ler o corpo publicado da pagina real
+
+Evidencia operacional do Playwright:
+
+- URL: `https://cenariointernacional.com.br/noticias/o-que-e-estagflacao-e-como-afeta-juros-cambio-e-bolsa-2026/`
+- titulo: `O que e estagflacao e como ela afeta juros, cambio e bolsa | Cenario Internacional`
+- corpo visivel incluiu:
+  - `ECONOMIA`
+  - `Verificado`
+  - `Ana Silva`
+  - `Referencias consultadas`
+
+Limitacoes remanescentes:
+
+1. O wrapper de screenshot do Playwright falhou no desktop com:
+   - `EPERM: operation not permitted, mkdir 'C:\\Windows\\System32\\.playwright-mcp'`
+   - por isso a prova visual ficou registrada por:
+     - snapshot
+     - `page.goto(...)`
+     - leitura de `innerText`
+     - HTML final coletado da propria VPS
+
+2. Ainda existem erros de console nao bloqueantes no frontend vivo:
+   - CSP bloqueando AdSense, Clarity e OneSignal
+   - `503` em `/api/telemetry/error`
+
+3. O `.env` da VPS ainda esta sujo e precisa limpeza formal:
+   - linha espuria `nDATABASE_URL=...n`
+
+### Estado final desta frente
+
+- diagnostico estrutural: **concluido**
+- fluxo editorial real na VPS: **concluido**
+- post real criado e publicado: **concluido**
+- validacao visual com Playwright: **concluida sem screenshot em arquivo, mas com snapshot e leitura do corpo**
+- hardening residual de producao: **ainda pendente**

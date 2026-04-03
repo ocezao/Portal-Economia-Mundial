@@ -44,9 +44,13 @@ export async function generateMetadata(
   const siteUrl = getSiteUrl();
   const url = canonicalUrl(siteUrl, ROUTES.noticia(article.slug));
 
-  const imageUrl = article.coverImage.startsWith('http')
-    ? article.coverImage
-    : `${siteUrl}${article.coverImage}`;
+  const coverImage = typeof article.coverImage === 'string' && article.coverImage.trim().length > 0
+    ? article.coverImage.trim()
+    : SEO_CONFIG.og.image;
+
+  const imageUrl = coverImage.startsWith('http')
+    ? coverImage
+    : siteUrl + coverImage;
 
   return {
     title: article.title,
@@ -136,7 +140,9 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
       title: article.title,
       slug: article.slug,
       excerpt: article.excerpt,
-      coverImage: article.coverImage,
+      coverImage: typeof article.coverImage === 'string' && article.coverImage.trim().length > 0
+        ? article.coverImage.trim()
+        : SEO_CONFIG.og.image,
       publishedAt: article.publishedAt,
       updatedAt: article.updatedAt,
       author: article.author,
@@ -171,4 +177,3 @@ export default async function NoticiaPage({ params }: { params: Promise<{ slug: 
     </>
   );
 }
-
