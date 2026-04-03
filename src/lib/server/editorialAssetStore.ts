@@ -161,7 +161,7 @@ export async function registerEditorialAsset(input: {
        metadata,
        created_by
      )
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::text[],$18,$19::jsonb,$20)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::text[],$17,$18::jsonb,$19)
      on conflict (storage_path) do update set
        public_url = excluded.public_url,
        original_name = excluded.original_name,

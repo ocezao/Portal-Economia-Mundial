@@ -1046,3 +1046,38 @@ Mesmo com o novo contrato de assets editoriais, o upload remoto por `application
 ### Se conseguiu arrumar
 
 **Corrigido no repositorio; validacao final em producao depende do redeploy e do novo teste remoto.**
+
+## 7.2.10. Correcao do registro SQL da biblioteca de imagens
+
+### O que precisava ser alterado
+
+Depois do redeploy da rota de upload, o request passou a entrar no branch certo de `application/json`, mas o runtime da VPS mostrou novo erro:
+
+- `INSERT has more expressions than target columns`
+- a causa era o `registerEditorialAsset()` com placeholders a mais no `insert into editorial_media_assets`
+
+### O que foi feito
+
+1. Corrigido o `values (...)` do `registerEditorialAsset()` para alinhar exatamente:
+   - colunas do `insert`
+   - placeholders SQL
+   - quantidade de parametros enviados
+
+2. O objetivo foi destravar a persistencia do asset no PostgreSQL depois do upload em disco.
+
+### Como foi feito
+
+- teste real do upload `base64` em producao
+- leitura do `docker logs portal-web`
+- correcao pontual da query SQL no store editorial
+
+### Tecnologias usadas
+
+- PostgreSQL
+- Next.js
+- TypeScript
+- Docker Compose
+
+### Se conseguiu arrumar
+
+**Corrigido no repositorio; a validacao final depende do novo redeploy e do reteste do endpoint.**
