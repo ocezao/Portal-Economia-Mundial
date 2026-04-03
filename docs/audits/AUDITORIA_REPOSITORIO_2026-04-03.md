@@ -266,9 +266,9 @@ Motivo:
 - lista arquivos e estruturas que ja nao refletem a base atual
 - deve ser tratado apenas como historico
 
-### Quantas fases restam para encerrar tudo o que ainda esta aberto
+### Quantas fases restavam para encerrar tudo o que ainda estava aberto nesta consolidacao
 
-**Restam 3 fases reais.**
+**Restavam 3 fases reais no momento desta leitura consolidada.**
 
 #### Fase 1 - Harden de seguranca e logging
 
@@ -280,7 +280,7 @@ Escopo:
   - inseguro e corrigido
 - revisar residuos de configuracao antiga relacionados a ambiente
 
-Status: **pendente**
+Status na consolidacao: **pendente**
 
 #### Fase 2 - Limpeza residual e fechamento documental
 
@@ -289,7 +289,7 @@ Escopo:
 - limpar referencias textuais antigas a Supabase e arquitetura removida em docs e arquivos auxiliares como `.env.scripts`
 - marcar formalmente os relatorios historicos como superados no indice documental
 
-Status: **pendente**
+Status na consolidacao: **pendente**
 
 #### Fase 3 - Decisao final sobre `collector/` e `sdk` + revalidacao de codigo morto
 
@@ -299,7 +299,7 @@ Escopo:
 - se sairem: remover, ajustar docs, scripts e public assets relacionados
 - revalidar dependencias de UI e analytics que podem ter sobrado no `package.json`
 
-Status: **pendente**
+Status na consolidacao: **pendente**
 
 ### O que nao conta como fase restante
 
@@ -308,7 +308,7 @@ Status: **pendente**
 - lote 5 de duplicacoes e wrappers legados: **encerrado**
 - auditoria historica do banco baseada em Supabase: **superada, nao pendente**
 
-### Se conseguiu atualizar a documentacao
+### Se conseguiu atualizar a documentacao nesta consolidacao
 
 **Sim.**
 
@@ -401,3 +401,50 @@ Status: **pendente**
 - o `npm run build` concluiu com sucesso apos as mudancas
 - no build ainda aparecem mensagens sanitizadas do `logger` relacionadas a fallback de snapshots quando o banco local nao responde
 - essas mensagens nao representam falha do build; sao log de degradacao controlada
+
+## 12. Fase 2 - Limpeza residual e fechamento documental
+
+### O que precisava ser alterado
+
+1. remover residuos textuais da arquitetura antiga em arquivos auxiliares
+2. limpar regras orfas de ignore que apontavam para diretorios ja removidos
+3. remover artefatos locais de build ainda presentes no workspace
+4. atualizar a documentacao para refletir que a Fase 1 ja foi concluida e que a Fase 2 tambem foi executada
+
+### O que foi feito
+
+- removidas as referencias antigas de `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` em `.env.scripts`
+- removida a regra orfa `supabase/.temp/` de `.gitignore`
+- removido o artefato local `tsconfig.tsbuildinfo` do workspace
+- atualizado `docs/README.md` para deixar explicito que qualquer mencao restante a arquitetura antiga e apenas historica
+- atualizado este relatorio para:
+  - marcar a consolidacao anterior como fotografia historica daquele momento
+  - registrar a conclusao da Fase 2
+  - reduzir as fases realmente abertas a partir daqui
+
+### Como foi feito
+
+1. varredura textual por `supabase`, `SUPABASE_` e `NEXT_PUBLIC_SUPABASE`
+2. remocao manual dos residuos restantes em configuracao auxiliar e ignore
+3. revisao do indice documental enxuto
+4. atualizacao do relatorio principal para manter rastreabilidade do que foi corrigido
+
+### Quais tecnologias foram usadas
+
+- PowerShell
+- ripgrep / busca textual recursiva
+- patches manuais
+- Git
+
+### Se conseguiu arrumar
+
+**Sim.**
+
+- os residuos textuais ativos da arquitetura antiga foram removidos dos arquivos auxiliares principais
+- o indice documental ficou coerente com a base atual
+- a fase residual/documental foi encerrada
+
+### Observacoes
+
+- mencoes historicas a `supabase/` permanecem apenas dentro deste proprio relatorio, como registro de auditoria do que foi removido
+- a partir daqui, a unica fase estrutural ainda aberta e a decisao final sobre `collector/` e `sdk` com revalidacao final de codigo morto

@@ -40,7 +40,6 @@ scripts/*-report-*.json
 
 # local build artifacts
 *.tsbuildinfo
-supabase/.temp/
 
 # Chaves secretas
 .env
