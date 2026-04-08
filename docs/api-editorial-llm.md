@@ -112,6 +112,9 @@ Se for necessario zero-downtime na rotacao, o proximo passo tecnico e suportar c
 
 `GET /api/v1/editorial/articles/{id}/validate?lookup=slug`
 - valida prontidao editorial
+- para validar bloqueios reais de publicacao, use:
+  - `GET /api/v1/editorial/articles/{id}/validate?lookup=slug&stage=publish`
+  - ou `strict=true`
 
 `POST /api/v1/editorial/articles/{id}/approve?lookup=slug`
 - aprova editorialmente
@@ -248,6 +251,7 @@ Regras operacionais:
 - nao tentar publicar ou agendar via `PATCH /articles/{id}`
 - nao tentar `approve` sem antes passar em `validate`
 - nao tentar `publish` ou `schedule` sem `approve`
+- para checar exatamente o que ainda bloqueia `publish`, usar `validate?stage=publish`
 - sempre persistir pelo menos uma fonte antes de publicar
 - sempre garantir `seoTitle`, `metaDescription`, `tags` e `faqItems` antes de publicar
 - usar pelo menos `3` tags editoriais antes de publicar

@@ -7,6 +7,15 @@ function getLookupMode(request: Request): 'id' | 'slug' {
   return searchParams.get('lookup') === 'slug' ? 'slug' : 'id';
 }
 
+function shouldRequirePublishReadiness(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const stage = (searchParams.get('stage') ?? '').toLowerCase();
+  const strict = (searchParams.get('strict') ?? '').toLowerCase();
+  const requireApproval = (searchParams.get('requireApproval') ?? '').toLowerCase();
+
+  return stage === 'publish' || strict === 'true' || requireApproval === 'true';
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -16,7 +25,12 @@ export async function GET(
     if (!auth.ok) return editorialError(auth.message, auth.status, { code: 'UNAUTHORIZED' });
 
     const { id } = await params;
-    const result = await validateEditorialArticle(auth.admin, id, getLookupMode(req));
+    const result = await validateEditorialArticle(
+      auth.admin,
+      id,
+      getLookupMode(req),
+      { requireApproval: shouldRequirePublishReadiness(req) },
+    );
     return editorialSuccess(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno do servidor';

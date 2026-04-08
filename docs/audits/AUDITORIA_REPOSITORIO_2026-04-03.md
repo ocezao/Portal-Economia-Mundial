@@ -114,6 +114,65 @@ Concluir a retirada integral do backend remoto legado e das suas dependencias do
 
 ### O que precisava ser alterado
 
+1. remover o wrapper legado `src/config/storage.ts` e apontar todo o app para `src/lib/storage.ts`
+2. eliminar a duplicacao de autores em `src/config/content.ts`, que mantinha um segundo mapa de autores sem uso real
+3. reduzir a superficie publica de `src/services/articleApi.ts`, que ainda exportava funcoes antigas nao importadas por nenhuma tela do app
+4. remover `src/lib/logger.new.ts`, que nao tinha nenhum import ativo no repositorio
+
+### O que foi feito
+
+- consolidado o uso de storage em `@/lib/storage` nos arquivos abaixo:
+  - `src/contexts/AuthContext.tsx`
+  - `src/app/app/page.tsx`
+  - `src/app/(site)/configuracoes/ConfiguracoesClient.tsx`
+  - `src/app/(site)/HomePageClient.tsx`
+  - `src/app/admin/diagnostico/page.tsx`
+  - `src/app/admin/noticias/novo/page.tsx`
+  - `src/app/admin/noticias/editar/[slug]/page.tsx`
+- removido `src/config/storage.ts`
+- removido o bloco duplicado `CONTENT_CONFIG.authors` de `src/config/content.ts` e mantido `AuthorId` derivado de `AUTHORS`
+- reduzido `src/services/articleApi.ts` para as duas funcoes realmente importadas no app:
+  - `createArticleApi`
+  - `updateArticleApi`
+- removido `src/lib/logger.new.ts`
+
+### Como foi feito
+
+1. varredura global com `rg` para localizar imports do wrapper de storage, referencias a `CONTENT_CONFIG.authors`, imports de `logger.new.ts` e uso real dos exports de `articleApi.ts`
+2. migracao dos imports ativos para `@/lib/storage`
+3. remocao dos wrappers e arquivos mortos
+4. reducao da API publica de `articleApi.ts` ao uso efetivo observado no app
+5. revarredura para confirmar que as referencias antigas zeraram
+6. reexecucao do `npm run build` para validar que a limpeza nao quebrou o app
+
+### Quais tecnologias foram usadas
+
+- PowerShell
+- ripgrep (`rg`)
+- Next.js
+- TypeScript
+- patches manuais
+- `npm run build`
+
+### Se conseguiu arrumar
+
+**Sim.**
+
+- o wrapper legado de storage saiu do caminho critico
+- a duplicacao de autores em configuracao foi removida
+- `articleApi.ts` ficou alinhado ao uso real do frontend
+- `logger.new.ts` foi removido sem impacto de import
+- o `npm run build` concluiu com sucesso apos a limpeza
+
+### Observacoes
+
+- a primeira execucao do build apos a limpeza terminou a geracao das paginas e falhou no final com `ENOENT` dentro de `.next/_ssgManifest.js`; a segunda execucao completou normalmente, o que caracteriza artefato transitório de output e nao regressao funcional do lote 5
+- seguem avisos nao bloqueantes de fallback de snapshots/DB e timeout externo de fetch, mas o build fecha e o site continua degradando com seguranca
+
+## 9. Lote 5 - Refino de codigo e duplicacoes
+
+### O que precisava ser alterado
+
 1. remover o wrapper legado `src/config/storage.ts` e migrar todos os imports para `src/lib/storage.ts`
 2. consolidar a fonte de verdade de autores, eliminando a duplicacao de `CONTENT_CONFIG.authors`
 3. reduzir a superficie publica de `src/services/articleApi.ts` ao uso real do admin
@@ -1100,3 +1159,42 @@ Validacao pratica em producao:
   - `altText`
   - `caption`
   - `creditText`
+
+## 7.2.11. Consistencia entre validate e publish no fluxo editorial
+
+### O que precisava ser alterado
+
+Foi encontrada uma inconsistencia de UX/API:
+
+- `validate` padrao mostrava a capa sem metadados apenas como `warning`
+- `publish` aplicava validacao mais rigida e bloqueava a publicacao
+- isso fazia agentes externos verem `readyToPublish: true` e, mesmo assim, receberem `409 VALIDATION_REQUIRED` ao publicar
+
+### O que foi feito
+
+1. O endpoint de validacao passou a aceitar modo estrito:
+   - `GET /api/v1/editorial/articles/{id}/validate?...&stage=publish`
+   - ou `strict=true`
+   - ou `requireApproval=true`
+
+2. Nesse modo, a API usa o mesmo rigor de `publish/schedule`.
+
+3. A documentacao da API e o OpenAPI foram atualizados para deixar isso explicito.
+
+### Como foi feito
+
+- reproducao real do bug de `publish` em producao
+- comparacao entre `validate` padrao e `assertEditorialPublishingEligibility`
+- ajuste do route handler de `validate`
+- atualizacao de docs e contrato OpenAPI
+
+### Tecnologias usadas
+
+- Next.js route handlers
+- TypeScript
+- OpenAPI
+- PowerShell
+
+### Se conseguiu arrumar
+
+**Corrigido no repositorio; faltava apenas o redeploy para a VPS refletir esse novo contrato.**

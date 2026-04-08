@@ -328,11 +328,12 @@ const openApiDocument = {
     '/articles/{id}/validate': {
       get: {
         summary: 'Valida prontidao editorial do artigo',
-        responses: {
-          200: { '$ref': '#/components/responses/Success' },
-          401: { '$ref': '#/components/responses/Unauthorized' },
-          404: { '$ref': '#/components/responses/NotFound' },
-        },
+        description: 'Use stage=publish (ou strict=true) para validar com o mesmo rigor aplicado por publish/schedule.',
+          responses: {
+            200: { '$ref': '#/components/responses/Success' },
+            401: { '$ref': '#/components/responses/Unauthorized' },
+            404: { '$ref': '#/components/responses/NotFound' },
+          },
       },
     },
     '/articles/{id}/approve': {
